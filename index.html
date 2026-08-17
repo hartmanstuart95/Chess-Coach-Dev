@@ -1,0 +1,2567 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Chess Coach v0.9.2B.8.1</title>
+<style>
+:root{
+  --bg:#111318;--panel:#1a1d24;--text:#f4f4f5;--muted:#a1a1aa;
+  --light:#f1ead9;--dark:#74836f;--sel:#f6c945;--last:#65a8e8;--best:#48d96b;--check:#ef5350;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.wrap{max-width:1180px;margin:0 auto;padding:20px}
+h1{font-size:30px;letter-spacing:-.6px;margin:0 0 5px}.sub{color:var(--muted);margin-bottom:18px}
+.layout{
+  display:grid;
+  grid-template-columns:minmax(560px,700px) minmax(320px,1fr);
+  gap:22px;
+  align-items:start;
+}
+.leftPane{min-width:0}
+@media(max-width:980px){
+  .layout{grid-template-columns:1fr}
+  .boardArea{max-width:720px;margin:0 auto}
+}
+@media(max-width:700px){
+  .wrap{padding:12px}
+  .boardShell{grid-template-columns:14px minmax(0,1fr);gap:7px}
+}
+@media(max-width:860px){.layout{grid-template-columns:1fr}}
+.boardArea{width:100%;max-width:700px}
+.boardShell{
+  display:grid;
+  grid-template-columns:18px minmax(0,1fr);
+  gap:10px;
+  align-items:stretch;
+  width:100%;
+}
+.evalBar{
+  position:relative;
+  border-radius:8px;
+  overflow:hidden;
+  background:#f1f1ed;
+  border:1px solid #343a46;
+  height:auto;
+}
+.evalBlack{position:absolute;left:0;right:0;top:0;height:50%;background:#17191e;transition:height .25s ease}
+.evalTag{position:absolute;z-index:2;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-90deg);font-size:10px;font-weight:800;white-space:nowrap;color:#9ca3af;text-shadow:0 1px 2px #000}
+.board{
+  width:100%;
+  aspect-ratio:1 / 1;
+  display:grid;
+  grid-template-columns:repeat(8,minmax(0,1fr));
+  grid-template-rows:repeat(8,minmax(0,1fr));
+  border-radius:14px;
+  overflow:hidden;
+  border:1px solid #3a3e48;
+  box-shadow:0 12px 34px rgba(0,0,0,.22);
+  touch-action:manipulation;
+  user-select:none;
+  -webkit-user-select:none;
+}
+.sq{
+  width:100%;
+  height:100%;
+  min-width:0;
+  min-height:0;
+  aspect-ratio:1 / 1;
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:clamp(28px,6.2vw,58px);
+  line-height:1;
+  border:0;
+  padding:0;
+  cursor:pointer;
+  overflow:hidden;
+}
+.piece{
+  position:relative;
+  z-index:1;
+  display:block;
+  font-size:0.78em;
+  line-height:1;
+  transform:translateZ(0);
+}
+
+.light{background:var(--light);color:#111}.dark{background:var(--dark);color:#111}
+.sq.selected{outline:5px solid var(--sel);outline-offset:-5px}
+.sq.last::after{content:"";position:absolute;inset:0;background:rgba(96,165,250,.18);pointer-events:none}
+.dot{position:absolute;width:22%;aspect-ratio:1;border-radius:50%;background:rgba(20,20,20,.28)}
+.coord{position:absolute;font-size:10px;font-weight:700;opacity:.62}.file{right:3px;bottom:2px}.rank{left:3px;top:2px}
+
+.card{background:linear-gradient(180deg,#1b1e25,#171a20);border:1px solid #2d323d;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 8px 24px rgba(0,0,0,.12)}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.toolbar button{min-width:72px}
+.toggleRow{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;padding:10px 0;border-top:1px solid #2d323d}
+.switch{position:relative;width:48px;height:28px;display:inline-block}.switch input{display:none}.slider{position:absolute;inset:0;background:#3a404c;border-radius:20px;transition:.2s}.slider:before{content:"";position:absolute;width:22px;height:22px;left:3px;top:3px;background:white;border-radius:50%;transition:.2s}.switch input:checked+.slider{background:#0ea5e9}.switch input:checked+.slider:before{transform:translateX(20px)}
+button{appearance:none;border:1px solid #3b4250;background:#252a33;color:var(--text);border-radius:10px;padding:10px 13px;font-size:16px}
+button.primary{background:#0ea5e9;border-color:#0ea5e9;color:#fff}
+textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250;background:#101218;color:var(--text);padding:10px;font-size:14px;resize:vertical}
+.status{font-size:16px;margin:8px 0}.small{font-size:13px;color:var(--muted)}
+.moves{max-height:290px;overflow:auto;line-height:1.9;padding-right:4px}.movebtn{padding:4px 8px;font-size:14px;margin:2px;border-radius:8px;background:#232832}.activeMove{background:#0ea5e9!important;border-color:#0ea5e9!important;color:#fff}
+.error{color:#fb7185}.ok{color:#86efac}
+.engineGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.engineStat{background:#101218;border:1px solid #343a46;border-radius:10px;padding:10px}
+.engineLabel{font-size:12px;color:var(--muted);margin-bottom:4px}
+.engineValue{font-size:20px;font-weight:700}
+.pv{margin-top:10px;padding:10px;border-radius:10px;background:#101218;border:1px solid #343a46;line-height:1.5}
+.bestFrom{box-shadow:inset 0 0 0 4px rgba(34,197,94,.55)}
+.bestTo{box-shadow:inset 0 0 0 4px rgba(34,197,94,.9)}
+.reviewGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.reviewBox{background:#101218;border:1px solid #343a46;border-radius:10px;padding:10px}
+.reviewLabel{font-size:12px;color:var(--muted);margin-bottom:4px}
+.reviewBig{font-size:21px;font-weight:800}
+.reviewText{margin-top:10px;padding:11px;border-radius:10px;background:#101218;border:1px solid #343a46;line-height:1.5}
+.classBest{color:#86efac}.classExcellent{color:#a7f3d0}.classGood{color:#bfdbfe}.classInaccuracy{color:#fde68a}.classMistake{color:#fdba74}.classBlunder{color:#fca5a5}.classMate{color:#f0abfc}
+.progressTrack{height:9px;background:#101218;border:1px solid #343a46;border-radius:999px;overflow:hidden;margin-top:10px}
+.progressFill{height:100%;width:0%;background:#0ea5e9;transition:width .2s ease}
+.summaryGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.summaryBox{background:#101218;border:1px solid #343a46;border-radius:10px;padding:9px;text-align:center}
+.summaryBox.clickable{cursor:pointer;transition:.15s}.summaryBox.clickable:hover{background:#171b22}
+.summaryBox.activeSummary{border-color:#0ea5e9;box-shadow:inset 0 0 0 1px #0ea5e9}
+.reviewMovesList{margin-top:12px;display:flex;flex-direction:column;gap:7px;max-height:420px;overflow:auto;padding-right:3px}
+.reviewMoveRow{display:grid;grid-template-columns:58px 1fr auto;gap:9px;align-items:center;width:100%;text-align:left;padding:9px 10px;background:#101218;border:1px solid #343a46;border-radius:10px}
+.reviewMoveRow:hover{background:#171b22}.reviewMoveName{font-weight:800}.reviewMoveMeta{font-size:12px;color:var(--muted)}
+.summaryNum{font-size:20px;font-weight:800}.summaryName{font-size:11px;color:var(--muted);margin-top:2px}
+.keyMoves{margin-top:12px;display:flex;flex-direction:column;gap:7px}
+.keyMove{display:grid;grid-template-columns:56px 1fr auto;gap:9px;align-items:center;width:100%;text-align:left;padding:9px 10px;background:#101218;border:1px solid #343a46;border-radius:10px}
+.keyMove:hover{background:#171b22}.keyMoveMove{font-weight:800}.keyMoveMeta{font-size:12px;color:var(--muted)}.keyMoveLoss{font-weight:800}
+.lessonBox{background:#101218;border:1px solid #343a46;border-radius:12px;padding:12px;margin-top:10px}
+.lessonTitle{font-weight:800;margin-bottom:5px}.lessonPrompt{line-height:1.45}
+.lessonActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.puzzleStatus{margin-top:10px;font-weight:700}.puzzleGood{color:#86efac}.puzzleTry{color:#fde68a}
+.hiddenAnswer{filter:blur(6px);user-select:none}.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;position:sticky;top:0;z-index:20;background:var(--bg);padding:4px 0 8px}
+.tabBtn{padding:8px 11px;font-size:14px;border-radius:9px;background:#20242c}
+.tabBtn.activeTab{background:#0ea5e9;border-color:#0ea5e9;color:#fff}
+.tabPane{display:none}.tabPane.activePane{display:block}
+.focusRow{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}
+.focusBtn{padding:7px 10px;font-size:13px}.focusBtn.activeFocus{background:#0ea5e9;border-color:#0ea5e9;color:#fff}
+.playerHeader{margin:8px 0 10px}.playerName{font-weight:800;font-size:18px}.playerSide{font-size:12px;color:var(--muted)}
+.thinkingGrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:10px}
+.thinkCard{background:#101218;border:1px solid #343a46;border-radius:10px;padding:10px}
+.thinkLabel{font-size:11px;color:var(--muted);margin-bottom:4px}
+.thinkValue{font-weight:700;line-height:1.35}
+.pauseBox{background:#101218;border:1px solid #343a46;border-radius:12px;padding:12px;margin-top:10px}
+.choiceRow{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.choiceBtn{font-size:13px;padding:8px 10px}.choiceBtn.selectedChoice{background:#0ea5e9;border-color:#0ea5e9}
+.profileGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
+.profileStat{background:#101218;border:1px solid #343a46;border-radius:10px;padding:9px}
+.profileNum{font-size:20px;font-weight:800}.profileName{font-size:11px;color:var(--muted)}
+.patternCard{background:#101218;border:1px solid #343a46;border-radius:12px;padding:12px;margin-top:10px}
+.patternHeadline{font-weight:800;font-size:18px;line-height:1.3}
+.patternSub{font-size:13px;color:var(--muted);margin-top:5px;line-height:1.45}
+.patternList{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.patternItem{background:#151820;border:1px solid #303641;border-radius:10px;padding:10px}
+.patternItem strong{display:block;margin-bottom:3px}
+.patternBar{height:7px;background:#242933;border-radius:999px;overflow:hidden;margin-top:7px}
+.patternFill{height:100%;background:#0ea5e9;border-radius:999px}
+.badge{display:inline-block;background:#173341;color:#9ee6ff;padding:4px 8px;border-radius:999px;font-size:12px;margin-bottom:8px}
+
+/* === Chess Coach v0.9.2B.8.1 board visual system === */
+.board{
+  background:#111318;
+  border:2px solid #353a45;
+  box-shadow:0 14px 36px rgba(0,0,0,.30);
+}
+.sq{
+  position:relative;
+  width:100%;
+  height:100%;
+  min-width:0;
+  min-height:0;
+  aspect-ratio:1 / 1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:0;
+  border:0;
+  overflow:hidden;
+  line-height:1;
+  cursor:pointer;
+  isolation:isolate;
+}
+.light{background:var(--light);color:#171717}
+.dark{background:var(--dark);color:#111}
+.sq.selected{
+  outline:5px solid var(--sel);
+  outline-offset:-5px;
+  z-index:2;
+}
+.sq.last::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:rgba(101,168,232,.23);
+  box-shadow:inset 0 0 0 2px rgba(101,168,232,.35);
+  pointer-events:none;
+  z-index:0;
+}
+.bestFrom{box-shadow:inset 0 0 0 5px rgba(49,195,107,.62)}
+.bestTo{box-shadow:inset 0 0 0 5px rgba(49,195,107,.98)}
+.sq.inCheck{
+  box-shadow:
+    inset 0 0 0 5px rgba(239,83,80,.98),
+    inset 0 0 24px rgba(239,83,80,.45);
+}
+.piece{
+  position:relative;
+  z-index:3;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:90%;
+  height:90%;
+  line-height:1;
+  font-family:"Arial Unicode MS","Segoe UI Symbol","Apple Symbols","Noto Sans Symbols 2",sans-serif;
+  font-size:clamp(40px,7.1vw,72px);
+  font-weight:700;
+  transform:translateY(-1%);
+  pointer-events:none;
+}
+
+/* Solid, dimensional white pieces — inspired by the user's custom set */
+.piece.whitePiece{
+  color:#f7f7f2;
+  -webkit-text-stroke:0.65px #34373d;
+  text-shadow:
+    0 -1px 0 #ffffff,
+    0 1px 0 #e5e5df,
+    0 2px 0 #c9cbc8,
+    0 3px 2px rgba(0,0,0,.34);
+  filter:
+    drop-shadow(0 3px 2px rgba(0,0,0,.36))
+    drop-shadow(0 0 1px rgba(255,255,255,.70));
+}
+
+/* Solid charcoal-black pieces with restrained edge lighting */
+.piece.blackPiece{
+  color:#151920;
+  -webkit-text-stroke:0.4px #050607;
+  text-shadow:
+    0 1px 0 rgba(255,255,255,.10),
+    0 2px 0 #080a0d,
+    0 3px 2px rgba(0,0,0,.48),
+    1px 0 0 rgba(255,255,255,.08),
+    -1px 0 0 rgba(255,255,255,.05);
+  filter:
+    drop-shadow(0 3px 2px rgba(0,0,0,.42))
+    drop-shadow(0 0 1px rgba(255,255,255,.14));
+}
+.dot{
+  position:absolute;
+  z-index:2;
+  width:24%;
+  aspect-ratio:1;
+  border-radius:50%;
+  background:rgba(17,19,24,.34);
+  box-shadow:0 0 0 2px rgba(255,255,255,.10);
+}
+.coord{
+  z-index:4;
+  font-size:10px;
+  font-weight:800;
+  opacity:.70;
+  text-shadow:0 1px rgba(255,255,255,.25);
+}
+@media(min-width:900px){
+  .piece{font-size:clamp(44px,5.5vw,72px)}
+}
+
+
+
+
+
+.openingGrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:10px}
+.openingStat{background:#101218;border:1px solid #343a46;border-radius:10px;padding:10px}
+.openingLabel{font-size:11px;color:var(--muted);margin-bottom:4px}
+.openingValue{font-weight:800;line-height:1.35}
+.openingNote{margin-top:10px;padding:11px;border-radius:10px;background:#101218;border:1px solid #343a46;line-height:1.45}
+.openingGood{color:#86efac}.openingWarn{color:#fde68a}.openingBad{color:#fca5a5}
+
+
+
+.knightGlyph{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:88%;
+  height:88%;
+  font-family:"Arial Unicode MS","Segoe UI Symbol","Apple Symbols","Noto Sans Symbols 2",sans-serif;
+  font-size:clamp(42px,7vw,72px);
+  font-weight:700;
+  line-height:1;
+  transform:translateY(-1%);
+  filter:drop-shadow(0 2px 1px rgba(0,0,0,.28));
+}
+.knightGlyph.whiteKnight{
+  color:#f5f1e8;
+  -webkit-text-stroke:0.7px #2c3036;
+  text-shadow:0 1px 0 #fff,0 2px 1px rgba(0,0,0,.24);
+}
+.knightGlyph.blackKnight{
+  color:#111318;
+  -webkit-text-stroke:0.35px #050607;
+  text-shadow:0 1px 0 rgba(255,255,255,.08),0 2px 1px rgba(0,0,0,.30);
+}
+
+.materialPanel{
+  margin-top:12px;
+  display:grid;
+  grid-template-columns:1fr 1fr auto;
+  gap:8px;
+  align-items:stretch;
+}
+.materialSide,.materialBalance{
+  background:#151820;
+  border:1px solid #303641;
+  border-radius:10px;
+  padding:9px 11px;
+}
+.materialLabel{
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  color:var(--muted);
+  margin-bottom:3px;
+  font-weight:800;
+}
+.materialPieces{
+  font-size:14px;
+  font-weight:750;
+  white-space:nowrap;
+}
+.materialBalance{
+  min-width:116px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  text-align:center;
+}
+.materialScore{
+  font-size:16px;
+  font-weight:850;
+}
+.materialEqual{color:#d4d4d8}
+.materialWhite{color:#f5f1e8}
+.materialBlack{color:#aeb4bd}
+@media(max-width:560px){
+  .materialPanel{grid-template-columns:1fr 1fr}
+  .materialBalance{grid-column:1 / -1}
+}
+
+#reloadLatestBtn{
+  border-style:dashed;
+  color:#b9e8ff;
+  background:#18232b;
+}
+#reloadLatestBtn:active{
+  transform:translateY(1px);
+}
+
+.promotionOverlay{
+  position:fixed;
+  inset:0;
+  z-index:999;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  background:rgba(8,10,14,.64);
+  backdrop-filter:blur(3px);
+  -webkit-backdrop-filter:blur(3px);
+}
+.promotionOverlay.show{display:flex}
+.promotionCard{
+  width:min(92vw,420px);
+  background:#171a20;
+  border:1px solid #3a404c;
+  border-radius:16px;
+  padding:16px;
+  box-shadow:0 20px 55px rgba(0,0,0,.45);
+}
+.promotionTitle{
+  font-size:18px;
+  font-weight:850;
+  margin-bottom:4px;
+}
+.promotionSub{
+  font-size:13px;
+  color:var(--muted);
+  margin-bottom:12px;
+}
+.promotionChoices{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+}
+.promotionBtn{
+  min-width:0;
+  padding:10px 6px;
+  font-size:13px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:5px;
+}
+.promotionIcon{
+  font-size:38px;
+  line-height:1;
+}
+.promotionCancel{
+  width:100%;
+  margin-top:10px;
+  font-size:13px;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Chess Coach v0.9.2B.8.1</h1>
+<div class="sub">Opening recognition + personalized coaching + live material counter + promotion choice.</div>
+
+<div class="layout">
+  <div class="leftPane">
+    <div class="boardArea">
+    <div class="boardShell">
+      <div id="evalBar" class="evalBar">
+        <div id="evalBlack" class="evalBlack"></div>
+        <div id="evalTag" class="evalTag">0.00</div>
+      </div>
+      <div id="board" class="board" aria-label="Interactive chess board"></div>
+    </div>
+    </div>
+    <div class="materialPanel" id="materialPanel" aria-label="Material and piece count">
+      <div class="materialSide">
+        <div class="materialLabel">White pieces</div>
+        <div id="whiteMaterialPieces" class="materialPieces">Q1 · R2 · B2 · N2 · P8</div>
+      </div>
+      <div class="materialSide">
+        <div class="materialLabel">Black pieces</div>
+        <div id="blackMaterialPieces" class="materialPieces">Q1 · R2 · B2 · N2 · P8</div>
+      </div>
+      <div class="materialBalance">
+        <div class="materialLabel">Material</div>
+        <div id="materialScore" class="materialScore materialEqual">Equal</div>
+      </div>
+    </div>
+    <div class="toolbar">
+      <button id="flipBtn">Flip board</button>
+      <button id="undoBtn">Undo</button>
+      <button id="resetBtn">Reset</button>
+      <button id="backBtn">◀ Back</button>
+      <button id="forwardBtn">Forward ▶</button>
+      <button id="reloadLatestBtn" title="Force Safari to request the newest GitHub Pages build">↻ Reload Latest</button>
+    </div>
+    <div id="status" class="status"></div>
+    <div id="feedback" class="small" aria-live="polite">Tap a piece to see legal moves.</div>
+  </div>
+
+  <div class="rightPane">
+    <div class="tabs">
+      <button class="tabBtn activeTab" data-tab="gameTab">Game</button>
+      <button class="tabBtn" data-tab="engineTab">Engine</button>
+      <button class="tabBtn" data-tab="reviewTab">Review</button>
+      <button class="tabBtn" data-tab="coachTab">Coach</button>
+      <button class="tabBtn" data-tab="trainTab">Train</button>
+      <button class="tabBtn" data-tab="middleTab">Middlegame</button>
+    </div>
+    <div id="gameTab" class="tabPane activePane"><div class="card">
+      <div class="badge">PGN</div>
+      <strong> Load a game</strong>
+      <p class="small">Paste a complete Chess.com PGN, then tap Load PGN.</p>
+      <textarea id="pgnInput" placeholder='[White "Player1"]
+[Black "Player2"]
+[Result "1-0"]
+
+1. e4 c5 2. Nf3 d6 3. d4 cxd4'></textarea>
+      <div class="row" style="margin-top:8px">
+        <button id="loadBtn" class="primary">Load PGN</button>
+        <button id="sampleBtn">Load sample</button>
+      </div>
+    </div>
+
+    <div class="card" id="openingCoachCard">
+      <div class="badge">OPENING COACH</div>
+      <strong id="openingName">Load a PGN to identify the opening.</strong>
+      <div id="openingEco" class="small" style="margin-top:4px"></div>
+      <div class="openingGrid">
+        <div class="openingStat">
+          <div class="openingLabel">Recognized through</div>
+          <div id="openingThrough" class="openingValue">—</div>
+        </div>
+        <div class="openingStat">
+          <div class="openingLabel">First departure</div>
+          <div id="openingDeviation" class="openingValue">—</div>
+        </div>
+      </div>
+      <div id="openingCoachNote" class="openingNote small">
+        Chess Coach distinguishes leaving stored theory from making a bad move.
+      </div>
+    </div>
+
+    <div class="card">
+      <strong>Game moves</strong>
+      <div id="moves" class="moves small">No moves yet.</div>
+    </div>
+
+    </div>
+    <div id="engineTab" class="tabPane"><div class="card">
+      <div class="badge">ENGINE</div>
+      <strong> Stockfish analysis</strong>
+      <p class="small">Analyze the position currently shown on the board.</p>
+      <button id="analyzeBtn" class="primary">Analyze position</button>
+      <div class="toggleRow">
+        <div>
+          <div style="font-weight:600">Live analysis</div>
+          <div class="small">Re-analyze when you move through the game.</div>
+        </div>
+        <label class="switch">
+          <input id="autoAnalyze" type="checkbox" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div id="engineStatus" class="small" style="margin-top:8px">Engine not started.</div>
+      <div class="engineGrid">
+        <div class="engineStat">
+          <div class="engineLabel">Evaluation</div>
+          <div id="evalValue" class="engineValue">—</div>
+        </div>
+        <div class="engineStat">
+          <div class="engineLabel">Best move</div>
+          <div id="bestMoveValue" class="engineValue">—</div>
+        </div>
+      </div>
+      <div class="pv">
+        <div class="engineLabel">Best line</div>
+        <div id="pvValue">—</div>
+      </div>
+      <div class="small" style="margin-top:8px">Stockfish 18 • Safari-safe local worker • live depth 12 • review depth 10</div>
+    </div>
+
+    </div>
+    <div id="reviewTab" class="tabPane"><div class="card">
+      <div class="badge">GAME REVIEW</div>
+      <strong> Analyze the full game</strong>
+      <p class="small">Stockfish will evaluate every position once, classify every move, and surface the biggest learning opportunities.</p>
+      <button id="analyzeGameBtn" class="primary">Analyze full game</button>
+      <div id="gameReviewStatus" class="small" style="margin-top:8px">Load a PGN to begin.</div>
+      <div class="progressTrack"><div id="gameReviewProgress" class="progressFill"></div></div>
+
+      <div class="focusRow">
+          <button class="focusBtn activeFocus" data-focus="me">Me</button>
+          <button class="focusBtn" data-focus="white">White</button>
+          <button class="focusBtn" data-focus="black">Black</button>
+          <button class="focusBtn" data-focus="both">Both</button>
+        </div>
+        <div class="playerHeader"><div id="focusPlayerName" class="playerName">Focus on Me</div><div id="focusPlayerSide" class="playerSide">Load a PGN to identify your side.</div></div>
+        <div class="summaryGrid">
+        <div id="summaryBestBox" class="summaryBox clickable"><div id="sumBest" class="summaryNum">—</div><div class="summaryName">Best / Excellent</div></div>
+        <div id="summaryGoodBox" class="summaryBox clickable"><div id="sumGood" class="summaryNum">—</div><div class="summaryName">Good / Inaccuracy</div></div>
+        <div id="summaryBadBox" class="summaryBox clickable"><div id="sumBad" class="summaryNum">—</div><div class="summaryName">Mistakes / Blunders</div></div>
+      </div>
+
+      <div style="margin-top:14px;display:flex;justify-content:space-between;gap:10px;align-items:center">
+        <div id="reviewListTitle" style="font-weight:700">Key learning positions</div>
+        <button id="showKeyBtn" style="padding:5px 8px;font-size:12px">Key positions</button>
+      </div>
+      <div id="allReviewMoves" class="reviewMovesList" style="display:none"></div>
+      <div id="keyMovesTitle" style="margin-top:10px;font-weight:700">Key learning positions</div>
+      <div id="keyMoves" class="keyMoves">
+        <div class="small">Your biggest evaluation swings will appear here.</div>
+      </div>
+      <div class="small" style="margin-top:8px">Batch review uses depth 8 for speed on iPad. Mate positions are classified separately. Tap a flagged move for deeper coaching.</div>
+    </div>
+
+    </div>
+    <div id="coachTab" class="tabPane"><div class="card">
+      <div class="badge">COACH</div>
+      <strong> Review the move</strong>
+      <p class="small">Go to any move in the game, then compare the move that was played with Stockfish's best choice.</p>
+      <button id="reviewMoveBtn" class="primary">Review current move</button>
+      <div id="reviewStatus" class="small" style="margin-top:8px">Choose a position after at least one move.</div>
+      <div class="reviewGrid">
+        <div class="reviewBox">
+          <div class="reviewLabel">Your move</div>
+          <div id="reviewActual" class="reviewBig">—</div>
+        </div>
+        <div class="reviewBox">
+          <div class="reviewLabel">Coach rating</div>
+          <div id="reviewClass" class="reviewBig">—</div>
+        </div>
+        <div class="reviewBox">
+          <div class="reviewLabel">Best move</div>
+          <div id="reviewBest" class="reviewBig">—</div>
+        </div>
+        <div class="reviewBox">
+          <div class="reviewLabel">Eval loss</div>
+          <div id="reviewLoss" class="reviewBig">—</div>
+        </div>
+      </div>
+      <div class="reviewText">
+        <div class="reviewLabel">What did I miss?</div>
+        <div id="reviewExplain">Review a move to see the coaching note.</div>
+      </div>
+      <div class="small" style="margin-top:8px">Ratings use Chess Coach's centipawn-loss heuristic. Mate is classified separately from centipawn loss.</div>
+    </div>
+
+    </div>
+    <div id="trainTab" class="tabPane"><div class="card">
+      <div class="badge">TEACH ME</div>
+      <strong> Turn mistakes into training</strong>
+      <p class="small">After a full-game review, choose a key learning position and Chess Coach will turn it into a mini-lesson from your own game.</p>
+      <div class="lessonBox">
+        <div class="reviewLabel">Pattern to notice</div>
+        <div id="lessonTheme" class="lessonTitle">Choose a key learning position.</div>
+        <div id="lessonWhy" class="lessonPrompt small">We’ll focus on the thinking process, not just the engine answer.</div>
+      </div>
+      <div class="lessonBox">
+        <div class="reviewLabel">Better thought process</div>
+        <div id="lessonThink" class="lessonPrompt">Checks → Captures → Threats → loose pieces → king safety.</div>
+      </div>
+      <div class="lessonActions">
+        <button id="trainBtn" class="primary">Try this position</button>
+        <button id="revealBtn">Reveal best move</button>
+      </div>
+      <div id="puzzleStatus" class="small" style="margin-top:10px">Select a key learning position first.</div>
+    </div>
+
+    </div>
+<div id="middleTab" class="tabPane">
+      <div class="card">
+        <div class="badge">MIDDLEGAME COACH</div>
+        <strong> What should I think about here?</strong>
+        <p class="small">Use this before revealing Stockfish. The goal is to generate a plan, not memorize an engine move.</p>
+        <button id="thinkBtn" class="primary">Think through this position</button>
+        <div class="thinkingGrid">
+          <div class="thinkCard"><div class="thinkLabel">1. Immediate danger</div><div id="thinkDanger" class="thinkValue">—</div></div>
+          <div class="thinkCard"><div class="thinkLabel">2. Forcing moves</div><div id="thinkForcing" class="thinkValue">—</div></div>
+          <div class="thinkCard"><div class="thinkLabel">3. King safety</div><div id="thinkKing" class="thinkValue">—</div></div>
+          <div class="thinkCard"><div class="thinkLabel">4. Worst piece</div><div id="thinkWorst" class="thinkValue">—</div></div>
+          <div class="thinkCard"><div class="thinkLabel">5. Target / weakness</div><div id="thinkTarget" class="thinkValue">—</div></div>
+          <div class="thinkCard"><div class="thinkLabel">6. Candidate plan</div><div id="thinkPlan" class="thinkValue">—</div></div>
+        </div>
+        <div class="pauseBox">
+          <div class="reviewLabel">PAUSE THE GAME</div>
+          <div id="pausePrompt" class="lessonTitle">Choose a middlegame position from your game.</div>
+          <div class="small">Before moving, decide what kind of move the position calls for.</div>
+          <div class="choiceRow">
+            <button class="choiceBtn" data-plan="threat">Answer a threat</button>
+            <button class="choiceBtn" data-plan="tactic">Look for a tactic</button>
+            <button class="choiceBtn" data-plan="piece">Improve a piece</button>
+            <button class="choiceBtn" data-plan="break">Create a pawn break</button>
+          </div>
+          <div id="pauseFeedback" class="small" style="margin-top:9px">Pick one, then try a move on the board.</div>
+          <div class="lessonActions">
+            <button id="pauseStartBtn" class="primary">Start pause position</button>
+            <button id="pauseRevealBtn">Reveal coach plan</button>
+          </div>
+        </div>
+        <div class="pauseBox">
+          <div class="reviewLabel">PATTERNS</div>
+          <div id="patternHeadline" class="patternHeadline">Analyze a game to detect recurring patterns.</div>
+          <div id="patternSub" class="patternSub">Chess Coach will compare this game with your prior reviewed games.</div>
+          <div id="currentGamePatterns" class="patternList"></div>
+          <div id="longTermPatterns" class="patternList"></div>
+        </div>
+
+        <div class="pauseBox">
+          <div class="reviewLabel">LEARNING PROFILE</div>
+          <div class="small">Stored locally on this iPad as you review games.</div>
+          <div class="profileGrid">
+            <div class="profileStat"><div id="profTactical" class="profileNum">0</div><div class="profileName">Tactical misses</div></div>
+            <div class="profileStat"><div id="profThreats" class="profileNum">0</div><div class="profileName">Threats overlooked</div></div>
+            <div class="profileStat"><div id="profKing" class="profileNum">0</div><div class="profileName">King safety</div></div>
+            <div class="profileStat"><div id="profPlanning" class="profileNum">0</div><div class="profileName">Planning / piece activity</div></div>
+          </div>
+          <div id="profileInsight" class="lessonPrompt small" style="margin-top:10px">Analyze games to build your learning profile.</div>
+          <div class="lessonActions" style="margin-top:10px">
+            <button id="profileDetailsBtn">Profile details</button>
+            <button id="resetProfileBtn">Reset memory</button>
+          </div>
+          <div id="profileDetails" class="small" style="margin-top:10px;display:none"></div>
+        </div>
+      </div>
+    </div>
+
+<div class="card">
+      <strong>Current position</strong>
+      <div class="small">FEN</div>
+      <div id="fen" style="word-break:break-all;margin-top:5px"></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div id="promotionOverlay" class="promotionOverlay" aria-hidden="true">
+  <div class="promotionCard" role="dialog" aria-modal="true" aria-labelledby="promotionTitle">
+    <div id="promotionTitle" class="promotionTitle">Promote pawn</div>
+    <div id="promotionSub" class="promotionSub">Choose the piece for promotion.</div>
+    <div class="promotionChoices">
+      <button class="promotionBtn" data-promotion="q"><span class="promotionIcon">♛</span><span>Queen</span></button>
+      <button class="promotionBtn" data-promotion="r"><span class="promotionIcon">♜</span><span>Rook</span></button>
+      <button class="promotionBtn" data-promotion="b"><span class="promotionIcon">♝</span><span>Bishop</span></button>
+      <button class="promotionBtn" data-promotion="n"><span class="promotionIcon">♞</span><span>Knight</span></button>
+    </div>
+    <button id="promotionCancel" class="promotionCancel">Cancel</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+<script>
+(function(){
+  /*
+   * Chess piece artwork: Cburnett by Colin M.L. Burnett.
+   * Source: lichess-org/lila public/piece/cburnett
+   * License: GPLv2+
+   * Geometry preserved; white fill warmed slightly for Chess Coach.
+   */
+  /*
+   * Knight artwork: Chessnut set from lichess-org/lila public/piece/chessnut.
+   * Used only for wN/bN; all other pieces remain unchanged.
+   */
+  const CBURNETT_PIECES={"wP":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 45 45\"><path fill=\"#f5f1e8\" stroke=\"#000\" stroke-linecap=\"round\" stroke-width=\"1.5\" d=\"M22.5 9c-2.21 0-4 1.79-4 4 0 .89.29 1.71.78 2.38C17.33 16.5 16 18.59 16 21c0 2.03.94 3.84 2.41 5.03-3 1.06-7.41 5.55-7.41 13.47h23c0-7.92-4.41-12.41-7.41-13.47 1.47-1.19 2.41-3 2.41-5.03 0-2.41-1.33-4.5-3.28-5.62.49-.67.78-1.49.78-2.38 0-2.21-1.79-4-4-4z\"/></svg>","wN":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 45 45\">\n<g fill=\"none\" stroke=\"#000\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.5\">\n  <path fill=\"#f5f1e8\" d=\"M12 36.5h22.5c-.6-6.8-2.4-12.1-6.1-15.4-2.6-2.4-5.6-3.9-8.9-4.5l2.8-5.1 4.3 2.5 3.2-3.8 1 6.3c3.8 2.6 6 6 6.6 10.4.5 4-1.1 7.2-4.2 9.6H12z\"/>\n  <path fill=\"#f5f1e8\" d=\"M20.2 16.6c-4.2 1-7.8 3.7-10.5 7.6-1.6 2.3-2.3 4.7-1.4 6 .8 1.2 2.7.4 4.5-.8l6.6-4.6c2.6-1.8 4.2-4.4 4.3-6.9z\"/>\n  <path d=\"M15.2 36.5h17.4\"/>\n  <path d=\"M13.4 33.2h20.1\"/>\n  <path d=\"M16.4 22.3c2.8-.9 5.2-.8 7.5.2\"/>\n  <circle cx=\"25.6\" cy=\"17.9\" r=\".8\" fill=\"#000\" stroke=\"none\"/>\n  <path d=\"M9.5 27.8c1 .1 1.8.5 2.5 1.1\"/>\n</g>\n</svg>","wB":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 45 45\"><g fill=\"none\" fill-rule=\"evenodd\" stroke=\"#000\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.5\"><g fill=\"#f5f1e8\" stroke-linecap=\"butt\"><path d=\"M9 36c3.39-.97 10.11.43 13.5-2 3.39 2.43 10.11 1.03 13.5 2 0 0 1.65.54 3 2-.68.97-1.65.99-3 .5-3.39-.97-10.11.46-13.5-1-3.39 1.46-10.11.03-13.5 1-1.35.49-2.32.47-3-.5 1.35-1.94 3-2 3-2z\"/><path d=\"M15 32c2.5 2.5 12.5 2.5 15 0 .5-1.5 0-2 0-2 0-2.5-2.5-4-2.5-4 5.5-1.5 6-11.5-5-15.5-11 4-10.5 14-5 15.5 0 0-2.5 1.5-2.5 4 0 0-.5.5 0 2z\"/><path d=\"M25 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 1 1 5 0z\"/></g><path stroke-linejoin=\"miter\" d=\"M17.5 26h10M15 30h15m-7.5-14.5v5M20 18h5\"/></g></svg>","wR":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 45 45\"><g fill=\"#f5f1e8\" fill-rule=\"evenodd\" stroke=\"#000\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.5\"><path stroke-linecap=\"butt\" d=\"M9 39h27v-3H9zm3-3v-4h21v4zm-1-22V9h4v2h5V9h5v2h5V9h4v5\"/><path d=\"m34 14-3 3H14l-3-3\"/><path stroke-linecap=\"butt\" stroke-linejoin=\"miter\" d=\"M31 17v12.5H14V17\"/><path d=\"m31 29.5 1.5 2.5h-20l1.5-2.5\"/><path fill=\"none\" stroke-linejoin=\"miter\" d=\"M11 14h23\"/></g></svg>","wQ":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 45 45\"><g fill=\"#f5f1e8\" fill-rule=\"evenodd\" stroke=\"#000\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.5\"><path d=\"M8 12a2 2 0 1 1-4 0 2 2 0 1 1 4 0m16.5-4.5a2 2 0 1 1-4 0 2 2 0 1 1 4 0M41 12a2 2 0 1 1-4 0 2 2 0 1 1 4 0M16 8.5a2 2 0 1 1-4 0 2 2 0 1 1 4 0M33 9a2 2 0 1 1-4 0 2 2 0 1 1 4 0\"/><path stroke-linecap=\"butt\" d=\"M9 26c8.5-1.5 21-1.5 27 0l2-12-7 11V11l-5.5 13.5-3-15-3 15-5.5-14V25L7 14z\"/><path stroke-linecap=\"butt\" d=\"M9 26c0 2 1.5 2 2.5 4 1 1.5 1 1 .5 3.5-1.5 1-1.5 2.5-1.5 2.5-1.5 1.5.5 2.5.5 2.5 6.5 1 16.5 1 23 0 0 0 1.5-1 0-2.5 0 0 .5-1.5-1-2.5-.5-2.5-.5-2 .5-3.5 1-2 2.5-2 2.5-4-8.5-1.5-18.5-1.5-27 0z\"/><path fill=\"none\" d=\"M11.5 30c3.5-1 18.5-1 22 0M12 33.5c6-1 15-1 21 0\"/></g></svg>","wK":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 45 45\"><g fill=\"none\" fill-rule=\"evenodd\" stroke=\"#000\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.5\"><path stroke-linejoin=\"miter\" d=\"M22.5 11.63V6M20 8h5\"/><path fill=\"#f5f1e8\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" d=\"M22.5 25s4.5-7.5 3-10.5c0 0-1-2.5-3-2.5s-3 2.5-3 2.5c-1.5 3 3 10.5 3 10.5\"/><path fill=\"#f5f1e8\" d=\"M11.5 37c5.5 3.5 15.5 3.5 21 0v-7s9-4.5 6-10.5c-4-6.5-13.5-3.5-16 4V27v-3.5c-3.5-7.5-13-10.5-16-4-3 6 5 10 5 10z\"/><path d=\"M11.5 30c5.5-3 15.5-3 21 0m-21 3.5c5.5-3 15.5-3 21 0m-21 3.5c5.5-3 15.5-3 21 0\"/></g></svg>","bP":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 45 45\"><path stroke=\"#000\" stroke-linecap=\"round\" stroke-width=\"1.5\" d=\"M22.5 9a4 4 0 0 0-3.22 6.38 6.48 6.48 0 0 0-.87 10.65c-3 1.06-7.41 5.55-7.41 13.47h23c0-7.92-4.41-12.41-7.41-13.47a6.46 6.46 0 0 0-.87-10.65A4.01 4.01 0 0 0 22.5 9z\"/></svg>","bN":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 45 45\">\n<g fill=\"none\" stroke=\"#000\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.5\">\n  <path fill=\"#000\" d=\"M12 36.5h22.5c-.6-6.8-2.4-12.1-6.1-15.4-2.6-2.4-5.6-3.9-8.9-4.5l2.8-5.1 4.3 2.5 3.2-3.8 1 6.3c3.8 2.6 6 6 6.6 10.4.5 4-1.1 7.2-4.2 9.6H12z\"/>\n  <path fill=\"#000\" d=\"M20.2 16.6c-4.2 1-7.8 3.7-10.5 7.6-1.6 2.3-2.3 4.7-1.4 6 .8 1.2 2.7.4 4.5-.8l6.6-4.6c2.6-1.8 4.2-4.4 4.3-6.9z\"/>\n  <path stroke=\"#c9cdd2\" d=\"M15.2 36.5h17.4\"/>\n  <path stroke=\"#c9cdd2\" d=\"M13.4 33.2h20.1\"/>\n  <path stroke=\"#c9cdd2\" d=\"M16.4 22.3c2.8-.9 5.2-.8 7.5.2\"/>\n  <circle cx=\"25.6\" cy=\"17.9\" r=\".8\" fill=\"#c9cdd2\" stroke=\"none\"/>\n  <path stroke=\"#c9cdd2\" d=\"M9.5 27.8c1 .1 1.8.5 2.5 1.1\"/>\n</g>\n</svg>","bB":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 45 45\"><g fill=\"none\" fill-rule=\"evenodd\" stroke=\"#000\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.5\"><g fill=\"#000\" stroke-linecap=\"butt\"><path d=\"M9 36c3.4-1 10.1.4 13.5-2 3.4 2.4 10.1 1 13.5 2 0 0 1.6.5 3 2-.7 1-1.6 1-3 .5-3.4-1-10.1.5-13.5-1-3.4 1.5-10.1 0-13.5 1-1.4.5-2.3.5-3-.5 1.4-2 3-2 3-2z\"/><path d=\"M15 32c2.5 2.5 12.5 2.5 15 0 .5-1.5 0-2 0-2 0-2.5-2.5-4-2.5-4 5.5-1.5 6-11.5-5-15.5-11 4-10.5 14-5 15.5 0 0-2.5 1.5-2.5 4 0 0-.5.5 0 2z\"/><path d=\"M25 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 1 1 5 0z\"/></g><path stroke=\"#c9cdd2\" stroke-linejoin=\"miter\" d=\"M17.5 26h10M15 30h15m-7.5-14.5v5M20 18h5\"/></g></svg>","bR":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 45 45\"><g fill-rule=\"evenodd\" stroke=\"#000\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.5\"><path stroke-linecap=\"butt\" d=\"M9 39h27v-3H9zm3.5-7 1.5-2.5h17l1.5 2.5zm-.5 4v-4h21v4z\"/><path stroke-linecap=\"butt\" stroke-linejoin=\"miter\" d=\"M14 29.5v-13h17v13z\"/><path stroke-linecap=\"butt\" d=\"M14 16.5 11 14h23l-3 2.5zM11 14V9h4v2h5V9h5v2h5V9h4v5z\"/><path fill=\"none\" stroke=\"#c9cdd2\" stroke-linejoin=\"miter\" stroke-width=\"1\" d=\"M12 35.5h21m-20-4h19m-18-2h17m-17-13h17M11 14h23\"/></g></svg>","bQ":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 45 45\"><g fill-rule=\"evenodd\" stroke=\"#000\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.5\"><g stroke=\"none\"><circle cx=\"6\" cy=\"12\" r=\"2.75\"/><circle cx=\"14\" cy=\"9\" r=\"2.75\"/><circle cx=\"22.5\" cy=\"8\" r=\"2.75\"/><circle cx=\"31\" cy=\"9\" r=\"2.75\"/><circle cx=\"39\" cy=\"12\" r=\"2.75\"/></g><path stroke-linecap=\"butt\" d=\"M9 26c8.5-1.5 21-1.5 27 0l2.5-12.5L31 25l-.3-14.1-5.2 13.6-3-14.5-3 14.5-5.2-13.6L14 25 6.5 13.5z\"/><path stroke-linecap=\"butt\" d=\"M9 26c0 2 1.5 2 2.5 4 1 1.5 1 1 .5 3.5-1.5 1-1.5 2.5-1.5 2.5-1.5 1.5.5 2.5.5 2.5 6.5 1 16.5 1 23 0 0 0 1.5-1 0-2.5 0 0 .5-1.5-1-2.5-.5-2.5-.5-2 .5-3.5 1-2 2.5-2 2.5-4-8.5-1.5-18.5-1.5-27 0z\"/><path fill=\"none\" stroke-linecap=\"butt\" d=\"M11 38.5a35 35 1 0 0 23 0\"/><path fill=\"none\" stroke=\"#c9cdd2\" d=\"M11 29a35 35 1 0 1 23 0m-21.5 2.5h20m-21 3a35 35 1 0 0 22 0m-23 3a35 35 1 0 0 24 0\"/></g></svg>","bK":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 45 45\"><g fill=\"none\" fill-rule=\"evenodd\" stroke=\"#000\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.5\"><path stroke-linejoin=\"miter\" d=\"M22.5 11.6V6\"/><path fill=\"#000\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" d=\"M22.5 25s4.5-7.5 3-10.5c0 0-1-2.5-3-2.5s-3 2.5-3 2.5c-1.5 3 3 10.5 3 10.5\"/><path fill=\"#000\" d=\"M11.5 37a22.3 22.3 0 0 0 21 0v-7s9-4.5 6-10.5c-4-6.5-13.5-3.5-16 4V27v-3.5c-3.5-7.5-13-10.5-16-4-3 6 5 10 5 10z\"/><path stroke-linejoin=\"miter\" d=\"M20 8h5\"/><path stroke=\"#c9cdd2\" d=\"M32 29.5s8.5-4 6-9.7C34.1 14 25 18 22.5 24.6v2.1-2.1C20 18 9.9 14 7 19.9c-2.5 5.6 4.8 9 4.8 9\"/><path stroke=\"#c9cdd2\" d=\"M11.5 30c5.5-3 15.5-3 21 0m-21 3.5c5.5-3 15.5-3 21 0m-21 3.5c5.5-3 15.5-3 21 0\"/></g></svg>"};
+
+  function pieceSVGData(type,color){
+    const key=(color==='w'?'w':'b')+type.toUpperCase();
+    const svg=CBURNETT_PIECES[key];
+    return 'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg);
+  }
+
+  const files='abcdefgh';
+
+  const boardEl=document.getElementById('board');
+  const statusEl=document.getElementById('status');
+  const feedbackEl=document.getElementById('feedback');
+  const fenEl=document.getElementById('fen');
+  const movesEl=document.getElementById('moves');
+  const pgnInput=document.getElementById('pgnInput');
+
+  let game=new Chess();
+  let orientation='white';
+  let savedOrientation='white';
+  let selected=null;
+  let legalTargets=[];
+  let loadedMoves=[];   // SAN moves from imported/current line
+  let cursor=0;         // number of half-moves currently shown
+  let lastMove=null;
+  let bestMoveHighlight=null;
+  let engine=null;
+  let engineReady=false;
+  let engineLoading=false;
+  let lastEngineInfo={depth:0,score:null,mate:null,pv:[]};
+  let analysisTimer=null;
+  let activeAnalysisFen=null;
+  let reviewStage=null;
+  let reviewData=null;
+  let reviewInfo={score:null,mate:null,pv:[],depth:0};
+  let batchMode=null;
+  let batchPositions=[];
+  let batchEvaluations=[];
+  let batchIndex=0;
+  let batchInfo={score:null,mate:null,pv:[],depth:0};
+  let batchRows=[];
+  let activeLessonRow=null;
+  let puzzleMode=false;
+  let puzzleExpectedUci=null;
+  let puzzleMoveIndex=null;
+  let currentFocus='me';
+  let pgnHeaders={};
+  let mySide=null;
+  let pauseMode=false;
+  let pauseRow=null;
+  let pauseExpectedUci=null;
+  let selectedPlan=null;
+  let learningProfile={tactical:0,threats:0,king:0,planning:0,games:0};
+  let reviewedGameKeys=[];
+  let patternMemory={games:0,tacticalGames:0,threatGames:0,kingGames:0,planningGames:0,mateMissGames:0,backRankGames:0};
+  let reviewCategory='key';
+
+  function switchTab(tabId){
+    document.querySelectorAll('.tabPane').forEach(p=>p.classList.remove('activePane'));
+    document.querySelectorAll('.tabBtn').forEach(b=>b.classList.remove('activeTab'));
+    document.getElementById(tabId)?.classList.add('activePane');
+    document.querySelector('.tabBtn[data-tab="'+tabId+'"]')?.classList.add('activeTab');
+  }
+
+  function parseHeaders(pgn){
+    const out={}; const re=/^\[([A-Za-z0-9_]+)\s+"([^"]*)"\]/gm; let m;
+    while((m=re.exec(pgn))!==null)out[m[1]]=m[2];
+    return out;
+  }
+
+  function detectMySide(){
+    const w=(pgnHeaders.White||'').toLowerCase(), b=(pgnHeaders.Black||'').toLowerCase();
+    const known=['sjh002','hartmanstuart95'];
+    mySide=known.some(k=>w.includes(k))?'white':known.some(k=>b.includes(k))?'black':null;
+  }
+
+  function rowMatchesFocus(r){
+    if(currentFocus==='both')return true;
+    if(currentFocus==='white')return r.side==='White';
+    if(currentFocus==='black')return r.side==='Black';
+    if(currentFocus==='me'){
+      if(mySide==='white')return r.side==='White';
+      if(mySide==='black')return r.side==='Black';
+    }
+    return true;
+  }
+
+  function updateFocusHeader(){
+    const n=document.getElementById('focusPlayerName'), s=document.getElementById('focusPlayerSide');
+    if(!n||!s)return;
+    if(currentFocus==='both'){n.textContent='Both players';s.textContent='White + Black';return;}
+    if(currentFocus==='white'){n.textContent=pgnHeaders.White||'White';s.textContent='White'+(pgnHeaders.WhiteElo?' • '+pgnHeaders.WhiteElo:'');return;}
+    if(currentFocus==='black'){n.textContent=pgnHeaders.Black||'Black';s.textContent='Black'+(pgnHeaders.BlackElo?' • '+pgnHeaders.BlackElo:'');return;}
+    if(mySide==='white'){n.textContent=pgnHeaders.White||'Me';s.textContent='Me • White'+(pgnHeaders.WhiteElo?' • '+pgnHeaders.WhiteElo:'');}
+    else if(mySide==='black'){n.textContent=pgnHeaders.Black||'Me';s.textContent='Me • Black'+(pgnHeaders.BlackElo?' • '+pgnHeaders.BlackElo:'');}
+    else {n.textContent='Focus on Me';s.textContent='Could not identify your username — showing both players.';}
+  }
+
+  function categoryRows(rows,category){
+    if(category==='best')return rows.filter(r=>['Best','Excellent','Checkmate','Mate found'].includes(r.rating.label));
+    if(category==='good')return rows.filter(r=>['Good','Inaccuracy'].includes(r.rating.label));
+    if(category==='bad')return rows.filter(r=>['Mistake','Blunder','Mate missed','Mate allowed'].includes(r.rating.label));
+    return [];
+  }
+
+  function renderReviewCategory(category){
+    reviewCategory=category;
+    document.querySelectorAll('.summaryBox.clickable').forEach(b=>b.classList.remove('activeSummary'));
+    const list=document.getElementById('allReviewMoves'), key=document.getElementById('keyMoves'), keyTitle=document.getElementById('keyMovesTitle'), title=document.getElementById('reviewListTitle');
+
+    if(category==='key'){
+      list.style.display='none'; key.style.display='flex'; keyTitle.style.display='block'; title.textContent='Key learning positions'; return;
+    }
+
+    const id=category==='best'?'summaryBestBox':category==='good'?'summaryGoodBox':'summaryBadBox';
+    document.getElementById(id)?.classList.add('activeSummary');
+    const rows=categoryRows(batchRows.filter(rowMatchesFocus),category);
+    key.style.display='none'; keyTitle.style.display='none'; list.style.display='flex';
+    const names={best:'Best / Excellent moves',good:'Good / Inaccuracy moves',bad:'Mistakes / Blunders'};
+    title.textContent=names[category]+' — tap any move to inspect it';
+    list.innerHTML='';
+    if(!rows.length){list.innerHTML='<div class="small">No moves in this category for the selected player.</div>';return;}
+    rows.forEach(r=>{
+      const btn=document.createElement('button'); btn.type='button'; btn.className='reviewMoveRow';
+      const loss=r.isMateEvent?'Mate':(r.loss>0?'-'+(r.loss/100).toFixed(2):'0.00');
+      btn.innerHTML='<div class="reviewMoveName">'+r.moveNo+(r.side==='White'?'.':'…')+' '+r.actualSan+'</div>'+
+      '<div><div class="'+r.rating.cls+'" style="font-weight:700">'+r.rating.label+'</div><div class="reviewMoveMeta">'+r.side+' • Best: '+r.bestSan+'</div></div>'+
+      '<div style="font-weight:800">'+loss+'</div>';
+      btn.addEventListener('click',()=>{showBatchMove(r.i);switchTab('coachTab');});
+      list.appendChild(btn);
+    });
+  }
+
+  function renderFocusedReview(){
+    updateFocusHeader();
+    if(!batchRows.length)return;
+    const rows=batchRows.filter(rowMatchesFocus);
+    document.getElementById('sumBest').textContent=rows.filter(r=>['Best','Excellent','Checkmate','Mate found'].includes(r.rating.label)).length;
+    document.getElementById('sumGood').textContent=rows.filter(r=>['Good','Inaccuracy'].includes(r.rating.label)).length;
+    document.getElementById('sumBad').textContent=rows.filter(r=>['Mistake','Blunder','Mate missed','Mate allowed'].includes(r.rating.label)).length;
+    const key=[...rows].filter(r=>r.loss>20||r.isMateEvent).sort((a,b)=>(b.isMateEvent?9999:b.loss)-(a.isMateEvent?9999:a.loss)).slice(0,6);
+    const box=document.getElementById('keyMoves'); box.innerHTML='';
+    if(!key.length){box.innerHTML='<div class="small">No major evaluation swings found for this player.</div>';return;}
+    key.forEach(r=>{
+      const btn=document.createElement('button'); btn.type='button'; btn.className='keyMove';
+      btn.innerHTML='<div class="keyMoveMove">'+r.moveNo+(r.side==='White'?'.':'…')+' '+r.actualSan+'</div>'+
+      '<div><div class="'+r.rating.cls+'" style="font-weight:700">'+r.rating.label+'</div><div class="keyMoveMeta">'+r.side+' • Best: '+r.bestSan+'</div></div>'+
+      '<div class="keyMoveLoss">'+(r.isMateEvent?'Mate':'-'+(r.loss/100).toFixed(2))+'</div>';
+      btn.addEventListener('click',()=>{showBatchMove(r.i);switchTab('coachTab');});
+      box.appendChild(btn);
+    });
+  }
+
+  function loadLearningProfile(){
+    try{
+      const raw=localStorage.getItem('chessCoachLearningProfile');
+      if(raw)learningProfile={...learningProfile,...JSON.parse(raw)};
+      const keys=localStorage.getItem('chessCoachReviewedGames');
+      if(keys)reviewedGameKeys=JSON.parse(keys);
+      const patterns=localStorage.getItem('chessCoachPatternMemory');
+      if(patterns)patternMemory={...patternMemory,...JSON.parse(patterns)};
+    }catch(e){}
+    renderLearningProfile();
+    renderPatternInsights();
+  }
+
+  function saveLearningProfile(){
+    try{
+      localStorage.setItem('chessCoachLearningProfile',JSON.stringify(learningProfile));
+      localStorage.setItem('chessCoachReviewedGames',JSON.stringify(reviewedGameKeys));
+      localStorage.setItem('chessCoachPatternMemory',JSON.stringify(patternMemory));
+    }catch(e){}
+    renderLearningProfile();
+    renderPatternInsights();
+  }
+
+  function gameFingerprint(){
+    const parts=[
+      pgnHeaders.White||'',
+      pgnHeaders.Black||'',
+      pgnHeaders.Date||'',
+      pgnHeaders.Result||'',
+      loadedMoves.join(' ')
+    ];
+    const str=parts.join('|');
+    let hash=2166136261;
+    for(let i=0;i<str.length;i++){
+      hash^=str.charCodeAt(i);
+      hash=Math.imul(hash,16777619);
+    }
+    return (hash>>>0).toString(16);
+  }
+
+  function resetLearningProfile(){
+    learningProfile={tactical:0,threats:0,king:0,planning:0,games:0};
+    reviewedGameKeys=[];
+    patternMemory={games:0,tacticalGames:0,threatGames:0,kingGames:0,planningGames:0,mateMissGames:0,backRankGames:0};
+    saveLearningProfile();
+  }
+
+  function detectCurrentGamePatterns(){
+    const rows=batchRows.filter(rowMatchesFocus);
+    const result={tactical:0,threats:0,king:0,planning:0,mateMisses:0,backRank:false};
+    rows.forEach(r=>{
+      if(r.rating.label==='Mate missed')result.mateMisses++;
+      if(r.rating.label==='Mate allowed')result.king++;
+      if(!['Inaccuracy','Mistake','Blunder','Mate missed','Mate allowed'].includes(r.rating.label))return;
+      const best=r.bestSan||'';
+      if(r.isMateEvent)result.king++;
+      else if(best.includes('x')||best.includes('+')||best.includes('#'))result.tactical++;
+      else if(r.loss>=200)result.threats++;
+      else result.planning++;
+    });
+    const mateRows=batchRows.filter(r=>r.rating.label==='Checkmate');
+    result.backRank=mateRows.some(r=>{
+      const s=r.actualSan||'';
+      return (s.startsWith('R')||s.startsWith('Q'))&&s.includes('#');
+    });
+    return result;
+  }
+
+  function patternItem(title,text,count,total){
+    const pct=total?Math.min(100,Math.round((count/total)*100)):0;
+    return '<div class="patternItem"><strong>'+title+'</strong><div class="patternSub">'+text+'</div>'+
+      (total?'<div class="patternBar"><div class="patternFill" style="width:'+pct+'%"></div></div>':'')+'</div>';
+  }
+
+  function renderPatternInsights(){
+    const head=document.getElementById('patternHeadline');
+    const sub=document.getElementById('patternSub');
+    const current=document.getElementById('currentGamePatterns');
+    const longTerm=document.getElementById('longTermPatterns');
+    if(!head||!sub||!current||!longTerm)return;
+    current.innerHTML=''; longTerm.innerHTML='';
+
+    if(batchRows.length){
+      const p=detectCurrentGamePatterns(), items=[];
+      if(p.mateMisses>=2)items.push(patternItem('Multiple missed mating opportunities',
+        'You missed '+p.mateMisses+' forced mating continuations in this game. When the enemy king is exposed, switch into forcing-move mode: Checks → Captures → Threats.',0,0));
+      if(p.tactical>=2)items.push(patternItem('Tactical opportunities missed',
+        p.tactical+' important moves involved a forcing capture/check that was stronger than your choice.',0,0));
+      if(p.threats>=2)items.push(patternItem('Opponent threats overlooked',
+        p.threats+' major evaluation swings came from failing to account for the opponent’s strongest reply.',0,0));
+      if(p.king>=2)items.push(patternItem('King safety is recurring inside this game',
+        'Several critical moments involved mate or king exposure. Make king safety part of your pre-move scan.',0,0));
+      if(p.planning>=3)items.push(patternItem('Middlegame planning needs attention',
+        p.planning+' errors were quieter positions where piece activity or planning mattered more than a direct tactic.',0,0));
+      if(p.backRank)items.push(patternItem('Back-rank mating pattern',
+        'This game ended with a rook/queen mating pattern. Add an escape-square check whenever your king is boxed behind its own pawns.',0,0));
+
+      if(items.length){
+        head.textContent='Patterns detected in this game';
+        sub.textContent='These themes tell you what kind of thinking to train, not just which move was wrong.';
+        current.innerHTML=items.join('');
+      }else{
+        head.textContent='No strong recurring pattern in this game';
+        sub.textContent='There were individual errors, but no single theme dominated at this review depth.';
+      }
+    }
+
+    const g=patternMemory.games||0;
+    if(g){
+      const c=[
+        ['Tactical misses',patternMemory.tacticalGames],
+        ['Opponent threats',patternMemory.threatGames],
+        ['King safety',patternMemory.kingGames],
+        ['Planning / piece activity',patternMemory.planningGames],
+        ['Missed mating sequences',patternMemory.mateMissGames],
+        ['Back-rank themes',patternMemory.backRankGames]
+      ].filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]);
+      if(c.length){
+        longTerm.innerHTML='<div class="reviewLabel" style="margin-top:6px">ACROSS YOUR GAMES</div>'+
+          c.slice(0,4).map(x=>patternItem(x[0],'Seen in '+x[1]+' of '+g+' reviewed games.',x[1],g)).join('');
+      }
+    }
+  }
+
+  function renderLearningProfile(){
+    const map={tactical:'profTactical',threats:'profThreats',king:'profKing',planning:'profPlanning'};
+    Object.keys(map).forEach(k=>{const el=document.getElementById(map[k]);if(el)el.textContent=learningProfile[k]||0;});
+    const insight=document.getElementById('profileInsight'); if(!insight)return;
+    const themes=['tactical','threats','king','planning'];
+    const top=themes.map(k=>[k,learningProfile[k]||0]).sort((a,b)=>b[1]-a[1])[0];
+    const games=learningProfile.games||0;
+    if(!top||top[1]===0){
+      insight.textContent='Analyze games to build your learning profile.';
+    }else{
+      const names={tactical:'tactical opportunities',threats:'opponent threats',king:'king safety',planning:'middlegame planning / piece activity'};
+      insight.textContent='Current priority: '+names[top[0]]+'. Based on '+games+' unique reviewed game'+(games===1?'':'s')+'.';
+    }
+
+    const details=document.getElementById('profileDetails');
+    if(details){
+      details.innerHTML=
+        '<strong>Unique games reviewed:</strong> '+games+'<br>'+
+        '<strong>Tactical misses:</strong> '+(learningProfile.tactical||0)+'<br>'+
+        '<strong>Threats overlooked:</strong> '+(learningProfile.threats||0)+'<br>'+
+        '<strong>King-safety errors:</strong> '+(learningProfile.king||0)+'<br>'+
+        '<strong>Planning / activity errors:</strong> '+(learningProfile.planning||0);
+    }
+  }
+
+  function findWorstPiece(g,color){
+    const board=g.board(), list=[];
+    for(let r=0;r<8;r++)for(let f=0;f<8;f++){
+      const p=board[r][f]; if(!p||p.color!==color||p.type==='p'||p.type==='k')continue;
+      const sq='abcdefgh'[f]+(8-r);
+      let moves=0; try{moves=g.moves({square:sq,verbose:true}).length;}catch(e){}
+      list.push({sq,p,moves});
+    }
+    if(!list.length)return 'No obvious piece';
+    list.sort((a,b)=>a.moves-b.moves);
+    const names={n:'knight',b:'bishop',r:'rook',q:'queen'};
+    return (color==='w'?'White ':'Black ')+(names[list[0].p.type]||'piece')+' on '+list[0].sq;
+  }
+
+  function analyzeThinkingPosition(){
+    const g=new Chess(game.fen()), side=g.turn();
+    const all=g.moves({verbose:true}), checks=[], captures=[];
+    all.forEach(m=>{
+      const c=new Chess(g.fen()); const played=c.move(m); if(!played)return;
+      if(c.in_check())checks.push(m.san);
+      if(m.captured)captures.push(m.san);
+    });
+    document.getElementById('thinkDanger').textContent=g.in_check()?'You are in check — respond first.':'No immediate check. Scan opponent checks, captures, threats.';
+    document.getElementById('thinkForcing').textContent=checks.length?'Checks: '+checks.slice(0,3).join(', '):captures.length?'Captures: '+captures.slice(0,3).join(', '):'No obvious forcing move. Shift to positional thinking.';
+    document.getElementById('thinkKing').textContent=g.in_check()?'King safety is urgent.':'King is not currently in check; still verify open files and diagonals.';
+    const worst=findWorstPiece(g,side);
+    document.getElementById('thinkWorst').textContent=worst;
+    document.getElementById('thinkTarget').textContent='Look for loose pieces, backward pawns, weak squares, or an exposed king.';
+    document.getElementById('thinkPlan').textContent=g.in_check()?'Answer the threat safely.':checks.length?'Calculate checks first.':captures.length?'Calculate captures first.':'Improve '+worst.replace(/^White |^Black /,'')+' or prepare a pawn break.';
+  }
+
+  function choosePauseRow(){
+    const rows=batchRows.filter(rowMatchesFocus);
+    if(!rows.length)return null;
+    const c=rows.filter(r=>r.moveNo>=8&&!r.isMateEvent);
+    c.sort((a,b)=>{
+      const w=x=>x.rating.label==='Blunder'?5:x.rating.label==='Mistake'?4:x.rating.label==='Inaccuracy'?3:x.rating.label==='Good'?2:1;
+      return w(b)-w(a)||b.loss-a.loss;
+    });
+    return c[0]||rows[0];
+  }
+
+  function startPausePosition(){
+    const r=choosePauseRow();
+    if(!r){document.getElementById('pauseFeedback').textContent='Run Full Game Review first.';return;}
+    pauseRow=r; pauseMode=true; pauseExpectedUci=r.bestUci; selectedPlan=null;
+    document.querySelectorAll('.choiceBtn').forEach(b=>b.classList.remove('selectedChoice'));
+    jumpToMove(r.i); bestMoveHighlight=null; clearEngineDisplay();
+    document.getElementById('pausePrompt').textContent='Move '+r.moveNo+(r.side==='White'?'.':'…')+' — '+r.side+' to move. What is the plan?';
+    document.getElementById('pauseFeedback').textContent='Choose the type of move first, then play a candidate on the board.';
+    switchTab('middleTab'); render();
+  }
+
+  function revealPausePlan(){
+    const r=pauseRow||choosePauseRow();
+    if(!r){document.getElementById('pauseFeedback').textContent='Run Full Game Review first.';return;}
+    pauseRow=r; const lesson=lessonForRow(r);
+    document.getElementById('pauseFeedback').textContent='Coach plan: '+lesson.think+' Best move: '+r.bestSan+'.';
+    bestMoveHighlight=r.bestUci&&r.bestUci!=='(none)'?{from:r.bestUci.slice(0,2),to:r.bestUci.slice(2,4)}:null;
+    pauseMode=false; render();
+  }
+
+  function updateProfileFromRows(){
+    const rows=batchRows.filter(rowMatchesFocus);
+    if(!rows.length)return;
+    const key=gameFingerprint();
+    if(reviewedGameKeys.includes(key)){renderLearningProfile();renderPatternInsights();return;}
+
+    const counts={tactical:0,threats:0,king:0,planning:0};
+    rows.forEach(r=>{
+      if(!['Inaccuracy','Mistake','Blunder','Mate missed','Mate allowed'].includes(r.rating.label))return;
+      if(r.isMateEvent){counts.king++;return;}
+      const best=r.bestSan||'';
+      if(best.includes('x')||best.includes('+')||best.includes('#'))counts.tactical++;
+      else if(r.loss>=200)counts.threats++;
+      else counts.planning++;
+    });
+
+    Object.keys(counts).forEach(k=>learningProfile[k]=(learningProfile[k]||0)+counts[k]);
+    learningProfile.games=(learningProfile.games||0)+1;
+
+    const p=detectCurrentGamePatterns();
+    patternMemory.games=(patternMemory.games||0)+1;
+    if(p.tactical>0)patternMemory.tacticalGames++;
+    if(p.threats>0)patternMemory.threatGames++;
+    if(p.king>0)patternMemory.kingGames++;
+    if(p.planning>0)patternMemory.planningGames++;
+    if(p.mateMisses>0)patternMemory.mateMissGames++;
+    if(p.backRank)patternMemory.backRankGames++;
+
+    reviewedGameKeys.push(key);
+    if(reviewedGameKeys.length>100)reviewedGameKeys=reviewedGameKeys.slice(-100);
+    saveLearningProfile();
+  }
+
+  function squareNames(){
+    const fs=orientation==='white'
+      ? ['a','b','c','d','e','f','g','h']
+      : ['h','g','f','e','d','c','b','a'];
+    const rs=orientation==='white'
+      ? ['8','7','6','5','4','3','2','1']
+      : ['1','2','3','4','5','6','7','8'];
+    const out=[];
+    for(const r of rs)for(const f of fs)out.push(f+r);
+    return out;
+  }
+
+  function legalMovesFrom(square){
+    return game.moves({square:square,verbose:true});
+  }
+
+
+  function updateMaterialCounter(){
+    const counts={
+      w:{q:0,r:0,b:0,n:0,p:0},
+      b:{q:0,r:0,b:0,n:0,p:0}
+    };
+
+    for(const sq of squareNames()){
+      const p=game.get(sq);
+      if(p && counts[p.color] && Object.prototype.hasOwnProperty.call(counts[p.color],p.type)){
+        counts[p.color][p.type]++;
+      }
+    }
+
+    const format=c=>'Q'+c.q+' · R'+c.r+' · B'+c.b+' · N'+c.n+' · P'+c.p;
+    const whiteEl=document.getElementById('whiteMaterialPieces');
+    const blackEl=document.getElementById('blackMaterialPieces');
+    const scoreEl=document.getElementById('materialScore');
+
+    if(whiteEl)whiteEl.textContent=format(counts.w);
+    if(blackEl)blackEl.textContent=format(counts.b);
+
+    const value={q:9,r:5,b:3,n:3,p:1};
+    const total=c=>Object.keys(value).reduce((sum,k)=>sum+(c[k]*value[k]),0);
+    const diff=total(counts.w)-total(counts.b);
+
+    if(scoreEl){
+      scoreEl.className='materialScore';
+      if(diff===0){
+        scoreEl.textContent='Equal';
+        scoreEl.classList.add('materialEqual');
+      }else if(diff>0){
+        scoreEl.textContent='White +'+diff;
+        scoreEl.classList.add('materialWhite');
+      }else{
+        scoreEl.textContent='Black +'+Math.abs(diff);
+        scoreEl.classList.add('materialBlack');
+      }
+    }
+  }
+
+  function render(){
+    boardEl.innerHTML='';
+
+    squareNames().forEach(sq=>{
+      const file=sq.charCodeAt(0)-97;
+      const rank=parseInt(sq[1],10)-1;
+      const isLight=(file+rank)%2===1;
+
+      const div=document.createElement('button');
+      div.type='button';
+      div.className='sq '+(isLight?'light':'dark');
+
+      if(selected===sq)div.classList.add('selected');
+      if(lastMove&&(lastMove.from===sq||lastMove.to===sq))div.classList.add('last');
+      if(bestMoveHighlight&&bestMoveHighlight.from===sq)div.classList.add('bestFrom');
+      if(bestMoveHighlight&&bestMoveHighlight.to===sq)div.classList.add('bestTo');
+
+      const p=game.get(sq);
+      if(p && p.type==='k' && p.color===game.turn() && game.in_check()){
+        div.classList.add('inCheck');
+      }
+      if(p){
+        const span=document.createElement('span');
+        span.className='piece';
+        if(p.type==='n'){
+          const knight=document.createElement('span');
+          knight.className='knightGlyph '+(p.color==='w'?'whiteKnight':'blackKnight');
+          knight.textContent='♞';
+          span.appendChild(knight);
+        }else{
+          const img=document.createElement('img');
+          img.alt='';
+          img.draggable=false;
+          img.src=pieceSVGData(p.type,p.color);
+          span.appendChild(img);
+        }
+        div.appendChild(span);
+      }else if(legalTargets.includes(sq)){
+        const dot=document.createElement('span');
+        dot.className='dot';
+        div.appendChild(dot);
+      }
+
+      const showFile=orientation==='white'?sq[1]==='1':sq[1]==='8';
+      const showRank=orientation==='white'?sq[0]==='a':sq[0]==='h';
+
+      if(showFile){
+        const c=document.createElement('span');
+        c.className='coord file';
+        c.textContent=sq[0];
+        div.appendChild(c);
+      }
+      if(showRank){
+        const c=document.createElement('span');
+        c.className='coord rank';
+        c.textContent=sq[1];
+        div.appendChild(c);
+      }
+
+      div.addEventListener('click',()=>handleSquare(sq));
+      boardEl.appendChild(div);
+    });
+
+    let txt=game.turn()==='w'?'White to move':'Black to move';
+    if(game.in_checkmate())txt+=' — Checkmate';
+    else if(game.in_check())txt+=' — Check';
+    else if(game.in_draw())txt+=' — Draw';
+
+    statusEl.textContent=txt;
+    fenEl.textContent=game.fen();
+    updateMaterialCounter();
+    renderMoves();
+  }
+
+  let pendingPromotion=null;
+
+  function promotionDisplayGlyph(piece,color){
+    const glyphs={
+      w:{q:'♕',r:'♖',b:'♗',n:'♘'},
+      b:{q:'♛',r:'♜',b:'♝',n:'♞'}
+    };
+    return glyphs[color][piece];
+  }
+
+  function showPromotionChooser(from,to,color){
+    pendingPromotion={from,to,color};
+    const overlay=document.getElementById('promotionOverlay');
+    document.getElementById('promotionSub').textContent=
+      (color==='w'?'White':'Black')+' pawn reached '+to+'. Choose promotion piece.';
+    overlay.querySelectorAll('[data-promotion]').forEach(btn=>{
+      const type=btn.dataset.promotion;
+      btn.querySelector('.promotionIcon').textContent=promotionDisplayGlyph(type,color);
+    });
+    overlay.classList.add('show');
+    overlay.setAttribute('aria-hidden','false');
+  }
+
+  function hidePromotionChooser(){
+    const overlay=document.getElementById('promotionOverlay');
+    overlay.classList.remove('show');
+    overlay.setAttribute('aria-hidden','true');
+    pendingPromotion=null;
+  }
+
+  function processPlayedMove(move){
+    lastMove={from:move.from,to:move.to};
+    selected=null;
+    legalTargets=[];
+
+    if(pauseMode){
+      const playedUci=move.from+move.to+(move.promotion||'');
+      const r=pauseRow;
+      const correct=playedUci===pauseExpectedUci;
+      pauseMode=false;
+      if(correct){
+        document.getElementById('pauseFeedback').textContent='✓ Strong move: '+move.san+'. Now explain why it fits the plan before revealing the engine line.';
+      }else{
+        document.getElementById('pauseFeedback').textContent='You chose '+move.san+'. Compare that move with your selected plan, then try again or reveal the coach plan.';
+      }
+      jumpToMove(r.i);
+      if(correct&&r){
+        bestMoveHighlight={from:r.bestUci.slice(0,2),to:r.bestUci.slice(2,4)};
+        render();
+      }
+      return;
+    }
+
+    if(puzzleMode){
+      const playedUci=move.from+move.to+(move.promotion||'');
+      const r=activeLessonRow;
+      puzzleMode=false;
+
+      if(playedUci===puzzleExpectedUci){
+        document.getElementById('puzzleStatus').className='puzzleStatus puzzleGood';
+        document.getElementById('puzzleStatus').textContent='✓ You found it: '+move.san+'. Now say WHY it works—that explanation is the learning.';
+        document.getElementById('reviewBest').textContent=r?r.bestSan:move.san;
+      }else{
+        document.getElementById('puzzleStatus').className='puzzleStatus puzzleTry';
+        document.getElementById('puzzleStatus').textContent='Not Stockfish’s top choice. You played '+move.san+'. Reset the puzzle and run Checks → Captures → Threats again, or reveal the answer.';
+      }
+
+      const wasCorrect=playedUci===puzzleExpectedUci;
+      jumpToMove(puzzleMoveIndex);
+      orientation=savedOrientation;
+      if(wasCorrect&&r){
+        bestMoveHighlight={from:r.bestUci.slice(0,2),to:r.bestUci.slice(2,4)};
+        render();
+      }
+      return;
+    }
+
+    if(cursor<loadedMoves.length){
+      loadedMoves=loadedMoves.slice(0,cursor);
+    }
+    loadedMoves.push(move.san);
+    cursor=loadedMoves.length;
+
+    feedbackEl.textContent='Played '+move.san;
+    feedbackEl.className='small ok';
+    clearEngineDisplay();
+    clearReview();
+    render();
+    scheduleAutoAnalysis();
+  }
+
+  function attemptManualMove(from,to,promotion){
+    let move=null;
+    try{
+      const spec={from,to};
+      if(promotion)spec.promotion=promotion;
+      move=game.move(spec);
+    }catch(e){}
+
+    if(!move){
+      feedbackEl.textContent='Illegal move.';
+      feedbackEl.className='small error';
+      selected=null;
+      legalTargets=[];
+      render();
+      return false;
+    }
+
+    processPlayedMove(move);
+    return true;
+  }
+
+  function handleSquare(sq){
+    feedbackEl.textContent='';
+
+    if(pendingPromotion)return;
+
+    if(!selected){
+      const p=game.get(sq);
+      if(p&&p.color===game.turn()){
+        selected=sq;
+        legalTargets=legalMovesFrom(sq).map(m=>m.to);
+        render();
+      }
+      return;
+    }
+
+    if(sq===selected){
+      selected=null;
+      legalTargets=[];
+      render();
+      return;
+    }
+
+    const own=game.get(sq);
+    if(own&&own.color===game.turn()){
+      selected=sq;
+      legalTargets=legalMovesFrom(sq).map(m=>m.to);
+      render();
+      return;
+    }
+
+    const movingPiece=game.get(selected);
+    const isPromotion=
+      movingPiece &&
+      movingPiece.type==='p' &&
+      ((movingPiece.color==='w'&&sq[1]==='8')||(movingPiece.color==='b'&&sq[1]==='1'));
+
+    if(isPromotion){
+      const legal=legalMovesFrom(selected).some(m=>m.to===sq);
+      if(legal){
+        showPromotionChooser(selected,sq,movingPiece.color);
+        return;
+      }
+    }
+
+    attemptManualMove(selected,sq,null);
+  }
+
+  document.querySelectorAll('[data-promotion]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      if(!pendingPromotion)return;
+      const {from,to}=pendingPromotion;
+      const choice=btn.dataset.promotion;
+      hidePromotionChooser();
+      attemptManualMove(from,to,choice);
+    });
+  });
+
+  document.getElementById('promotionCancel').addEventListener('click',()=>{
+    hidePromotionChooser();
+    feedbackEl.textContent='Promotion cancelled.';
+    feedbackEl.className='small';
+    render();
+  });
+
+
+  function rebuildTo(n){
+    const rebuilt=new Chess();
+    let lm=null;
+
+    for(let i=0;i<n;i++){
+      let m=null;
+      try{m=rebuilt.move(loadedMoves[i]);}catch(e){}
+      if(!m){
+        feedbackEl.textContent='Could not rebuild move '+(i+1)+': '+loadedMoves[i];
+        feedbackEl.className='small error';
+        return;
+      }
+      lm={from:m.from,to:m.to};
+    }
+
+    game=rebuilt;
+    cursor=n;
+    lastMove=lm;
+    selected=null;
+    legalTargets=[];
+    clearEngineDisplay();
+    clearReview();
+    render();
+    scheduleAutoAnalysis();
+  }
+
+
+  const OPENING_BOOK=[
+    {name:'London System',eco:'D02',moves:['d4','d5','Nf3','Nf6','Bf4','e6','e3','Bd6','Bg3','O-O','Bd3','c5']},
+    {name:'London System',eco:'D02',moves:['d4','Nf6','Nf3','g6','Bf4','Bg7','e3','O-O','Be2','d6','O-O']},
+    {name:'Jobava London',eco:'D00',moves:['d4','d5','Nc3','Nf6','Bf4']},
+    {name:"Queen's Gambit",eco:'D06',moves:['d4','d5','c4']},
+    {name:"Queen's Gambit Declined",eco:'D30',moves:['d4','d5','c4','e6','Nc3','Nf6']},
+    {name:'Slav Defense',eco:'D10',moves:['d4','d5','c4','c6']},
+    {name:"King's Indian Defense",eco:'E60',moves:['d4','Nf6','c4','g6','Nc3','Bg7','e4','d6']},
+    {name:'Nimzo-Indian Defense',eco:'E20',moves:['d4','Nf6','c4','e6','Nc3','Bb4']},
+    {name:'Italian Game',eco:'C50',moves:['e4','e5','Nf3','Nc6','Bc4']},
+    {name:'Giuoco Piano',eco:'C50',moves:['e4','e5','Nf3','Nc6','Bc4','Bc5']},
+    {name:'Ruy Lopez',eco:'C60',moves:['e4','e5','Nf3','Nc6','Bb5']},
+    {name:'Scotch Game',eco:'C44',moves:['e4','e5','Nf3','Nc6','d4']},
+    {name:'Four Knights Game',eco:'C47',moves:['e4','e5','Nf3','Nc6','Nc3','Nf6']},
+    {name:'Sicilian Defense',eco:'B20',moves:['e4','c5']},
+    {name:'Sicilian Defense — Open',eco:'B20',moves:['e4','c5','Nf3','d6','d4','cxd4','Nxd4']},
+    {name:'Caro-Kann Defense',eco:'B10',moves:['e4','c6','d4','d5']},
+    {name:'French Defense',eco:'C00',moves:['e4','e6','d4','d5']},
+    {name:'Scandinavian Defense',eco:'B01',moves:['e4','d5']},
+    {name:"Alekhine's Defense",eco:'B02',moves:['e4','Nf6']},
+    {name:'Pirc Defense',eco:'B07',moves:['e4','d6','d4','Nf6','Nc3','g6']},
+    {name:'English Opening',eco:'A10',moves:['c4']},
+    {name:'Réti Opening',eco:'A04',moves:['Nf3','d5','g3']},
+    {name:"King's Gambit",eco:'C30',moves:['e4','e5','f4']},
+    {name:'Danish Gambit',eco:'C21',moves:['e4','e5','d4','exd4','c3']},
+    {name:'Vienna Game',eco:'C25',moves:['e4','e5','Nc3']}
+  ];
+
+  function cleanOpeningSan(s){
+    return (s||'').replace(/[+#?!]+$/g,'');
+  }
+
+  function findOpeningMatch(){
+    if(!loadedMoves.length)return null;
+    const gm=loadedMoves.map(cleanOpeningSan);
+    let best=null;
+    OPENING_BOOK.forEach(line=>{
+      let matched=0;
+      for(let i=0;i<Math.min(gm.length,line.moves.length);i++){
+        if(gm[i]!==cleanOpeningSan(line.moves[i]))break;
+        matched++;
+      }
+      const min=line.moves.length<=2?2:Math.min(3,line.moves.length);
+      if(matched>=min){
+        if(!best||matched>best.matched||(matched===best.matched&&line.moves.length>best.moves.length)){
+          best={...line,matched};
+        }
+      }
+    });
+    return best;
+  }
+
+  function openingMoveLabel(i,san){
+    return (Math.floor(i/2)+1)+(i%2===0?'.':'...')+san;
+  }
+
+  function openingReviewRow(i){
+    return batchRows?.find(r=>r.i===i)||null;
+  }
+
+  function renderOpeningCoach(){
+    const nameEl=document.getElementById('openingName');
+    const ecoEl=document.getElementById('openingEco');
+    const throughEl=document.getElementById('openingThrough');
+    const devEl=document.getElementById('openingDeviation');
+    const noteEl=document.getElementById('openingCoachNote');
+    if(!nameEl)return;
+
+    if(!loadedMoves.length){
+      nameEl.textContent='Load a PGN to identify the opening.';
+      ecoEl.textContent='';
+      throughEl.textContent='—';
+      devEl.textContent='—';
+      noteEl.className='openingNote small';
+      noteEl.textContent='Chess Coach distinguishes leaving stored theory from making a bad move.';
+      return;
+    }
+
+    const match=findOpeningMatch();
+    if(!match){
+      nameEl.textContent='Opening not yet recognized';
+      ecoEl.textContent='No strong match in the current curated opening reference.';
+      throughEl.textContent='—';
+      devEl.textContent='—';
+      noteEl.className='openingNote small';
+      noteEl.textContent='That does not mean the moves are bad—only that this line is not yet stored in Chess Coach.';
+      return;
+    }
+
+    nameEl.textContent=match.name;
+    ecoEl.textContent='ECO '+match.eco+' • '+match.matched+' half-moves matched';
+    const last=Math.max(0,match.matched-1);
+    throughEl.textContent=openingMoveLabel(last,loadedMoves[last]);
+
+    const devIdx=match.matched;
+    if(devIdx>=loadedMoves.length){
+      devEl.textContent='Still in stored line';
+      noteEl.className='openingNote small openingGood';
+      noteEl.textContent='The loaded moves remain inside this Chess Coach reference line.';
+      return;
+    }
+
+    const san=loadedMoves[devIdx];
+    const side=devIdx%2===0?'White':'Black';
+    const player=side==='White'?(pgnHeaders.White||'White'):(pgnHeaders.Black||'Black');
+    const isMe=(mySide==='w'&&side==='White')||(mySide==='b'&&side==='Black');
+    const who=isMe?'You':player;
+    devEl.textContent=openingMoveLabel(devIdx,san)+' • '+who;
+
+    const row=openingReviewRow(devIdx);
+    if(!row){
+      noteEl.className='openingNote small';
+      noteEl.textContent=who+' was first to leave our stored '+match.name+' line with '+san+
+        '. Run Full Game Review to learn whether that departure was actually strong or weak.';
+      return;
+    }
+
+    const label=row.rating?.label||'';
+    const best=row.bestSan||'';
+    if(['Best','Excellent','Good','Checkmate','Mate found'].includes(label)){
+      noteEl.className='openingNote small openingGood';
+      noteEl.textContent=who+' left our stored '+match.name+' reference with '+san+
+        ', but Stockfish rated it '+label+'. Leaving theory is not the same as making a mistake.'+
+        (best?' Engine preference: '+best+'.':'');
+    }else if(label==='Inaccuracy'){
+      noteEl.className='openingNote small openingWarn';
+      noteEl.textContent=who+' left our stored '+match.name+' reference with '+san+
+        '. Stockfish called it an Inaccuracy, so the move is worth reviewing—the problem is move quality, not simply leaving theory.'+
+        (best?' Engine preference: '+best+'.':'');
+    }else if(['Mistake','Blunder','Mate missed','Mate allowed'].includes(label)){
+      noteEl.className='openingNote small openingBad';
+      noteEl.textContent=who+' left our stored '+match.name+' reference with '+san+
+        ', and Stockfish classified it as '+label+'. This is a useful opening-to-middlegame transition position to study.'+
+        (best?' Engine preference: '+best+'.':'');
+    }else{
+      noteEl.className='openingNote small';
+      noteEl.textContent=who+' was first to leave our stored '+match.name+' line with '+san+'.';
+    }
+  }
+
+  function renderMoves(){
+    if(!loadedMoves.length){
+      movesEl.textContent='No moves yet.';
+      return;
+    }
+
+    movesEl.innerHTML='';
+
+    for(let i=0;i<loadedMoves.length;i++){
+      if(i%2===0){
+        const num=document.createElement('span');
+        num.textContent=(Math.floor(i/2)+1)+'. ';
+        movesEl.appendChild(num);
+      }
+
+      const b=document.createElement('button');
+      b.type='button';
+      b.className='movebtn'+(cursor===i+1?' activeMove':'');
+      b.textContent=loadedMoves[i];
+      b.addEventListener('click',()=>rebuildTo(i+1));
+      movesEl.appendChild(b);
+
+      if(i%2===1)movesEl.appendChild(document.createElement('br'));
+    }
+    renderOpeningCoach();
+  }
+
+  
+  function reloadLatestBuild(){
+    const url=new URL(window.location.href);
+    url.searchParams.set('v',Date.now().toString());
+    window.location.replace(url.toString());
+  }
+
+  document.getElementById('reloadLatestBtn').addEventListener('click',reloadLatestBuild);
+
+document.getElementById('flipBtn').addEventListener('click',()=>{
+    orientation=orientation==='white'?'black':'white';
+    savedOrientation=orientation;
+    render();
+  });
+
+  document.getElementById('resetBtn').addEventListener('click',()=>{
+    game=new Chess();
+    loadedMoves=[];
+    cursor=0;
+    lastMove=null;
+    selected=null;
+    legalTargets=[];
+    feedbackEl.textContent='Board reset.';
+    feedbackEl.className='small';
+    clearEngineDisplay();
+    clearReview();
+    render();
+    scheduleAutoAnalysis();
+  });
+
+  document.getElementById('undoBtn').addEventListener('click',()=>{
+    if(cursor>0)rebuildTo(cursor-1);
+  });
+
+  document.getElementById('backBtn').addEventListener('click',()=>{
+    if(cursor>0)rebuildTo(cursor-1);
+  });
+
+  document.getElementById('forwardBtn').addEventListener('click',()=>{
+    if(cursor<loadedMoves.length)rebuildTo(cursor+1);
+  });
+
+  document.getElementById('sampleBtn').addEventListener('click',()=>{
+    pgnInput.value='[White "AFake46"]\\n[Black "sjh002"]\\n[Result "0-1"]\\n\\n1. e4 c5 2. c4 Nf6 3. f4 Nxe4 4. Nc3 Nf6 5. Nd5 Ne4 6. Bd3 Nd6 7. Nf3 e6 8. Ne5 exd5 9. cxd5 f6 10. Ng4 f5 11. Qe2+ Be7 12. Nf2 O-O 13. g4 Bh4 14. Rg1 Re8 15. gxf5 Rxe2+ 16. Kxe2 Qe7+ 17. Kf3 b6 18. f6 Qxf6 19. Ng4 Qd4 20. Be2 Qxd5+ 21. Ke3 Nf5# 0-1';
+    feedbackEl.textContent='Sample inserted. Tap Load PGN.';
+    feedbackEl.className='small';
+  });
+
+  document.getElementById('loadBtn').addEventListener('click',()=>{
+    const pgn=pgnInput.value.trim();
+
+    if(!pgn){
+      feedbackEl.textContent='Paste a PGN first.';
+      feedbackEl.className='small error';
+      return;
+    }
+
+    const temp=new Chess();
+    let ok=false;
+
+    try{
+      ok=temp.load_pgn(pgn,{sloppy:true});
+    }catch(e){
+      ok=false;
+    }
+
+    if(!ok){
+      feedbackEl.textContent='Could not read that PGN. Check that the full game notation was copied.';
+      feedbackEl.className='small error';
+      return;
+    }
+
+    loadedMoves=temp.history();
+    pgnHeaders=parseHeaders(pgn);
+    detectMySide();
+    updateFocusHeader();
+
+    game=new Chess();
+    cursor=0;
+    lastMove=null;
+    selected=null;
+    legalTargets=[];
+
+    feedbackEl.textContent='PGN loaded: '+loadedMoves.length+' half-moves.';
+    feedbackEl.className='small ok';
+    resetBatchUI();
+    activeLessonRow=null;
+    puzzleMode=false;
+    document.getElementById('lessonTheme').textContent='Choose a key learning position.';
+    document.getElementById('lessonWhy').textContent='We’ll focus on the thinking process, not just the engine answer.';
+    document.getElementById('lessonThink').textContent='Checks → Captures → Threats → loose pieces → king safety.';
+    document.getElementById('puzzleStatus').textContent='Select a key learning position first.';
+    document.getElementById('gameReviewStatus').textContent='Ready to analyze '+loadedMoves.length+' half-moves.';
+
+    rebuildTo(loadedMoves.length);
+  });
+
+  function clearEngineDisplay(){
+    bestMoveHighlight=null;
+    document.getElementById('evalValue').textContent='—';
+    document.getElementById('bestMoveValue').textContent='—';
+    document.getElementById('pvValue').textContent='—';
+    setEvalBar(0);
+    lastEngineInfo={depth:0,score:null,mate:null,pv:[]};
+  }
+
+  function uciToSan(fen,uci){
+    try{
+      const g=new Chess(fen);
+      const from=uci.slice(0,2),to=uci.slice(2,4);
+      const promotion=uci.length>4?uci[4]:'q';
+      const m=g.move({from,to,promotion});
+      return m?m.san:uci;
+    }catch(e){
+      return uci;
+    }
+  }
+
+  function pvToSan(fen,pv){
+    try{
+      const g=new Chess(fen);
+      const out=[];
+      for(const uci of pv.slice(0,8)){
+        const m=g.move({
+          from:uci.slice(0,2),
+          to:uci.slice(2,4),
+          promotion:uci.length>4?uci[4]:'q'
+        });
+        if(!m)break;
+        out.push(m.san);
+      }
+      return out.join(' ');
+    }catch(e){
+      return pv.slice(0,8).join(' ');
+    }
+  }
+
+  function setEvalBar(value){
+    const black=document.getElementById('evalBlack');
+    const tag=document.getElementById('evalTag');
+    if(!black||!tag)return;
+
+    if(typeof value==='string'&&value.startsWith('M')){
+      const whiteWinning=!value.startsWith('-');
+      black.style.height=whiteWinning?'8%':'92%';
+      tag.textContent=value;
+      return;
+    }
+
+    const v=Math.max(-8,Math.min(8,Number(value)||0));
+    const whitePct=50+(v/8)*42;
+    black.style.height=(100-whitePct)+'%';
+    tag.textContent=(v>0?'+':'')+v.toFixed(2);
+  }
+
+  function displayScore(){
+    const evalEl=document.getElementById('evalValue');
+    if(lastEngineInfo.mate!==null){
+      let m=lastEngineInfo.mate;
+      if(game.turn()==='b')m=-m;
+      const text=(m>0?'M'+m:'-M'+Math.abs(m));
+      evalEl.textContent=text;
+      setEvalBar(text);
+      return;
+    }
+    if(lastEngineInfo.score===null)return;
+    let cp=lastEngineInfo.score;
+    if(game.turn()==='b')cp=-cp;
+    const pawns=cp/100;
+    evalEl.textContent=(pawns>0?'+':'')+pawns.toFixed(2);
+    setEvalBar(pawns);
+  }
+
+  function buildPositionAt(n){
+    const g=new Chess();
+    let last=null;
+    for(let i=0;i<n;i++){
+      const m=g.move(loadedMoves[i]);
+      if(!m)return null;
+      last=m;
+    }
+    return {game:g,last};
+  }
+
+  function scoreToWhite(score,mate,turn){
+    if(mate!==null){
+      const mateForSide=mate>0;
+      const whiteWinning=turn==='w'?mateForSide:!mateForSide;
+      return {type:'mate',whiteWinning,mate:Math.abs(mate)};
+    }
+    let cp=score===null?0:score;
+    if(turn==='b')cp=-cp;
+    return {type:'cp',cp};
+  }
+
+  function cpForMover(result,mover){
+    if(result.type!=='cp')return null;
+    return mover==='w'?result.cp:-result.cp;
+  }
+
+  function classifyMove(loss,exactBest){
+    if(exactBest)return {label:'Best',cls:'classBest'};
+    if(loss<=20)return {label:'Excellent',cls:'classExcellent'};
+    if(loss<=50)return {label:'Good',cls:'classGood'};
+    if(loss<=100)return {label:'Inaccuracy',cls:'classInaccuracy'};
+    if(loss<=200)return {label:'Mistake',cls:'classMistake'};
+    return {label:'Blunder',cls:'classBlunder'};
+  }
+
+  function classifyMateTransition(beforeResult,afterResult,mover,exactBest,actualSan){
+    const moverWasWinningMate =
+      beforeResult.type==='mate' &&
+      ((mover==='w'&&beforeResult.whiteWinning)||(mover==='b'&&!beforeResult.whiteWinning));
+
+    const moverIsWinningMate =
+      afterResult.type==='mate' &&
+      ((mover==='w'&&afterResult.whiteWinning)||(mover==='b'&&!afterResult.whiteWinning));
+
+    const moverIsLosingMate =
+      afterResult.type==='mate' &&
+      ((mover==='w'&&!afterResult.whiteWinning)||(mover==='b'&&afterResult.whiteWinning));
+
+    if(actualSan&&actualSan.includes('#')){
+      return {label:'Checkmate',cls:'classMate',mateNote:'You delivered checkmate.'};
+    }
+    if(moverWasWinningMate&&!moverIsWinningMate){
+      return {label:'Mate missed',cls:'classBlunder',mateNote:'You had a forced mate but let it slip.'};
+    }
+    if(moverIsLosingMate){
+      return {label:'Mate allowed',cls:'classBlunder',mateNote:'This move allowed a forced mate against your king.'};
+    }
+    if(moverIsWinningMate){
+      return {label:'Mate found',cls:'classMate',mateNote:'This move preserves or creates a forced mating sequence.'};
+    }
+    if(exactBest)return {label:'Best',cls:'classBest',mateNote:null};
+    return null;
+  }
+
+  function clearReview(){
+    document.getElementById('reviewActual').textContent='—';
+    document.getElementById('reviewClass').textContent='—';
+    document.getElementById('reviewClass').className='reviewBig';
+    document.getElementById('reviewBest').textContent='—';
+    document.getElementById('reviewLoss').textContent='—';
+    document.getElementById('reviewExplain').textContent='Review a move to see the coaching note.';
+  }
+
+  function startReviewAnalysis(fen,stage){
+    reviewStage=stage;
+    reviewInfo={score:null,mate:null,pv:[],depth:0};
+    engine.postMessage('stop');
+    engine.postMessage('position fen '+fen);
+    engine.postMessage('go depth 10');
+  }
+
+  function finishMoveReview(){
+    const d=reviewData;
+    const beforeResult=scoreToWhite(d.before.score,d.before.mate,d.before.turn);
+    const afterResult=scoreToWhite(d.after.score,d.after.mate,d.after.turn);
+    const mover=d.before.turn;
+    const exactBest=d.actualUci===d.bestUci;
+    const mateRating=classifyMateTransition(beforeResult,afterResult,mover,exactBest,d.actualSan);
+    let loss=0;
+    let rating=mateRating;
+    if(!rating){
+      const beforeMover=cpForMover(beforeResult,mover);
+      const afterMover=cpForMover(afterResult,mover);
+      loss=Math.max(0,(beforeMover??0)-(afterMover??0));
+      rating=classifyMove(loss,exactBest);
+    }
+
+    document.getElementById('reviewActual').textContent=d.actualSan;
+    document.getElementById('reviewBest').textContent=d.bestSan;
+    document.getElementById('reviewLoss').textContent=mateRating?'Mate':(loss/100).toFixed(2);
+    const classEl=document.getElementById('reviewClass');
+    classEl.textContent=rating.label;
+    classEl.className='reviewBig '+rating.cls;
+
+    let explanation='';
+    if(mateRating&&mateRating.mateNote){
+      explanation=mateRating.mateNote;
+      if(d.bestSan&&d.bestSan!=='—'&&d.bestSan!==d.actualSan)explanation+=' Stockfish preferred '+d.bestSan+'.';
+    }else if(exactBest){
+      explanation='You found Stockfish’s top move in this position. Nice calculation.';
+    }else if(loss<=20){
+      explanation='Your move was essentially as strong as the engine choice. Stockfish slightly prefers '+d.bestSan+'.';
+    }else if(loss<=50){
+      explanation='Your move was solid, but '+d.bestSan+' kept a little more pressure or improved the position more efficiently.';
+    }else if(loss<=100){
+      explanation='You missed a stronger continuation. Compare your '+d.actualSan+' with '+d.bestSan+' and look first for checks, captures, and threats.';
+    }else if(loss<=200){
+      explanation='This move caused a meaningful evaluation swing. Stockfish preferred '+d.bestSan+'. Revisit the position and calculate your opponent’s forcing reply before committing.';
+    }else{
+      explanation='This was a large evaluation swing. The key training question is: what forcing move became available after '+d.actualSan+'? Stockfish wanted '+d.bestSan+'.';
+    }
+
+    document.getElementById('reviewExplain').textContent=explanation;
+    document.getElementById('reviewStatus').textContent='Move review complete • depth '+Math.min(d.before.depth,d.after.depth);
+    reviewStage=null;
+    reviewData=null;
+
+    if(document.getElementById('autoAnalyze')?.checked){
+      scheduleAutoAnalysis();
+    }
+  }
+
+  function startMoveReview(){
+    if(cursor<1){
+      document.getElementById('reviewStatus').textContent='Move to a position after at least one move.';
+      return;
+    }
+
+    const before=buildPositionAt(cursor-1);
+    const after=buildPositionAt(cursor);
+    if(!before||!after||!after.last){
+      document.getElementById('reviewStatus').textContent='Could not reconstruct this move.';
+      return;
+    }
+
+    clearTimeout(analysisTimer);
+    if(engine)engine.postMessage('stop');
+
+    reviewData={
+      beforeFen:before.game.fen(),
+      afterFen:after.game.fen(),
+      before:{turn:before.game.turn(),score:null,mate:null,depth:0},
+      after:{turn:after.game.turn(),score:null,mate:null,depth:0},
+      actualSan:loadedMoves[cursor-1],
+      actualUci:after.last.from+after.last.to+(after.last.promotion||''),
+      bestUci:null,
+      bestSan:'—'
+    };
+
+    document.getElementById('reviewActual').textContent=reviewData.actualSan;
+    document.getElementById('reviewClass').textContent='…';
+    document.getElementById('reviewBest').textContent='…';
+    document.getElementById('reviewLoss').textContent='…';
+    document.getElementById('reviewExplain').textContent='Analyzing the position before and after your move…';
+    document.getElementById('reviewStatus').textContent='Reviewing move…';
+
+    const go=()=>{
+      startReviewAnalysis(reviewData.beforeFen,'before');
+    };
+
+    if(engineReady&&engine)go();
+    else{
+      reviewStage='waiting';
+      initEngine();
+      const wait=setInterval(()=>{
+        if(engineReady&&engine){
+          clearInterval(wait);
+          go();
+        }
+      },100);
+      setTimeout(()=>clearInterval(wait),12000);
+    }
+  }
+
+  function buildBatchPositions(){
+    const g=new Chess();
+    const positions=[{fen:g.fen(),turn:g.turn(),moveIndex:0}];
+    const actual=[];
+
+    for(let i=0;i<loadedMoves.length;i++){
+      const m=g.move(loadedMoves[i]);
+      if(!m)throw new Error('Could not rebuild move '+(i+1));
+      actual.push({
+        san:m.san,
+        uci:m.from+m.to+(m.promotion||''),
+        from:m.from,
+        to:m.to,
+        promotion:m.promotion||''
+      });
+      positions.push({fen:g.fen(),turn:g.turn(),moveIndex:i+1});
+    }
+    return {positions,actual};
+  }
+
+  function resetBatchUI(){
+    document.getElementById('gameReviewProgress').style.width='0%';
+    document.getElementById('sumBest').textContent='—';
+    document.getElementById('sumGood').textContent='—';
+    document.getElementById('sumBad').textContent='—';
+    document.getElementById('keyMoves').innerHTML='<div class="small">Your biggest evaluation swings will appear here.</div>';
+  }
+
+  function startBatchPosition(){
+    if(batchIndex>=batchPositions.length){
+      finishFullGameReview();
+      return;
+    }
+
+    batchInfo={score:null,mate:null,pv:[],depth:0};
+    const p=batchPositions[batchIndex];
+    const pct=Math.round((batchIndex/batchPositions.length)*100);
+    document.getElementById('gameReviewProgress').style.width=pct+'%';
+    document.getElementById('gameReviewStatus').textContent='Analyzing position '+(batchIndex+1)+' of '+batchPositions.length+'…';
+
+    engine.postMessage('stop');
+    engine.postMessage('position fen '+p.fen);
+    engine.postMessage('go depth 8');
+  }
+
+  function finishFullGameReview(){
+    document.getElementById('gameReviewProgress').style.width='100%';
+
+    const built=buildBatchPositions();
+    const actual=built.actual;
+    const rows=[];
+
+    for(let i=0;i<actual.length;i++){
+      const before=batchEvaluations[i];
+      const after=batchEvaluations[i+1];
+      if(!before||!after)continue;
+
+      const beforeResult=scoreToWhite(before.score,before.mate,batchPositions[i].turn);
+      const afterResult=scoreToWhite(after.score,after.mate,batchPositions[i+1].turn);
+      const mover=batchPositions[i].turn;
+      const bestUci=before.bestmove||'';
+      const exactBest=actual[i].uci===bestUci;
+      const mateRating=classifyMateTransition(beforeResult,afterResult,mover,exactBest,actual[i].san);
+      let loss=0;
+      let rating=mateRating;
+      if(!rating){
+        const beforeMover=cpForMover(beforeResult,mover);
+        const afterMover=cpForMover(afterResult,mover);
+        loss=Math.max(0,(beforeMover??0)-(afterMover??0));
+        rating=classifyMove(loss,exactBest);
+      }
+      const bestSan=bestUci&&bestUci!=='(none)'?uciToSan(batchPositions[i].fen,bestUci):'—';
+
+      rows.push({
+        i,
+        moveNo:Math.floor(i/2)+1,
+        side:i%2===0?'White':'Black',
+        actualSan:actual[i].san,
+        actualUci:actual[i].uci,
+        bestUci,
+        bestSan,
+        loss,
+        rating,
+        isMateEvent:!!(mateRating && ['Checkmate','Mate found','Mate missed','Mate allowed'].includes(mateRating.label)),
+        mateNote:(mateRating && ['Checkmate','Mate found','Mate missed','Mate allowed'].includes(mateRating.label)) ? (mateRating.mateNote||null) : null,
+        before,
+        after
+      });
+    }
+
+    batchRows=rows;
+    reviewCategory='key';
+    document.querySelectorAll('.summaryBox.clickable').forEach(b=>b.classList.remove('activeSummary'));
+    document.getElementById('allReviewMoves').style.display='none';
+    document.getElementById('keyMoves').style.display='flex';
+    document.getElementById('keyMovesTitle').style.display='block';
+    document.getElementById('reviewListTitle').textContent='Key learning positions';
+
+    renderFocusedReview();
+    updateProfileFromRows();
+    renderPatternInsights();
+
+    renderOpeningCoach();
+    document.getElementById('gameReviewStatus').textContent='Full game review complete • '+rows.length+' moves classified.';
+    document.getElementById('analyzeGameBtn').disabled=false;
+    document.getElementById('analyzeGameBtn').textContent='Analyze full game again';
+    batchMode=null;
+
+    if(document.getElementById('autoAnalyze')?.checked)scheduleAutoAnalysis();
+  }
+
+  function lessonForRow(r){
+    if(!r)return {theme:'Choose a key learning position.',why:'We’ll focus on the thinking process, not just the engine answer.',think:'Checks → Captures → Threats → loose pieces → king safety.'};
+
+    if(r.rating.label==='Mate allowed'){
+      return {
+        theme:'King safety — you allowed a forced mate',
+        why:'The position became tactically decisive after '+r.actualSan+'. Before making a move near an exposed king, forcing replies must come first.',
+        think:'Before I move: 1) What checks does my opponent have? 2) Can I answer every one? 3) Only then consider my own plan.'
+      };
+    }
+    if(r.rating.label==='Mate missed'){
+      return {
+        theme:'Forcing moves — a mating sequence was available',
+        why:'You had a forced mate but chose '+r.actualSan+'. This is a calculation opportunity, not an opening-memory problem.',
+        think:'When the enemy king is exposed, calculate every check first. Don’t stop after finding one good move; look for the forcing finish.'
+      };
+    }
+    if(r.rating.label==='Checkmate'||r.rating.label==='Mate found'){
+      return {
+        theme:'Pattern recognition — mating attack',
+        why:'You correctly found or preserved a forced mating sequence.',
+        think:'Remember what made the attack work: restricted king squares, forcing checks, and pieces coordinating around the king.'
+      };
+    }
+
+    const best=r.bestSan||'the engine move';
+    const captureBest=best.includes('x');
+    const checkBest=best.includes('+')||best.includes('#');
+    const actualCapture=(r.actualSan||'').includes('x');
+
+    if(checkBest){
+      return {
+        theme:'Forcing move — check first',
+        why:'Stockfish preferred '+best+'. A forcing check can change the entire position before slower plans matter.',
+        think:'Run CCT in order: Checks → Captures → Threats. Calculate forcing moves before positional moves.'
+      };
+    }
+    if(captureBest&&!actualCapture){
+      return {
+        theme:'Tactical awareness — a capture was available',
+        why:'You played '+r.actualSan+', but '+best+' was stronger. There was material or a tactical target available immediately.',
+        think:'Before committing: scan every legal capture for both sides. Ask “what is loose, overloaded, pinned, or insufficiently defended?”'
+      };
+    }
+    if(r.loss>=200){
+      return {
+        theme:'Blunder check — opponent’s forcing reply',
+        why:r.actualSan+' caused a large evaluation swing. The useful question is not “why didn’t I find Stockfish’s move?” but “what became possible for my opponent?”',
+        think:'Before releasing the piece: Checks against me → Captures against me → Threats against me. Then ask whether the moved piece was defending something.'
+      };
+    }
+    if(r.loss>=100){
+      return {
+        theme:'Calculation — compare candidate moves',
+        why:'This move gave away a meaningful part of the position. '+best+' was the stronger candidate.',
+        think:'Pick 2–3 candidate moves. For each one, calculate the opponent’s strongest reply—not the reply you hope they play.'
+      };
+    }
+    return {
+      theme:'Move quality — improve the position efficiently',
+      why:'Your move was playable, but '+best+' was more precise.',
+      think:'Ask: What is my worst piece? What is my opponent threatening? Can I improve a piece while creating a threat?'
+    };
+  }
+
+  function loadLesson(r){
+    activeLessonRow=r;
+    const l=lessonForRow(r);
+    document.getElementById('lessonTheme').textContent=l.theme;
+    document.getElementById('lessonWhy').textContent=l.why;
+    document.getElementById('lessonThink').textContent=l.think;
+    document.getElementById('puzzleStatus').textContent='Ready: move '+r.moveNo+(r.side==='White'?'.':'…')+' from your game.';
+  }
+
+  function startPuzzle(){
+    const r=activeLessonRow;
+    if(!r){
+      document.getElementById('puzzleStatus').textContent='Tap a key learning position in Full Game Review first.';
+      return;
+    }
+    puzzleMode=true;
+    puzzleExpectedUci=r.bestUci;
+    puzzleMoveIndex=r.i;
+    savedOrientation=orientation;
+    jumpToMove(r.i); // position BEFORE the move
+
+    // Always face the side to move toward the learner.
+    orientation=game.turn()==='w'?'white':'black';
+
+    bestMoveHighlight=null;
+    clearEngineDisplay();
+    document.getElementById('reviewBest').textContent='Hidden';
+    document.getElementById('puzzleStatus').className='puzzleStatus';
+    document.getElementById('puzzleStatus').textContent='Your turn. Find the best move without Stockfish. Use your thinking checklist.';
+    render();
+  }
+
+  function revealPuzzle(){
+    const r=activeLessonRow;
+    if(!r){
+      document.getElementById('puzzleStatus').textContent='Choose a key learning position first.';
+      return;
+    }
+    if(cursor!==r.i)jumpToMove(r.i);
+    orientation=savedOrientation;
+    bestMoveHighlight=r.bestUci&&r.bestUci!=='(none)'?{from:r.bestUci.slice(0,2),to:r.bestUci.slice(2,4)}:null;
+    document.getElementById('reviewBest').textContent=r.bestSan;
+    document.getElementById('puzzleStatus').className='puzzleStatus';
+    document.getElementById('puzzleStatus').textContent='Best move: '+r.bestSan+'. Now explain to yourself WHY it works before moving on.';
+    puzzleMode=false;
+    render();
+  }
+
+  function showBatchMove(i){
+    const r=batchRows.find(x=>x.i===i);
+    if(!r)return;
+
+    loadLesson(r);
+    jumpToMove(i+1);
+
+    document.getElementById('reviewActual').textContent=r.actualSan;
+    document.getElementById('reviewBest').textContent=r.bestSan;
+    document.getElementById('reviewLoss').textContent=r.isMateEvent?'Mate':(r.loss/100).toFixed(2);
+    const classEl=document.getElementById('reviewClass');
+    classEl.textContent=r.rating.label;
+    classEl.className='reviewBig '+r.rating.cls;
+
+    let explanation='';
+    if(r.isMateEvent&&r.mateNote){
+      explanation=r.mateNote;
+      if(r.bestSan&&r.bestSan!=='—'&&r.bestSan!==r.actualSan)explanation+=' Stockfish preferred '+r.bestSan+'.';
+    }else if(r.rating.label==='Best'){
+      explanation='You found Stockfish’s top move in this position.';
+    }else if(r.rating.label==='Excellent'||r.rating.label==='Good'){
+      explanation='Your move was playable, but Stockfish slightly preferred '+r.bestSan+'. Compare the resulting piece activity and threats.';
+    }else if(r.rating.label==='Inaccuracy'){
+      explanation='This gave away some of your advantage. Before '+r.actualSan+', check whether '+r.bestSan+' creates a stronger forcing sequence.';
+    }else if(r.rating.label==='Mistake'){
+      explanation='This caused a meaningful evaluation swing. Recalculate the position before '+r.actualSan+' and look at your opponent’s checks, captures, and threats. Stockfish preferred '+r.bestSan+'.';
+    }else{
+      explanation='This was one of the game’s biggest turning points. Ask what tactical or positional resource became available after '+r.actualSan+'. Stockfish wanted '+r.bestSan+'.';
+    }
+    document.getElementById('reviewExplain').textContent=explanation;
+    document.getElementById('reviewStatus').textContent='Loaded from full-game review. Tap Review current move for a deeper depth-10 check.';
+
+    bestMoveHighlight=r.bestUci&&r.bestUci!=='(none)'?{from:r.bestUci.slice(0,2),to:r.bestUci.slice(2,4)}:null;
+    render();
+  }
+
+  function jumpToMove(n){
+    const rebuilt=new Chess();
+    let lm=null;
+    for(let i=0;i<n;i++){
+      const m=rebuilt.move(loadedMoves[i]);
+      if(!m)return;
+      lm={from:m.from,to:m.to};
+    }
+    game=rebuilt;
+    cursor=n;
+    lastMove=lm;
+    selected=null;
+    legalTargets=[];
+    clearEngineDisplay();
+    render();
+  }
+
+  function startFullGameReview(){
+    if(!loadedMoves.length){
+      document.getElementById('gameReviewStatus').textContent='Load a PGN first.';
+      return;
+    }
+
+    clearTimeout(analysisTimer);
+    if(engine)engine.postMessage('stop');
+
+    try{
+      const built=buildBatchPositions();
+      batchPositions=built.positions;
+    }catch(e){
+      document.getElementById('gameReviewStatus').textContent=e.message;
+      return;
+    }
+
+    resetBatchUI();
+    batchEvaluations=[];
+    batchRows=[];
+    batchIndex=0;
+    batchMode='waiting';
+
+    const btn=document.getElementById('analyzeGameBtn');
+    btn.disabled=true;
+    btn.textContent='Analyzing game…';
+    document.getElementById('gameReviewStatus').textContent='Preparing Stockfish…';
+
+    const begin=()=>{
+      batchMode='running';
+      startBatchPosition();
+    };
+
+    if(engineReady&&engine){
+      begin();
+    }else{
+      initEngine();
+    }
+  }
+
+  function handleEngineLine(line){
+    if(typeof line!=='string')return;
+
+    if(batchMode){
+      if(line==='uciok'){
+        engine.postMessage('isready');
+        return;
+      }
+      if(line==='readyok'){
+        engineReady=true;
+        engineLoading=false;
+        document.getElementById('engineStatus').textContent='Engine ready.';
+        if(batchMode==='waiting'){
+          batchMode='running';
+          startBatchPosition();
+        }
+        return;
+      }
+      if(batchMode==='running'&&line.startsWith('info ')){
+        const depthMatch=line.match(/\bdepth (\d+)/);
+        const cpMatch=line.match(/\bscore cp (-?\d+)/);
+        const mateMatch=line.match(/\bscore mate (-?\d+)/);
+        const pvIndex=line.indexOf(' pv ');
+        if(depthMatch)batchInfo.depth=parseInt(depthMatch[1],10);
+        if(cpMatch){batchInfo.score=parseInt(cpMatch[1],10);batchInfo.mate=null;}
+        if(mateMatch){batchInfo.mate=parseInt(mateMatch[1],10);batchInfo.score=null;}
+        if(pvIndex>=0)batchInfo.pv=line.slice(pvIndex+4).trim().split(/\s+/);
+        return;
+      }
+      if(batchMode==='running'&&line.startsWith('bestmove ')){
+        const bm=line.split(/\s+/)[1]||'(none)';
+        batchEvaluations[batchIndex]={
+          score:batchInfo.score,
+          mate:batchInfo.mate,
+          pv:batchInfo.pv,
+          depth:batchInfo.depth,
+          bestmove:bm
+        };
+        batchIndex++;
+        startBatchPosition();
+        return;
+      }
+    }
+
+    if(reviewStage&&reviewStage!=='waiting'){
+      if(line.startsWith('info ')){
+        const depthMatch=line.match(/\bdepth (\d+)/);
+        const cpMatch=line.match(/\bscore cp (-?\d+)/);
+        const mateMatch=line.match(/\bscore mate (-?\d+)/);
+        const pvIndex=line.indexOf(' pv ');
+        if(depthMatch)reviewInfo.depth=parseInt(depthMatch[1],10);
+        if(cpMatch){reviewInfo.score=parseInt(cpMatch[1],10);reviewInfo.mate=null;}
+        if(mateMatch){reviewInfo.mate=parseInt(mateMatch[1],10);reviewInfo.score=null;}
+        if(pvIndex>=0)reviewInfo.pv=line.slice(pvIndex+4).trim().split(/\s+/);
+        return;
+      }
+      if(line.startsWith('bestmove ')){
+        const bm=line.split(/\s+/)[1];
+        if(reviewStage==='before'){
+          reviewData.before.score=reviewInfo.score;
+          reviewData.before.mate=reviewInfo.mate;
+          reviewData.before.depth=reviewInfo.depth;
+          reviewData.bestUci=bm;
+          reviewData.bestSan=uciToSan(reviewData.beforeFen,bm);
+          startReviewAnalysis(reviewData.afterFen,'after');
+        }else if(reviewStage==='after'){
+          reviewData.after.score=reviewInfo.score;
+          reviewData.after.mate=reviewInfo.mate;
+          reviewData.after.depth=reviewInfo.depth;
+          finishMoveReview();
+        }
+        return;
+      }
+      if(line==='uciok'){engine.postMessage('isready');return;}
+      if(line==='readyok'){engineReady=true;engineLoading=false;return;}
+    }
+
+    if(activeAnalysisFen&&activeAnalysisFen!==game.fen()&&line.startsWith('info '))return;
+
+    if(line==='uciok'){
+      engine.postMessage('isready');
+      return;
+    }
+    if(line==='readyok'){
+      engineReady=true;
+      engineLoading=false;
+      document.getElementById('engineStatus').textContent='Engine ready.';
+      if(reviewStage!=='waiting'&&!batchMode)runAnalysis();
+      return;
+    }
+
+    if(line.startsWith('info ')){
+      const depthMatch=line.match(/\bdepth (\d+)/);
+      const cpMatch=line.match(/\bscore cp (-?\d+)/);
+      const mateMatch=line.match(/\bscore mate (-?\d+)/);
+      const pvIndex=line.indexOf(' pv ');
+
+      if(depthMatch)lastEngineInfo.depth=parseInt(depthMatch[1],10);
+      if(cpMatch){
+        lastEngineInfo.score=parseInt(cpMatch[1],10);
+        lastEngineInfo.mate=null;
+      }
+      if(mateMatch){
+        lastEngineInfo.mate=parseInt(mateMatch[1],10);
+        lastEngineInfo.score=null;
+      }
+      if(pvIndex>=0){
+        lastEngineInfo.pv=line.slice(pvIndex+4).trim().split(/\s+/);
+      }
+
+      displayScore();
+      if(lastEngineInfo.pv.length){
+        document.getElementById('bestMoveValue').textContent=uciToSan(game.fen(),lastEngineInfo.pv[0]);
+        document.getElementById('pvValue').textContent=pvToSan(game.fen(),lastEngineInfo.pv);
+        bestMoveHighlight={from:lastEngineInfo.pv[0].slice(0,2),to:lastEngineInfo.pv[0].slice(2,4)};
+        render();
+      }
+      document.getElementById('engineStatus').textContent='Analyzing… depth '+lastEngineInfo.depth;
+      return;
+    }
+
+    if(line.startsWith('bestmove ')){
+      const bm=line.split(/\s+/)[1];
+      if(bm&&bm!=='(none)'){
+        document.getElementById('bestMoveValue').textContent=uciToSan(game.fen(),bm);
+        bestMoveHighlight={from:bm.slice(0,2),to:bm.slice(2,4)};
+        render();
+      }
+      document.getElementById('engineStatus').textContent='Analysis complete • depth '+lastEngineInfo.depth;
+    }
+  }
+
+  async function initEngine(){
+    if(engineReady){
+      runAnalysis();
+      return;
+    }
+    if(engineLoading)return;
+
+    engineLoading=true;
+    document.getElementById('engineStatus').textContent='Loading Stockfish…';
+
+    try{
+      // v0.9.1: same-origin worker bootstrap for Safari/iPad reliability.
+      // stockfish-worker.js lives beside index.html on GitHub Pages.
+      engine=new Worker('./stockfish-worker.js');
+
+      let started=false;
+      const startupTimer=setTimeout(()=>{
+        if(!started){
+          try{engine.terminate();}catch(e){}
+          engine=null;
+          engineLoading=false;
+          document.getElementById('engineStatus').textContent='Stockfish worker timed out. Refresh once and try again.';
+        }
+      },15000);
+
+      engine.onmessage=e=>{
+        started=true;
+        clearTimeout(startupTimer);
+        handleEngineLine(e.data);
+      };
+
+      engine.onerror=e=>{
+        clearTimeout(startupTimer);
+        engineLoading=false;
+        document.getElementById('engineStatus').textContent='Stockfish worker could not start. Make sure stockfish-worker.js was added to the repository.';
+        console.error(e);
+      };
+
+      engine.postMessage('uci');
+    }catch(e){
+      engineLoading=false;
+      document.getElementById('engineStatus').textContent='Could not start the local Stockfish worker.';
+      console.error(e);
+    }
+  }
+
+  function runAnalysis(){
+    if(!engineReady||!engine)return;
+
+    clearEngineDisplay();
+    activeAnalysisFen=game.fen();
+    document.getElementById('engineStatus').textContent='Analyzing…';
+
+    engine.postMessage('stop');
+    engine.postMessage('position fen '+activeAnalysisFen);
+    engine.postMessage('go depth 12');
+  }
+
+  function scheduleAutoAnalysis(){
+    if(!document.getElementById('autoAnalyze')?.checked)return;
+    clearTimeout(analysisTimer);
+    analysisTimer=setTimeout(()=>{
+      if(engineReady)runAnalysis();
+      else initEngine();
+    },260);
+  }
+
+  document.getElementById('analyzeBtn').addEventListener('click',initEngine);
+  document.getElementById('reviewMoveBtn').addEventListener('click',startMoveReview);
+  document.getElementById('analyzeGameBtn').addEventListener('click',startFullGameReview);
+  document.getElementById('trainBtn').addEventListener('click',startPuzzle);
+  document.getElementById('revealBtn').addEventListener('click',revealPuzzle);
+
+  document.querySelectorAll('.tabBtn').forEach(btn=>btn.addEventListener('click',()=>switchTab(btn.dataset.tab)));
+  document.querySelectorAll('.focusBtn').forEach(btn=>btn.addEventListener('click',()=>{
+    currentFocus=btn.dataset.focus;
+    document.querySelectorAll('.focusBtn').forEach(b=>b.classList.remove('activeFocus'));
+    btn.classList.add('activeFocus');
+    renderFocusedReview();
+    renderPatternInsights();
+  }));
+  document.getElementById('summaryBestBox').addEventListener('click',()=>renderReviewCategory('best'));
+  document.getElementById('summaryGoodBox').addEventListener('click',()=>renderReviewCategory('good'));
+  document.getElementById('summaryBadBox').addEventListener('click',()=>renderReviewCategory('bad'));
+  document.getElementById('showKeyBtn').addEventListener('click',()=>renderReviewCategory('key'));
+
+  document.getElementById('thinkBtn').addEventListener('click',analyzeThinkingPosition);
+  document.getElementById('pauseStartBtn').addEventListener('click',startPausePosition);
+  document.getElementById('pauseRevealBtn').addEventListener('click',revealPausePlan);
+
+  document.getElementById('profileDetailsBtn').addEventListener('click',()=>{
+    const el=document.getElementById('profileDetails');
+    el.style.display=el.style.display==='none'?'block':'none';
+  });
+
+  document.getElementById('resetProfileBtn').addEventListener('click',()=>{
+    if(confirm('Reset Chess Coach learning memory on this device?')){
+      resetLearningProfile();
+    }
+  });
+
+  document.querySelectorAll('.choiceBtn').forEach(btn=>btn.addEventListener('click',()=>{
+    selectedPlan=btn.dataset.plan;
+    document.querySelectorAll('.choiceBtn').forEach(b=>b.classList.remove('selectedChoice'));
+    btn.classList.add('selectedChoice');
+    const text={
+      threat:'Good. First prove the opponent has a real threat and identify the forcing reply you must answer.',
+      tactic:'Good. Calculate checks, captures, and forcing threats before quieter moves.',
+      piece:'Good. Identify your least-active piece and improve it toward a useful square.',
+      break:'Good. Identify which pawn break changes the structure and whether your pieces support it.'
+    };
+    document.getElementById('pauseFeedback').textContent=text[selectedPlan];
+  }));
+  document.getElementById('autoAnalyze').addEventListener('change',e=>{
+    if(e.target.checked)scheduleAutoAnalysis();
+    else{
+      clearTimeout(analysisTimer);
+      if(engine)engine.postMessage('stop');
+      document.getElementById('engineStatus').textContent='Live analysis paused.';
+    }
+  });
+
+
+  loadLearningProfile();
+
+  if(typeof Chess==='undefined'){
+    feedbackEl.textContent='Chess library failed to load. Refresh the page while connected to the internet.';
+    feedbackEl.className='small error';
+  }else{
+    render();
+  }
+})();
+</script>
+
+</body>
+</html>
