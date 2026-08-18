@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Chess Coach v0.9.2B.8.2</title>
+<title>Chess Coach v0.9.2B.8.3</title>
 <style>
 :root{
   --bg:#111318;--panel:#1a1d24;--text:#f4f4f5;--muted:#a1a1aa;
@@ -464,7 +464,7 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
 </head>
 <body>
 <div class="wrap">
-<h1>Chess Coach v0.9.2B.8.2</h1>
+<h1>Chess Coach v0.9.2B.8.3</h1>
 <div class="sub">Opening recognition + personalized coaching + live material counter + promotion choice.</div>
 
 <div class="layout">
@@ -524,6 +524,7 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
 1. e4 c5 2. Nf3 d6 3. d4 cxd4'></textarea>
       <div class="row" style="margin-top:8px">
         <button id="loadBtn" class="primary">Load PGN</button>
+        <button id="clearPgnBtn">Clear PGN</button>
         <button id="sampleBtn">Load sample</button>
       </div>
     </div>
@@ -1706,6 +1707,13 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
 
   document.getElementById('forwardBtn').addEventListener('click',()=>{
     if(cursor<loadedMoves.length)rebuildTo(cursor+1);
+  });
+
+  document.getElementById('clearPgnBtn').addEventListener('click',()=>{
+    pgnInput.value='';
+    pgnInput.focus();
+    feedbackEl.textContent='PGN box cleared. Paste the next game.';
+    feedbackEl.className='small ok';
   });
 
   document.getElementById('sampleBtn').addEventListener('click',()=>{
