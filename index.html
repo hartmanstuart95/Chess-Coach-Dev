@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Chess Coach v0.9.2B.8.4</title>
+<title>Chess Coach DEV v0.9.2B.8.6</title>
 <style>
 :root{
   --bg:#111318;--panel:#1a1d24;--text:#f4f4f5;--muted:#a1a1aa;
@@ -464,7 +464,7 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
 </head>
 <body>
 <div class="wrap">
-<h1>Chess Coach v0.9.2B.8.4</h1>
+<h1>Chess Coach DEV v0.9.2B.8.6</h1>
 <div class="sub">Opening recognition + personalized coaching + live material counter + promotion choice.</div>
 
 <div class="layout">
@@ -806,6 +806,9 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
   let engineWatchdog=null;
   let engineStartupTimer=null;
   let engineGeneration=0;
+  // Exactly one tagged job may own Stockfish. UCI has no request IDs, so every
+  // job is separated from its predecessor by stop -> isready -> readyok.
+  let engineJob=null;
   const ENGINE_STALL_TIMEOUT=20000;
   let activeAnalysisFen=null;
   let reviewStage=null;
@@ -1135,6 +1138,12 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
     const r=pauseRow||choosePauseRow();
     if(!r){document.getElementById('pauseFeedback').textContent='Run Full Game Review first.';return;}
     pauseRow=r; const lesson=lessonForRow(r);
+    if(r.fen!==game.fen()||!validateBestMove(game.fen(),r.bestUci).valid){
+      document.getElementById('pauseFeedback').textContent='Stored analysis did not match this board. Re-analyzing the displayed position…';
+      bestMoveHighlight=null;
+      runAnalysis();
+      return;
+    }
     document.getElementById('pauseFeedback').textContent='Coach plan: '+lesson.think+' Best move: '+r.bestSan+'.';
     bestMoveHighlight=r.bestUci&&r.bestUci!=='(none)'?{from:r.bestUci.slice(0,2),to:r.bestUci.slice(2,4)}:null;
     pauseMode=false; render();
@@ -1831,6 +1840,47 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
     }
   }
 
+  function validateBestMove(fen,uci){
+    if(uci==='(none)'){
+      try{
+        const terminal=new Chess(fen);
+        return terminal.game_over()?{valid:true,uci,san:'—',move:null}:{valid:false,reason:'non-terminal position returned no move'};
+      }catch(e){return {valid:false,reason:'invalid FEN'};}
+    }
+    if(!/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(uci||''))return {valid:false,reason:'malformed UCI'};
+    try{
+      const g=new Chess(fen);
+      const from=uci.slice(0,2), to=uci.slice(2,4);
+      const piece=g.get(from);
+      if(!piece)return {valid:false,reason:'empty origin square'};
+      if(piece.color!==g.turn())return {valid:false,reason:'wrong side to move'};
+      const move=g.move({from,to,promotion:uci[4]||'q'});
+      return move?{valid:true,uci,san:move.san,move}:{valid:false,reason:'illegal move'};
+    }catch(e){return {valid:false,reason:'invalid FEN'};}
+  }
+
+  function requestEngineJob(owner,fen,depth,retries=0){
+    if(!engineReady||!engine)return false;
+    if(batchMode&&owner!=='batch')return false; // Full Game Review is exclusive.
+    engineJob={owner,fen,depth,retries,phase:'flushing'};
+    engine.postMessage('stop');
+    engine.postMessage('isready');
+    armEngineWatchdog();
+    return true;
+  }
+
+  function retryEngineJob(job,reason){
+    console.warn('Discarded Stockfish result for '+job.owner+' ('+reason+'); retrying '+job.fen);
+    requestEngineJob(job.owner,job.fen,job.depth,job.retries+1);
+  }
+
+  function runResultIntegrityRegressionChecks(){
+    const fen='r5k1/1Np2ppp/p4b2/4rB2/8/P4P2/1PP2P1P/R1B2RK1 w - - 1 18';
+    const g=new Chess(fen);
+    console.assert(!g.get('d1')&&!g.get('d8'),'Regression FEN must contain no queens');
+    console.assert(!validateBestMove(fen,'d1d8').valid,'Qxd8-style stale UCI must be rejected');
+  }
+
   function pvToSan(fen,pv){
     try{
       const g=new Chess(fen);
@@ -1963,10 +2013,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
   function startReviewAnalysis(fen,stage){
     reviewStage=stage;
     reviewInfo={score:null,mate:null,pv:[],depth:0};
-    engine.postMessage('stop');
-    engine.postMessage('position fen '+fen);
-    engine.postMessage('go depth 10');
-    armEngineWatchdog();
+    requestEngineJob('review',fen,10);
   }
 
   function finishMoveReview(){
@@ -2021,6 +2068,10 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
   }
 
   function startMoveReview(){
+    if(batchMode){
+      document.getElementById('reviewStatus').textContent='Full Game Review has exclusive use of Stockfish.';
+      return;
+    }
     if(cursor<1){
       document.getElementById('reviewStatus').textContent='Move to a position after at least one move.';
       return;
@@ -2112,10 +2163,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
     document.getElementById('gameReviewProgress').style.width=pct+'%';
     document.getElementById('gameReviewStatus').textContent='Analyzing position '+(batchIndex+1)+' of '+batchPositions.length+'…';
 
-    engine.postMessage('stop');
-    engine.postMessage('position fen '+p.fen);
-    engine.postMessage('go depth 8');
-    armEngineWatchdog();
+    requestEngineJob('batch',p.fen,8);
   }
 
   function finishFullGameReview(){
@@ -2154,6 +2202,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
         actualUci:actual[i].uci,
         bestUci,
         bestSan,
+        fen:before.fen,
         loss,
         rating,
         isMateEvent:!!(mateRating && ['Checkmate','Mate found','Mate missed','Mate allowed'].includes(mateRating.label)),
@@ -2357,7 +2406,11 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
     }
 
     clearTimeout(analysisTimer);
-    if(engine)engine.postMessage('stop');
+    // The first batch job performs the full stop/isready/readyok flush.
+    engineJob=null;
+    activeAnalysisFen=null;
+    reviewStage=null;
+    reviewData=null;
 
     try{
       const built=buildBatchPositions();
@@ -2396,7 +2449,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
   }
 
   function engineIsWorking(){
-    return Boolean(activeAnalysisFen||reviewStage&&reviewStage!=='waiting'||batchMode==='running');
+    return Boolean(engineJob||activeAnalysisFen||reviewStage&&reviewStage!=='waiting'||batchMode==='running');
   }
 
   function armEngineWatchdog(){
@@ -2421,6 +2474,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
     engineReady=false;
     engineLoading=false;
     activeAnalysisFen=null;
+    engineJob=null;
 
     if(batchMode){
       batchMode=null;
@@ -2443,87 +2497,20 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
     initEngine();
   }
 
+  function parseEngineInfo(line,target){
+    const depthMatch=line.match(/\bdepth (\d+)/);
+    const cpMatch=line.match(/\bscore cp (-?\d+)/);
+    const mateMatch=line.match(/\bscore mate (-?\d+)/);
+    const pvIndex=line.indexOf(' pv ');
+    if(depthMatch)target.depth=parseInt(depthMatch[1],10);
+    if(cpMatch){target.score=parseInt(cpMatch[1],10);target.mate=null;}
+    if(mateMatch){target.mate=parseInt(mateMatch[1],10);target.score=null;}
+    if(pvIndex>=0)target.pv=line.slice(pvIndex+4).trim().split(/\s+/);
+  }
+
   function handleEngineLine(line){
     if(typeof line!=='string')return;
     if(engineIsWorking())armEngineWatchdog();
-
-    if(batchMode){
-      if(line==='uciok'){
-        engine.postMessage('isready');
-        return;
-      }
-      if(line==='readyok'){
-        engineReady=true;
-        engineLoading=false;
-        document.getElementById('engineStatus').textContent='Engine ready.';
-        if(batchMode==='waiting'){
-          batchMode='running';
-          startBatchPosition();
-        }
-        return;
-      }
-      if(batchMode==='running'&&line.startsWith('info ')){
-        const depthMatch=line.match(/\bdepth (\d+)/);
-        const cpMatch=line.match(/\bscore cp (-?\d+)/);
-        const mateMatch=line.match(/\bscore mate (-?\d+)/);
-        const pvIndex=line.indexOf(' pv ');
-        if(depthMatch)batchInfo.depth=parseInt(depthMatch[1],10);
-        if(cpMatch){batchInfo.score=parseInt(cpMatch[1],10);batchInfo.mate=null;}
-        if(mateMatch){batchInfo.mate=parseInt(mateMatch[1],10);batchInfo.score=null;}
-        if(pvIndex>=0)batchInfo.pv=line.slice(pvIndex+4).trim().split(/\s+/);
-        return;
-      }
-      if(batchMode==='running'&&line.startsWith('bestmove ')){
-        const bm=line.split(/\s+/)[1]||'(none)';
-        batchEvaluations[batchIndex]={
-          score:batchInfo.score,
-          mate:batchInfo.mate,
-          pv:batchInfo.pv,
-          depth:batchInfo.depth,
-          bestmove:bm
-        };
-        batchIndex++;
-        clearEngineWatchdog();
-        startBatchPosition();
-        return;
-      }
-    }
-
-    if(reviewStage&&reviewStage!=='waiting'){
-      if(line.startsWith('info ')){
-        const depthMatch=line.match(/\bdepth (\d+)/);
-        const cpMatch=line.match(/\bscore cp (-?\d+)/);
-        const mateMatch=line.match(/\bscore mate (-?\d+)/);
-        const pvIndex=line.indexOf(' pv ');
-        if(depthMatch)reviewInfo.depth=parseInt(depthMatch[1],10);
-        if(cpMatch){reviewInfo.score=parseInt(cpMatch[1],10);reviewInfo.mate=null;}
-        if(mateMatch){reviewInfo.mate=parseInt(mateMatch[1],10);reviewInfo.score=null;}
-        if(pvIndex>=0)reviewInfo.pv=line.slice(pvIndex+4).trim().split(/\s+/);
-        return;
-      }
-      if(line.startsWith('bestmove ')){
-        clearEngineWatchdog();
-        const bm=line.split(/\s+/)[1];
-        if(reviewStage==='before'){
-          reviewData.before.score=reviewInfo.score;
-          reviewData.before.mate=reviewInfo.mate;
-          reviewData.before.depth=reviewInfo.depth;
-          reviewData.bestUci=bm;
-          reviewData.bestSan=uciToSan(reviewData.beforeFen,bm);
-          startReviewAnalysis(reviewData.afterFen,'after');
-        }else if(reviewStage==='after'){
-          reviewData.after.score=reviewInfo.score;
-          reviewData.after.mate=reviewInfo.mate;
-          reviewData.after.depth=reviewInfo.depth;
-          finishMoveReview();
-        }
-        return;
-      }
-      if(line==='uciok'){engine.postMessage('isready');return;}
-      if(line==='readyok'){engineReady=true;engineLoading=false;return;}
-    }
-
-    if(activeAnalysisFen&&activeAnalysisFen!==game.fen()&&line.startsWith('info '))return;
 
     if(line==='uciok'){
       engine.postMessage('isready');
@@ -2533,46 +2520,86 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
       engineReady=true;
       engineLoading=false;
       document.getElementById('engineStatus').textContent='Engine ready.';
-      if(reviewStage!=='waiting'&&!batchMode)runAnalysis();
+      if(engineJob&&engineJob.phase==='flushing'){
+        engineJob.phase='searching';
+        engine.postMessage('position fen '+engineJob.fen);
+        engine.postMessage('go depth '+engineJob.depth);
+        return;
+      }
+      if(batchMode==='waiting'){
+        batchMode='running';
+        startBatchPosition();
+      }else if(reviewStage!=='waiting'){
+        runAnalysis();
+      }
       return;
     }
+
+    // bestmove/info emitted before readyok belongs to the stopped predecessor.
+    if(!engineJob||engineJob.phase!=='searching')return;
+    const job=engineJob;
 
     if(line.startsWith('info ')){
-      const depthMatch=line.match(/\bdepth (\d+)/);
-      const cpMatch=line.match(/\bscore cp (-?\d+)/);
-      const mateMatch=line.match(/\bscore mate (-?\d+)/);
-      const pvIndex=line.indexOf(' pv ');
-
-      if(depthMatch)lastEngineInfo.depth=parseInt(depthMatch[1],10);
-      if(cpMatch){
-        lastEngineInfo.score=parseInt(cpMatch[1],10);
-        lastEngineInfo.mate=null;
+      if(job.owner==='batch')parseEngineInfo(line,batchInfo);
+      else if(job.owner==='review')parseEngineInfo(line,reviewInfo);
+      else if(job.owner==='live'){
+        if(job.fen!==game.fen())return;
+        parseEngineInfo(line,lastEngineInfo);
+        displayScore();
+        if(lastEngineInfo.pv.length){
+          const valid=validateBestMove(job.fen,lastEngineInfo.pv[0]);
+          if(valid.valid){
+            document.getElementById('bestMoveValue').textContent=valid.san;
+            document.getElementById('pvValue').textContent=pvToSan(job.fen,lastEngineInfo.pv);
+            bestMoveHighlight={from:valid.move.from,to:valid.move.to};
+            render();
+          }
+        }
+        document.getElementById('engineStatus').textContent='Analyzing… depth '+lastEngineInfo.depth;
       }
-      if(mateMatch){
-        lastEngineInfo.mate=parseInt(mateMatch[1],10);
-        lastEngineInfo.score=null;
-      }
-      if(pvIndex>=0){
-        lastEngineInfo.pv=line.slice(pvIndex+4).trim().split(/\s+/);
-      }
-
-      displayScore();
-      if(lastEngineInfo.pv.length){
-        document.getElementById('bestMoveValue').textContent=uciToSan(game.fen(),lastEngineInfo.pv[0]);
-        document.getElementById('pvValue').textContent=pvToSan(game.fen(),lastEngineInfo.pv);
-        bestMoveHighlight={from:lastEngineInfo.pv[0].slice(0,2),to:lastEngineInfo.pv[0].slice(2,4)};
-        render();
-      }
-      document.getElementById('engineStatus').textContent='Analyzing… depth '+lastEngineInfo.depth;
       return;
     }
 
-    if(line.startsWith('bestmove ')){
-      clearEngineWatchdog();
-      const bm=line.split(/\s+/)[1];
-      if(bm&&bm!=='(none)'){
-        document.getElementById('bestMoveValue').textContent=uciToSan(game.fen(),bm);
-        bestMoveHighlight={from:bm.slice(0,2),to:bm.slice(2,4)};
+    if(!line.startsWith('bestmove '))return;
+    const bm=line.split(/\s+/)[1]||'(none)';
+    const valid=validateBestMove(job.fen,bm);
+    if(!valid.valid){
+      retryEngineJob(job,valid.reason);
+      return;
+    }
+    engineJob=null;
+    clearEngineWatchdog();
+
+    if(job.owner==='batch'){
+      if(batchMode!=='running'||batchPositions[batchIndex]?.fen!==job.fen)return;
+      batchEvaluations[batchIndex]={
+        fen:job.fen,score:batchInfo.score,mate:batchInfo.mate,
+        pv:batchInfo.pv,depth:batchInfo.depth,bestmove:bm
+      };
+      batchIndex++;
+      startBatchPosition();
+      return;
+    }
+    if(job.owner==='review'){
+      if(!reviewData)return;
+      const expectedFen=reviewStage==='before'?reviewData.beforeFen:reviewData.afterFen;
+      if(expectedFen!==job.fen)return;
+      if(reviewStage==='before'){
+        Object.assign(reviewData.before,{score:reviewInfo.score,mate:reviewInfo.mate,depth:reviewInfo.depth,fen:job.fen});
+        reviewData.bestUci=bm;
+        reviewData.bestSan=valid.san;
+        startReviewAnalysis(reviewData.afterFen,'after');
+      }else if(reviewStage==='after'){
+        Object.assign(reviewData.after,{score:reviewInfo.score,mate:reviewInfo.mate,depth:reviewInfo.depth,fen:job.fen});
+        finishMoveReview();
+      }
+      return;
+    }
+    if(job.owner==='live'){
+      if(activeAnalysisFen!==job.fen||game.fen()!==job.fen)return;
+      if(bm!=='(none)'){
+        document.getElementById('bestMoveValue').textContent=valid.san;
+        bestMoveHighlight={from:valid.move.from,to:valid.move.to};
         render();
       }
       document.getElementById('engineStatus').textContent='Analysis complete • depth '+lastEngineInfo.depth;
@@ -2637,20 +2664,17 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
   }
 
   function runAnalysis(){
-    if(!engineReady||!engine)return;
+    if(!engineReady||!engine||batchMode)return;
 
     clearEngineDisplay();
     activeAnalysisFen=game.fen();
     document.getElementById('engineStatus').textContent='Analyzing…';
 
-    engine.postMessage('stop');
-    engine.postMessage('position fen '+activeAnalysisFen);
-    engine.postMessage('go depth 12');
-    armEngineWatchdog();
+    requestEngineJob('live',activeAnalysisFen,12);
   }
 
   function scheduleAutoAnalysis(){
-    if(!document.getElementById('autoAnalyze')?.checked)return;
+    if(batchMode||!document.getElementById('autoAnalyze')?.checked)return;
     clearTimeout(analysisTimer);
     analysisTimer=setTimeout(()=>{
       if(engineReady)runAnalysis();
@@ -2721,6 +2745,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
     feedbackEl.textContent='Chess library failed to load. Refresh the page while connected to the internet.';
     feedbackEl.className='small error';
   }else{
+    runResultIntegrityRegressionChecks();
     render();
   }
 })();
