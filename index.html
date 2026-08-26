@@ -559,7 +559,10 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
       <div class="badge">ENGINE</div>
       <strong> Stockfish analysis</strong>
       <p class="small">Analyze the position currently shown on the board.</p>
-      <button id="analyzeBtn" class="primary">Analyze position</button>
+      <div class="row">
+        <button id="analyzeBtn" class="primary">Analyze position</button>
+        <button id="restartEngineBtn" title="Stop the current worker and start a fresh Stockfish engine">Restart engine</button>
+      </div>
       <div class="toggleRow">
         <div>
           <div style="font-weight:600">Live analysis</div>
@@ -570,7 +573,7 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
           <span class="slider"></span>
         </label>
       </div>
-      <div id="engineStatus" class="small" style="margin-top:8px">Engine not started.</div>
+      <div id="engineStatus" class="small" style="margin-top:8px" aria-live="polite">Engine not started.</div>
       <div class="engineGrid">
         <div class="engineStat">
           <div class="engineLabel">Evaluation</div>
@@ -800,6 +803,10 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
   let engineLoading=false;
   let lastEngineInfo={depth:0,score:null,mate:null,pv:[]};
   let analysisTimer=null;
+  let engineWatchdog=null;
+  let engineStartupTimer=null;
+  let engineGeneration=0;
+  const ENGINE_STALL_TIMEOUT=20000;
   let activeAnalysisFen=null;
   let reviewStage=null;
   let reviewData=null;
@@ -1959,6 +1966,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
     engine.postMessage('stop');
     engine.postMessage('position fen '+fen);
     engine.postMessage('go depth 10');
+    armEngineWatchdog();
   }
 
   function finishMoveReview(){
@@ -2107,6 +2115,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
     engine.postMessage('stop');
     engine.postMessage('position fen '+p.fen);
     engine.postMessage('go depth 8');
+    armEngineWatchdog();
   }
 
   function finishFullGameReview(){
@@ -2381,8 +2390,62 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
     }
   }
 
+  function clearEngineWatchdog(){
+    clearTimeout(engineWatchdog);
+    engineWatchdog=null;
+  }
+
+  function engineIsWorking(){
+    return Boolean(activeAnalysisFen||reviewStage&&reviewStage!=='waiting'||batchMode==='running');
+  }
+
+  function armEngineWatchdog(){
+    clearEngineWatchdog();
+    if(!engineIsWorking())return;
+    engineWatchdog=setTimeout(()=>{
+      stopEngine('Stockfish stopped responding. Restart the engine to continue.');
+    },ENGINE_STALL_TIMEOUT);
+  }
+
+  function stopEngine(statusMessage){
+    clearTimeout(analysisTimer);
+    clearEngineWatchdog();
+    clearTimeout(engineStartupTimer);
+    engineStartupTimer=null;
+    engineGeneration++;
+    if(engine){
+      try{engine.postMessage('stop');}catch(e){}
+      try{engine.terminate();}catch(e){}
+    }
+    engine=null;
+    engineReady=false;
+    engineLoading=false;
+    activeAnalysisFen=null;
+
+    if(batchMode){
+      batchMode=null;
+      const button=document.getElementById('analyzeGameBtn');
+      button.disabled=false;
+      button.textContent='Analyze full game again';
+      document.getElementById('gameReviewStatus').textContent='Game analysis stopped. Restart it to try again.';
+    }
+    if(reviewStage){
+      reviewStage=null;
+      reviewData=null;
+      document.getElementById('reviewStatus').textContent='Move review stopped. Try it again after restarting the engine.';
+    }
+    if(statusMessage)document.getElementById('engineStatus').textContent=statusMessage;
+  }
+
+  function restartEngine(){
+    stopEngine('Restarting Stockfish…');
+    clearEngineDisplay();
+    initEngine();
+  }
+
   function handleEngineLine(line){
     if(typeof line!=='string')return;
+    if(engineIsWorking())armEngineWatchdog();
 
     if(batchMode){
       if(line==='uciok'){
@@ -2420,6 +2483,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
           bestmove:bm
         };
         batchIndex++;
+        clearEngineWatchdog();
         startBatchPosition();
         return;
       }
@@ -2438,6 +2502,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
         return;
       }
       if(line.startsWith('bestmove ')){
+        clearEngineWatchdog();
         const bm=line.split(/\s+/)[1];
         if(reviewStage==='before'){
           reviewData.before.score=reviewInfo.score;
@@ -2503,6 +2568,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
     }
 
     if(line.startsWith('bestmove ')){
+      clearEngineWatchdog();
       const bm=line.split(/\s+/)[1];
       if(bm&&bm!=='(none)'){
         document.getElementById('bestMoveValue').textContent=uciToSan(game.fen(),bm);
@@ -2510,6 +2576,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
         render();
       }
       document.getElementById('engineStatus').textContent='Analysis complete • depth '+lastEngineInfo.depth;
+      activeAnalysisFen=null;
     }
   }
 
@@ -2527,25 +2594,35 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
       // v0.9.1: same-origin worker bootstrap for Safari/iPad reliability.
       // stockfish-worker.js lives beside index.html on GitHub Pages.
       engine=new Worker('./stockfish-worker.js');
+      const generation=++engineGeneration;
 
       let started=false;
-      const startupTimer=setTimeout(()=>{
-        if(!started){
-          try{engine.terminate();}catch(e){}
+      const worker=engine;
+      engineStartupTimer=setTimeout(()=>{
+        if(!started&&generation===engineGeneration){
+          try{worker.terminate();}catch(e){}
           engine=null;
+          engineReady=false;
           engineLoading=false;
-          document.getElementById('engineStatus').textContent='Stockfish worker timed out. Refresh once and try again.';
+          document.getElementById('engineStatus').textContent='Stockfish worker timed out. Use Restart engine to try again.';
         }
       },15000);
 
       engine.onmessage=e=>{
+        if(generation!==engineGeneration)return;
         started=true;
-        clearTimeout(startupTimer);
+        clearTimeout(engineStartupTimer);
+        engineStartupTimer=null;
         handleEngineLine(e.data);
       };
 
       engine.onerror=e=>{
-        clearTimeout(startupTimer);
+        if(generation!==engineGeneration)return;
+        clearTimeout(engineStartupTimer);
+        engineStartupTimer=null;
+        clearEngineWatchdog();
+        engine=null;
+        engineReady=false;
         engineLoading=false;
         document.getElementById('engineStatus').textContent='Stockfish worker could not start. Make sure stockfish-worker.js was added to the repository.';
         console.error(e);
@@ -2569,6 +2646,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
     engine.postMessage('stop');
     engine.postMessage('position fen '+activeAnalysisFen);
     engine.postMessage('go depth 12');
+    armEngineWatchdog();
   }
 
   function scheduleAutoAnalysis(){
@@ -2581,6 +2659,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
   }
 
   document.getElementById('analyzeBtn').addEventListener('click',initEngine);
+  document.getElementById('restartEngineBtn').addEventListener('click',restartEngine);
   document.getElementById('reviewMoveBtn').addEventListener('click',startMoveReview);
   document.getElementById('analyzeGameBtn').addEventListener('click',startFullGameReview);
   document.getElementById('trainBtn').addEventListener('click',startPuzzle);
