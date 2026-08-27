@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Chess Coach DEV v0.9.2B.8.6</title>
+<title>Chess Coach v0.9.3</title>
 <style>
 :root{
   --bg:#111318;--panel:#1a1d24;--text:#f4f4f5;--muted:#a1a1aa;
@@ -141,6 +141,13 @@ h1{font-size:30px;letter-spacing:-.6px;margin:0 0 5px}.sub{color:var(--muted);ma
 .row{display:flex;gap:8px;flex-wrap:wrap}
 .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .toolbar button{min-width:72px}
+.reviewNav{display:grid;grid-template-columns:auto auto minmax(120px,1fr) auto auto;gap:8px;align-items:center;margin:12px 0}
+.reviewNav button{min-width:0;font-size:14px;font-weight:700;padding:10px 9px}
+.moveIndicator{text-align:center;font-weight:800;color:#e4e4e7}
+.currentMoveCard{border:1px solid #3b4250;border-left:5px solid #0ea5e9;background:linear-gradient(180deg,#20242c,#171a20);border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 8px 24px rgba(0,0,0,.16)}
+.currentMoveCard.learningPositive{border-left-color:#48d96b}.currentMoveCard.learningWarning{border-left-color:#f59e0b}.currentMoveCard.learningCritical{border-left-color:#ef4444;background:linear-gradient(180deg,#291e21,#171a20)}
+.learningHeading{font-size:18px;font-weight:850;margin-bottom:7px}.learningPlayed{font-size:20px;font-weight:850;margin-bottom:8px}.learningDetails{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-bottom:9px}.learningDetail{background:#101218;border:1px solid #343a46;border-radius:9px;padding:8px}.learningWhy{line-height:1.45}.recurringPattern{display:inline-block;margin-top:10px;border-radius:999px;padding:5px 9px;background:#3b2b13;color:#fde68a;font-size:12px;font-weight:800}
+@media(max-width:600px){.reviewNav{grid-template-columns:repeat(4,1fr)}.moveIndicator{grid-column:1/-1;grid-row:1}.reviewNav button{font-size:12px;padding:9px 4px}.learningDetails{grid-template-columns:1fr}}
 .toggleRow{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;padding:10px 0;border-top:1px solid #2d323d}
 .switch{position:relative;width:48px;height:28px;display:inline-block}.switch input{display:none}.slider{position:absolute;inset:0;background:#3a404c;border-radius:20px;transition:.2s}.slider:before{content:"";position:absolute;width:22px;height:22px;left:3px;top:3px;background:white;border-radius:50%;transition:.2s}.switch input:checked+.slider{background:#0ea5e9}.switch input:checked+.slider:before{transform:translateX(20px)}
 button{appearance:none;border:1px solid #3b4250;background:#252a33;color:var(--text);border-radius:10px;padding:10px 13px;font-size:16px}
@@ -464,7 +471,7 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
 </head>
 <body>
 <div class="wrap">
-<h1>Chess Coach DEV v0.9.2B.8.6</h1>
+<h1>Chess Coach v0.9.3</h1>
 <div class="sub">Opening recognition + personalized coaching + live material counter + promotion choice.</div>
 
 <div class="layout">
@@ -478,6 +485,17 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
       <div id="board" class="board" aria-label="Interactive chess board"></div>
     </div>
     </div>
+    <nav class="reviewNav" aria-label="PGN move navigation">
+      <button id="startMoveBtn" title="Go to the initial position">|◀ Start</button>
+      <button id="previousMoveBtn">← Previous</button>
+      <div id="moveIndicator" class="moveIndicator" aria-live="polite">Move 0 of 0</div>
+      <button id="nextMoveBtn">Next →</button>
+      <button id="endMoveBtn" title="Go to the final position">End ▶|</button>
+    </nav>
+    <section id="currentMoveCard" class="currentMoveCard" aria-live="polite">
+      <div class="learningHeading">Load a PGN to begin move-by-move review</div>
+      <div class="small">Your current move’s coaching will appear here.</div>
+    </section>
     <div class="materialPanel" id="materialPanel" aria-label="Material and piece count">
       <div class="materialSide">
         <div class="materialLabel">White pieces</div>
@@ -496,8 +514,6 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
       <button id="flipBtn">Flip board</button>
       <button id="undoBtn">Undo</button>
       <button id="resetBtn">Reset</button>
-      <button id="backBtn">◀ Back</button>
-      <button id="forwardBtn">Forward ▶</button>
       <button id="reloadLatestBtn" title="Force Safari to request the newest GitHub Pages build">↻ Reload Latest</button>
     </div>
     <div id="status" class="status"></div>
@@ -1239,6 +1255,84 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
     }
   }
 
+  function reviewedEval(evaluation){
+    if(!evaluation||!evaluation.fen)return null;
+    const turn=new Chess(evaluation.fen).turn();
+    return scoreToWhite(evaluation.score,evaluation.mate,turn);
+  }
+
+  function formatReviewedEval(result){
+    if(!result)return '—';
+    if(result.type==='mate')return (result.whiteWinning?'M':'-M')+result.mate;
+    const pawns=result.cp/100;
+    return (pawns>0?'+':'')+pawns.toFixed(1);
+  }
+
+  function coachingExplanation(r){
+    if(r.isMateEvent&&r.mateNote){
+      return r.mateNote+(r.bestSan&&r.bestSan!=='—'&&r.bestSan!==r.actualSan?' Stockfish preferred '+r.bestSan+'.':'');
+    }
+    if(r.rating.label==='Best')return 'You found Stockfish’s top move in this position.';
+    if(r.rating.label==='Excellent'||r.rating.label==='Good')return 'Your move was playable, but Stockfish slightly preferred '+r.bestSan+'. Compare the resulting piece activity and threats.';
+    if(r.rating.label==='Inaccuracy')return 'This gave away some of your advantage. Before '+r.actualSan+', check whether '+r.bestSan+' creates a stronger forcing sequence.';
+    if(r.rating.label==='Mistake')return 'This caused a meaningful evaluation swing. Recalculate the position before '+r.actualSan+' and look at your opponent’s checks, captures, and threats. Stockfish preferred '+r.bestSan+'.';
+    return 'This was one of the game’s biggest turning points. Ask what tactical or positional resource became available after '+r.actualSan+'. Stockfish wanted '+r.bestSan+'.';
+  }
+
+  function recurringPatternForRow(r){
+    if(!r||!['Inaccuracy','Mistake','Blunder','Mate missed','Mate allowed'].includes(r.rating.label))return null;
+    let key='planning',label='Planning / piece activity';
+    const best=r.bestSan||'';
+    if(r.isMateEvent){key='king';label='King safety';}
+    else if(best.includes('x')||best.includes('+')||best.includes('#')){key='tactical';label='Tactical miss';}
+    else if(r.loss>=200){key='threats';label='Overlooked threat';}
+    return (learningProfile[key]||0)>=2?label:null;
+  }
+
+  function renderCurrentMoveLearning(){
+    const card=document.getElementById('currentMoveCard');
+    const indicator=document.getElementById('moveIndicator');
+    indicator.textContent='Move '+cursor+' of '+loadedMoves.length;
+    document.getElementById('startMoveBtn').disabled=cursor===0;
+    document.getElementById('previousMoveBtn').disabled=cursor===0;
+    document.getElementById('nextMoveBtn').disabled=cursor>=loadedMoves.length;
+    document.getElementById('endMoveBtn').disabled=cursor>=loadedMoves.length;
+    card.className='currentMoveCard';
+    card.innerHTML='';
+
+    const heading=document.createElement('div'); heading.className='learningHeading';
+    if(!loadedMoves.length){
+      heading.textContent='Load a PGN to begin move-by-move review'; card.appendChild(heading);
+      const note=document.createElement('div');note.className='small';note.textContent='Your current move’s coaching will appear here.';card.appendChild(note);return;
+    }
+    if(cursor===0){
+      heading.textContent='Game ready — advance to move 1';card.appendChild(heading);
+      const note=document.createElement('div');note.className='small';note.textContent='The complete game is loaded. Use Next to review one half-move at a time.';card.appendChild(note);return;
+    }
+
+    const moveIndex=cursor-1, side=moveIndex%2===0?'White':'Black';
+    const player=side==='White'?(pgnHeaders.White||'White'):(pgnHeaders.Black||'Black');
+    heading.textContent='Move '+(Math.floor(moveIndex/2)+1)+' — '+player;card.appendChild(heading);
+    const r=batchRows.find(row=>row.i===moveIndex);
+    const played=document.createElement('div');played.className='learningPlayed';
+    played.textContent='Played: '+loadedMoves[moveIndex]+(r?' — '+r.rating.label.toUpperCase():'');card.appendChild(played);
+    if(!r){
+      const note=document.createElement('div');note.className='small';note.textContent='Run Full Game Review to see move grading and coaching.';card.appendChild(note);return;
+    }
+    if(['Mistake'].includes(r.rating.label))card.classList.add('learningWarning');
+    if(['Blunder','Mate missed','Mate allowed'].includes(r.rating.label))card.classList.add('learningCritical');
+    if(['Best','Excellent','Checkmate','Mate found'].includes(r.rating.label))card.classList.add('learningPositive');
+    const before=reviewedEval(r.before),after=reviewedEval(r.after);
+    const details=document.createElement('div');details.className='learningDetails';
+    const best=document.createElement('div');best.className='learningDetail';best.textContent='Best: '+r.bestSan;details.appendChild(best);
+    const evaluation=document.createElement('div');evaluation.className='learningDetail';evaluation.textContent='Eval: '+formatReviewedEval(before)+' → '+formatReviewedEval(after);details.appendChild(evaluation);
+    if(!r.isMateEvent){const loss=document.createElement('div');loss.className='learningDetail';loss.textContent='Eval loss: '+(r.loss/100).toFixed(2);details.appendChild(loss);}
+    card.appendChild(details);
+    const why=document.createElement('div');why.className='learningWhy';why.textContent='Why: '+coachingExplanation(r);card.appendChild(why);
+    const recurring=recurringPatternForRow(r);if(recurring){const badge=document.createElement('div');badge.className='recurringPattern';badge.textContent='Recurring pattern — '+recurring;card.appendChild(badge);}
+    const selectedEval=after;if(selectedEval)setEvalBar(selectedEval.type==='mate'?(selectedEval.whiteWinning?'M'+selectedEval.mate:'-M'+selectedEval.mate):selectedEval.cp/100);
+  }
+
   function render(){
     boardEl.innerHTML='';
 
@@ -1311,6 +1405,7 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
     fenEl.textContent=game.fen();
     updateMaterialCounter();
     renderMoves();
+    renderCurrentMoveLearning();
   }
 
   let pendingPromotion=null;
@@ -1395,6 +1490,7 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
     }
     loadedMoves.push(move.san);
     cursor=loadedMoves.length;
+    batchRows=[]; // The stored review belongs to the original imported move list.
 
     feedbackEl.textContent='Played '+move.san;
     feedbackEl.className='small ok';
@@ -1702,6 +1798,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
   document.getElementById('resetBtn').addEventListener('click',()=>{
     game=new Chess();
     loadedMoves=[];
+    batchRows=[];
     cursor=0;
     lastMove=null;
     selected=null;
@@ -1718,13 +1815,10 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
     if(cursor>0)rebuildTo(cursor-1);
   });
 
-  document.getElementById('backBtn').addEventListener('click',()=>{
-    if(cursor>0)rebuildTo(cursor-1);
-  });
-
-  document.getElementById('forwardBtn').addEventListener('click',()=>{
-    if(cursor<loadedMoves.length)rebuildTo(cursor+1);
-  });
+  document.getElementById('startMoveBtn').addEventListener('click',()=>rebuildTo(0));
+  document.getElementById('previousMoveBtn').addEventListener('click',()=>{if(cursor>0)rebuildTo(cursor-1);});
+  document.getElementById('nextMoveBtn').addEventListener('click',()=>{if(cursor<loadedMoves.length)rebuildTo(cursor+1);});
+  document.getElementById('endMoveBtn').addEventListener('click',()=>rebuildTo(loadedMoves.length));
 
   function showManualPasteFallback(){
     pgnInput.focus();
@@ -1807,6 +1901,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
 
     feedbackEl.textContent='PGN loaded: '+loadedMoves.length+' half-moves.';
     feedbackEl.className='small ok';
+    batchRows=[];
     resetBatchUI();
     activeLessonRow=null;
     puzzleMode=false;
@@ -1816,7 +1911,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
     document.getElementById('puzzleStatus').textContent='Select a key learning position first.';
     document.getElementById('gameReviewStatus').textContent='Ready to analyze '+loadedMoves.length+' half-moves.';
 
-    rebuildTo(loadedMoves.length);
+    rebuildTo(0);
   });
 
   function clearEngineDisplay(){
@@ -2225,6 +2320,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
     renderPatternInsights();
 
     renderOpeningCoach();
+    renderCurrentMoveLearning();
     document.getElementById('gameReviewStatus').textContent='Full game review complete • '+rows.length+' moves classified.';
     document.getElementById('analyzeGameBtn').disabled=false;
     document.getElementById('analyzeGameBtn').textContent='Analyze full game again';
