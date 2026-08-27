@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Chess Coach v0.9.3.1</title>
+<title>Chess Coach DEV v0.9.3.2</title>
 <style>
 :root{
   --bg:#111318;--panel:#1a1d24;--text:#f4f4f5;--muted:#a1a1aa;
@@ -152,6 +152,14 @@ h1{font-size:30px;letter-spacing:-.6px;margin:0 0 5px}.sub{color:var(--muted);ma
 .switch{position:relative;width:48px;height:28px;display:inline-block}.switch input{display:none}.slider{position:absolute;inset:0;background:#3a404c;border-radius:20px;transition:.2s}.slider:before{content:"";position:absolute;width:22px;height:22px;left:3px;top:3px;background:white;border-radius:50%;transition:.2s}.switch input:checked+.slider{background:#0ea5e9}.switch input:checked+.slider:before{transform:translateX(20px)}
 button{appearance:none;border:1px solid #3b4250;background:#252a33;color:var(--text);border-radius:10px;padding:10px 13px;font-size:16px}
 button.primary{background:#0ea5e9;border-color:#0ea5e9;color:#fff}
+button:disabled{opacity:.48;cursor:not-allowed}
+.tryLineLaunch{background:#7c3aed;border-color:#8b5cf6;color:#fff;font-weight:850;min-height:46px}
+.tryLinePanel{display:none;margin-top:12px;padding:14px;border:2px solid #8b5cf6;border-radius:14px;background:linear-gradient(180deg,#25183d,#171a20)}
+.tryLinePanel.active{display:block}.tryLineTitle{font-size:17px;font-weight:900;line-height:1.35}.tryLineNotice{color:#ddd6fe;margin-top:4px}
+.tryLineStats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}.tryLineStat{background:#110d18;border:1px solid #4c3a67;border-radius:10px;padding:9px}.tryLineValue{font-size:17px;font-weight:850;margin-top:3px;word-break:break-word}
+.tryLineMoves{margin-top:10px;padding:10px;min-height:44px;background:#110d18;border:1px solid #4c3a67;border-radius:10px;line-height:1.7}
+.tryLineControls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}.tryLineControls button{min-height:46px;font-weight:750}
+@media(max-width:520px){.tryLineStats{grid-template-columns:1fr}.tryLineControls{grid-template-columns:1fr 1fr}.tryLineControls button{padding:12px 7px;font-size:14px}}
 textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250;background:#101218;color:var(--text);padding:10px;font-size:14px;resize:vertical}
 .status{font-size:16px;margin:8px 0}.small{font-size:13px;color:var(--muted)}
 .moves{max-height:290px;overflow:auto;line-height:1.9;padding-right:4px}.movebtn{padding:4px 8px;font-size:14px;margin:2px;border-radius:8px;background:#232832}.activeMove{background:#0ea5e9!important;border-color:#0ea5e9!important;color:#fff}
@@ -471,8 +479,8 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
 </head>
 <body>
 <div class="wrap">
-<h1>Chess Coach v0.9.3.1</h1>
-<div class="sub">Opening recognition + personalized coaching + live material counter + promotion choice.</div>
+<h1>Chess Coach DEV v0.9.3.2</h1>
+<div class="sub">Explore alternatives safely with Try a Line.</div>
 
 <div class="layout">
   <div class="leftPane">
@@ -511,11 +519,29 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
       </div>
     </div>
     <div class="toolbar">
+      <button id="tryLineBtn" class="tryLineLaunch">♟ Try a Line</button>
       <button id="flipBtn">Flip board</button>
       <button id="undoBtn">Undo</button>
       <button id="resetBtn">Reset</button>
       <button id="reloadLatestBtn" title="Force Safari to request the newest GitHub Pages build">↻ Reload Latest</button>
     </div>
+    <section id="tryLinePanel" class="tryLinePanel" aria-live="polite">
+      <div class="tryLineTitle">Try a Line — experimental moves do not change your original game.</div>
+      <div id="tryLineStatus" class="tryLineNotice small">Stockfish is preparing the starting position…</div>
+      <div class="tryLineStats">
+        <div class="tryLineStat"><div class="engineLabel">Starting move</div><div id="tryLineStartMove" class="tryLineValue">—</div></div>
+        <div class="tryLineStat"><div class="engineLabel">Current evaluation</div><div id="tryLineEval" class="tryLineValue">—</div></div>
+        <div class="tryLineStat"><div class="engineLabel">Change from start</div><div id="tryLineDelta" class="tryLineValue">—</div></div>
+      </div>
+      <div class="engineLabel" style="margin-top:10px">Experimental variation</div>
+      <div id="tryLineMoves" class="tryLineMoves">No experimental moves yet.</div>
+      <div class="engineLabel" style="margin-top:10px">Stockfish recommended response</div>
+      <div id="tryLineBest" class="tryLineValue">—</div>
+      <div class="tryLineControls">
+        <button id="tryLineUndo">Undo Move</button><button id="tryLineRestart">Restart Line</button>
+        <button id="tryLineExit">Exit Try a Line</button><button id="tryLineReturn" class="primary">Return to Game</button>
+      </div>
+    </section>
     <div id="status" class="status"></div>
     <div id="feedback" class="small" aria-live="polite">Tap a piece to see legal moves.</div>
   </div>
@@ -851,6 +877,126 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
   let reviewedGameKeys=[];
   let patternMemory={games:0,tacticalGames:0,threatGames:0,kingGames:0,planningGames:0,mateMissGames:0,backRankGames:0};
   let reviewCategory='key';
+  let tryLine=null;
+  let tryLineGeneration=0;
+  let tryLineInfo={score:null,mate:null,pv:[],depth:0};
+
+  const TRY_LINE_CONSUMER_IDS=['analyzeBtn','autoAnalyze','reviewMoveBtn','analyzeGameBtn','trainBtn','revealBtn','thinkBtn','pauseStartBtn','pauseRevealBtn','loadBtn','sampleBtn','resetBtn','undoBtn','startMoveBtn','previousMoveBtn','nextMoveBtn','endMoveBtn'];
+
+  function setTryLineConsumersDisabled(disabled){
+    TRY_LINE_CONSUMER_IDS.forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=disabled;});
+    document.querySelectorAll('.movebtn,.tabBtn').forEach(el=>el.disabled=disabled);
+  }
+
+  function engineResultMatchesLine(job,line,fen,generation){
+    return Boolean(line&&job&&job.owner==='tryline'&&job.lineToken===generation&&job.fen===fen);
+  }
+
+  function tryLineJobMatches(job){
+    return engineResultMatchesLine(job,tryLine,game.fen(),tryLineGeneration);
+  }
+
+  function evaluationForFen(info,fen){
+    const turn=fen.split(' ')[1];
+    if(info.mate!==null){
+      const signed=turn==='b'?-info.mate:info.mate;
+      return {type:'mate',value:signed,label:(signed>0?'M':'-M')+Math.abs(signed)};
+    }
+    if(info.score===null)return null;
+    const cp=turn==='b'?-info.score:info.score;
+    return {type:'cp',value:cp,label:(cp>0?'+':'')+(cp/100).toFixed(2)};
+  }
+
+  function renderTryLine(){
+    const panel=document.getElementById('tryLinePanel');
+    panel.classList.toggle('active',Boolean(tryLine));
+    if(!tryLine)return;
+    document.getElementById('tryLineStartMove').textContent=tryLine.startLabel;
+    const moves=document.getElementById('tryLineMoves');
+    if(!tryLine.moves.length)moves.textContent='No experimental moves yet.';
+    else{
+      let number=tryLine.startFullmove, turn=tryLine.startTurn, text='';
+      tryLine.moves.forEach(san=>{
+        if(turn==='w'){text+=(text?' ':'')+number+'. '+san;turn='b';}
+        else{text+=(text?' ':'')+(text?san:number+'… '+san);turn='w';number++;}
+      });
+      moves.textContent=text;
+    }
+    document.getElementById('tryLineUndo').disabled=!tryLine.moves.length||tryLine.locked;
+    document.getElementById('tryLineRestart').disabled=tryLine.locked;
+  }
+
+  function requestTryLineAnalysis(kind){
+    if(!tryLine)return;
+    tryLine.locked=true;
+    selected=null;legalTargets=[];bestMoveHighlight=null;
+    tryLineInfo={score:null,mate:null,pv:[],depth:0};
+    const status=document.getElementById('tryLineStatus');
+    status.textContent=kind==='base'?'Stockfish is evaluating the starting position…':'Stockfish is analyzing the experimental position…';
+    document.getElementById('tryLineBest').textContent='…';
+    renderTryLine();render();
+    if(engineReady&&engine)requestEngineJob('tryline',game.fen(),12,0,tryLineGeneration,kind);
+    else initEngine();
+  }
+
+  function startTryLine(){
+    if(tryLine)return;
+    const parts=game.fen().split(' ');
+    const fullmove=parseInt(parts[5],10)||1, turn=parts[1];
+    tryLine={
+      snapshot:{fen:game.fen(),cursor,loadedMoves:loadedMoves.slice(),lastMove:lastMove?{...lastMove}:null,pgn:pgnInput.value,autoAnalyze:document.getElementById('autoAnalyze').checked,
+        puzzleMode,pauseMode,lastEngineInfo:{...lastEngineInfo,pv:lastEngineInfo.pv.slice()},bestMoveHighlight:bestMoveHighlight?{...bestMoveHighlight}:null,
+        engineDisplay:{eval:document.getElementById('evalValue').textContent,best:document.getElementById('bestMoveValue').textContent,pv:document.getElementById('pvValue').textContent,status:document.getElementById('engineStatus').textContent}},
+      startFen:game.fen(),startFullmove:fullmove,startTurn:turn,startLabel:'Move '+fullmove+(turn==='w'?' (White)':'… (Black)'),
+      moves:[],baseEval:null,currentEval:null,locked:true
+    };
+    tryLineGeneration++;
+    clearTimeout(analysisTimer);
+    stopEngine('Try a Line has exclusive use of Stockfish.');
+    puzzleMode=false;pauseMode=false;
+    document.getElementById('autoAnalyze').checked=false;
+    setTryLineConsumersDisabled(true);
+    document.getElementById('tryLineBtn').disabled=true;
+    document.getElementById('tryLineEval').textContent='—';
+    document.getElementById('tryLineDelta').textContent='—';
+    renderTryLine();
+    initEngine();
+  }
+
+  function restartTryLine(){
+    if(!tryLine)return;
+    game=new Chess(tryLine.startFen);tryLine.moves=[];tryLine.currentEval=tryLine.baseEval;
+    tryLineGeneration++;lastMove=null;selected=null;legalTargets=[];
+    document.getElementById('tryLineEval').textContent=tryLine.baseEval?.label||'—';
+    document.getElementById('tryLineDelta').textContent=tryLine.baseEval?.type==='cp'?'0.00':'—';
+    requestTryLineAnalysis('current');
+  }
+
+  function undoTryLineMove(){
+    if(!tryLine||!tryLine.moves.length)return;
+    game.undo();tryLine.moves.pop();tryLineGeneration++;lastMove=null;
+    requestTryLineAnalysis('current');
+  }
+
+  function exitTryLine(){
+    if(!tryLine)return;
+    const saved=tryLine.snapshot;
+    tryLineGeneration++;
+    if(engine){engine.postMessage('stop');engine.postMessage('isready');}
+    engineJob=null;activeAnalysisFen=null;
+    game=new Chess(saved.fen);cursor=saved.cursor;loadedMoves=saved.loadedMoves.slice();lastMove=saved.lastMove;pgnInput.value=saved.pgn;
+    document.getElementById('autoAnalyze').checked=saved.autoAnalyze;
+    tryLine=null;selected=null;legalTargets=[];puzzleMode=saved.puzzleMode;pauseMode=saved.pauseMode;
+    lastEngineInfo=saved.lastEngineInfo;bestMoveHighlight=saved.bestMoveHighlight;
+    setTryLineConsumersDisabled(false);document.getElementById('tryLineBtn').disabled=false;
+    renderTryLine();render();
+    document.getElementById('evalValue').textContent=saved.engineDisplay.eval;
+    document.getElementById('bestMoveValue').textContent=saved.engineDisplay.best;
+    document.getElementById('pvValue').textContent=saved.engineDisplay.pv;
+    document.getElementById('engineStatus').textContent=saved.engineDisplay.status;
+    feedbackEl.textContent='Returned to the original game and move.';feedbackEl.className='small ok';
+    scheduleAutoAnalysis();
+  }
 
   function switchTab(tabId){
     document.querySelectorAll('.tabPane').forEach(p=>p.classList.remove('activePane'));
@@ -1446,6 +1592,7 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
     updateMaterialCounter();
     renderMoves();
     renderCurrentMoveLearning();
+    if(tryLine)setTryLineConsumersDisabled(true);
   }
 
   let pendingPromotion=null;
@@ -1482,6 +1629,15 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
     lastMove={from:move.from,to:move.to};
     selected=null;
     legalTargets=[];
+
+    if(tryLine){
+      tryLine.moves.push(move.san);
+      tryLineGeneration++;
+      feedbackEl.textContent='Experimental move: '+move.san;
+      feedbackEl.className='small ok';
+      requestTryLineAnalysis('current');
+      return;
+    }
 
     if(pauseMode){
       const playedUci=move.from+move.to+(move.promotion||'');
@@ -1541,6 +1697,11 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
   }
 
   function attemptManualMove(from,to,promotion){
+    if(tryLine?.locked){
+      feedbackEl.textContent='Wait for Stockfish to finish before playing the next move.';
+      feedbackEl.className='small';
+      return false;
+    }
     let move=null;
     try{
       const spec={from,to};
@@ -1994,10 +2155,10 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
     }catch(e){return {valid:false,reason:'invalid FEN'};}
   }
 
-  function requestEngineJob(owner,fen,depth,retries=0){
+  function requestEngineJob(owner,fen,depth,retries=0,lineToken=null,tryLineKind=null){
     if(!engineReady||!engine)return false;
     if(batchMode&&owner!=='batch')return false; // Full Game Review is exclusive.
-    engineJob={owner,fen,depth,retries,phase:'flushing'};
+    engineJob={owner,fen,depth,retries,lineToken,tryLineKind,phase:'flushing'};
     engine.postMessage('stop');
     engine.postMessage('isready');
     armEngineWatchdog();
@@ -2006,7 +2167,8 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
 
   function retryEngineJob(job,reason){
     console.warn('Discarded Stockfish result for '+job.owner+' ('+reason+'); retrying '+job.fen);
-    requestEngineJob(job.owner,job.fen,job.depth,job.retries+1);
+    if(job.owner==='tryline'&&!tryLineJobMatches(job))return;
+    requestEngineJob(job.owner,job.fen,job.depth,job.retries+1,job.lineToken,job.tryLineKind);
   }
 
   function runResultIntegrityRegressionChecks(){
@@ -2014,6 +2176,23 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
     const g=new Chess(fen);
     console.assert(!g.get('d1')&&!g.get('d8'),'Regression FEN must contain no queens');
     console.assert(!validateBestMove(fen,'d1d8').valid,'Qxd8-style stale UCI must be rejected');
+  }
+
+  function runTryLineRegressionChecks(){
+    const originalPgn='[White "Regression"]\n\n1. e4 e5';
+    const original=new Chess();original.move('e4');
+    const originalFen=original.fen(), originalIndex=1;
+    const line=new Chess(originalFen);
+    console.assert(line.move({from:'e7',to:'e5'})!==null,'Try a Line accepts a legal move');
+    console.assert(line.move({from:'e1',to:'e8'})===null,'Try a Line rejects illegal moves');
+    line.load(originalFen);
+    console.assert(line.fen()===originalFen,'Restart Line restores the exact starting FEN');
+    const restored={pgn:originalPgn,fen:originalFen,cursor:originalIndex};
+    console.assert(restored.pgn===originalPgn,'Original PGN remains unchanged');
+    console.assert(restored.fen===originalFen&&restored.cursor===originalIndex,'Exit restores the original game and move index');
+    const current={owner:'tryline',fen:originalFen,lineToken:9};
+    console.assert(!engineResultMatchesLine(current,{},'stale-fen',9),'Stale Stockfish FEN cannot affect the line');
+    console.assert(!engineResultMatchesLine(current,{},originalFen,10),'Stale Stockfish generation cannot affect the line');
   }
 
   function pvToSan(fen,pv){
@@ -2666,6 +2845,8 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
       if(batchMode==='waiting'){
         batchMode='running';
         startBatchPosition();
+      }else if(tryLine){
+        requestTryLineAnalysis(tryLine.baseEval?'current':'base');
       }else if(reviewStage!=='waiting'){
         runAnalysis();
       }
@@ -2693,6 +2874,12 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
           }
         }
         document.getElementById('engineStatus').textContent='Analyzing… depth '+lastEngineInfo.depth;
+      }else if(job.owner==='tryline'){
+        if(!tryLineJobMatches(job))return;
+        parseEngineInfo(line,tryLineInfo);
+        const liveEval=evaluationForFen(tryLineInfo,job.fen);
+        if(liveEval)document.getElementById('tryLineEval').textContent=liveEval.label;
+        document.getElementById('tryLineStatus').textContent='Analyzing… depth '+tryLineInfo.depth;
       }
       return;
     }
@@ -2732,6 +2919,26 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
       }
       return;
     }
+    if(job.owner==='tryline'){
+      if(!tryLineJobMatches(job))return;
+      const result=evaluationForFen(tryLineInfo,job.fen);
+      if(!result){retryEngineJob(job,'missing evaluation');return;}
+      if(job.tryLineKind==='base')tryLine.baseEval=result;
+      tryLine.currentEval=result;
+      tryLine.locked=false;
+      document.getElementById('tryLineEval').textContent=result.label;
+      let delta='—';
+      if(tryLine.baseEval?.type==='cp'&&result.type==='cp'){
+        const d=(result.value-tryLine.baseEval.value)/100;
+        delta=(d>0?'+':'')+d.toFixed(2);
+      }
+      document.getElementById('tryLineDelta').textContent=delta;
+      document.getElementById('tryLineBest').textContent=valid.san;
+      document.getElementById('tryLineStatus').textContent='Ready • Stockfish depth '+tryLineInfo.depth+'. Play another legal move.';
+      if(valid.move)bestMoveHighlight={from:valid.move.from,to:valid.move.to};
+      renderTryLine();render();
+      return;
+    }
     if(job.owner==='live'){
       if(activeAnalysisFen!==job.fen||game.fen()!==job.fen)return;
       if(bm!=='(none)'){
@@ -2746,7 +2953,8 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
 
   async function initEngine(){
     if(engineReady){
-      runAnalysis();
+      if(tryLine)requestTryLineAnalysis(tryLine.baseEval?'current':'base');
+      else runAnalysis();
       return;
     }
     if(engineLoading)return;
@@ -2820,6 +3028,11 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
   }
 
   document.getElementById('analyzeBtn').addEventListener('click',initEngine);
+  document.getElementById('tryLineBtn').addEventListener('click',startTryLine);
+  document.getElementById('tryLineUndo').addEventListener('click',undoTryLineMove);
+  document.getElementById('tryLineRestart').addEventListener('click',restartTryLine);
+  document.getElementById('tryLineExit').addEventListener('click',exitTryLine);
+  document.getElementById('tryLineReturn').addEventListener('click',exitTryLine);
   document.getElementById('restartEngineBtn').addEventListener('click',restartEngine);
   document.getElementById('reviewMoveBtn').addEventListener('click',startMoveReview);
   document.getElementById('analyzeGameBtn').addEventListener('click',startFullGameReview);
@@ -2883,6 +3096,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
     feedbackEl.className='small error';
   }else{
     runResultIntegrityRegressionChecks();
+    runTryLineRegressionChecks();
     render();
   }
 })();
