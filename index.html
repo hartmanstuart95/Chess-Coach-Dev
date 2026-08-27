@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Chess Coach v0.9.3</title>
+<title>Chess Coach v0.9.3.1</title>
 <style>
 :root{
   --bg:#111318;--panel:#1a1d24;--text:#f4f4f5;--muted:#a1a1aa;
@@ -145,8 +145,8 @@ h1{font-size:30px;letter-spacing:-.6px;margin:0 0 5px}.sub{color:var(--muted);ma
 .reviewNav button{min-width:0;font-size:14px;font-weight:700;padding:10px 9px}
 .moveIndicator{text-align:center;font-weight:800;color:#e4e4e7}
 .currentMoveCard{border:1px solid #3b4250;border-left:5px solid #0ea5e9;background:linear-gradient(180deg,#20242c,#171a20);border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 8px 24px rgba(0,0,0,.16)}
-.currentMoveCard.learningPositive{border-left-color:#48d96b}.currentMoveCard.learningWarning{border-left-color:#f59e0b}.currentMoveCard.learningCritical{border-left-color:#ef4444;background:linear-gradient(180deg,#291e21,#171a20)}
-.learningHeading{font-size:18px;font-weight:850;margin-bottom:7px}.learningPlayed{font-size:20px;font-weight:850;margin-bottom:8px}.learningDetails{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-bottom:9px}.learningDetail{background:#101218;border:1px solid #343a46;border-radius:9px;padding:8px}.learningWhy{line-height:1.45}.recurringPattern{display:inline-block;margin-top:10px;border-radius:999px;padding:5px 9px;background:#3b2b13;color:#fde68a;font-size:12px;font-weight:800}
+.currentMoveCard.learningPositive{border-left-color:#48d96b}.currentMoveCard.learningGood{border-left-color:#7fbf90}.currentMoveCard.learningInaccuracy{border-left-color:#eab308}.currentMoveCard.learningWarning{border-left-color:#f59e0b}.currentMoveCard.learningCritical{border-left-color:#ef4444;background:linear-gradient(180deg,#291e21,#171a20)}
+.learningHeading{font-size:18px;font-weight:850;margin-bottom:7px}.learningPlayed{font-size:20px;font-weight:850;margin-bottom:3px}.learningClassification{font-size:14px;font-weight:900;letter-spacing:.06em;margin-bottom:10px}.learningPositive .learningClassification{color:#86efac}.learningGood .learningClassification{color:#bbf7d0}.learningInaccuracy .learningClassification{color:#fde047}.learningWarning .learningClassification{color:#fdba74}.learningCritical .learningClassification{color:#fca5a5}.learningDetails{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-bottom:9px}.learningDetail{background:#101218;border:1px solid #343a46;border-radius:9px;padding:8px}.learningWhy{line-height:1.5}.learningSectionLabel{display:block;color:var(--muted);font-size:11px;font-weight:900;letter-spacing:.08em;margin:12px 0 3px}.coachingReminder{margin-top:10px;padding:10px;border-left:3px solid #0ea5e9;background:#101820;border-radius:0 9px 9px 0;font-weight:750;line-height:1.45}.recurringPattern{margin-top:10px;border-radius:9px;padding:9px;background:#3b2b13;color:#fde68a;font-size:12px;font-weight:800}
 @media(max-width:600px){.reviewNav{grid-template-columns:repeat(4,1fr)}.moveIndicator{grid-column:1/-1;grid-row:1}.reviewNav button{font-size:12px;padding:9px 4px}.learningDetails{grid-template-columns:1fr}}
 .toggleRow{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;padding:10px 0;border-top:1px solid #2d323d}
 .switch{position:relative;width:48px;height:28px;display:inline-block}.switch input{display:none}.slider{position:absolute;inset:0;background:#3a404c;border-radius:20px;transition:.2s}.slider:before{content:"";position:absolute;width:22px;height:22px;left:3px;top:3px;background:white;border-radius:50%;transition:.2s}.switch input:checked+.slider{background:#0ea5e9}.switch input:checked+.slider:before{transform:translateX(20px)}
@@ -471,7 +471,7 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
 </head>
 <body>
 <div class="wrap">
-<h1>Chess Coach v0.9.3</h1>
+<h1>Chess Coach v0.9.3.1</h1>
 <div class="sub">Opening recognition + personalized coaching + live material counter + promotion choice.</div>
 
 <div class="layout">
@@ -1268,7 +1268,33 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
     return (pawns>0?'+':'')+pawns.toFixed(1);
   }
 
+  // Only call an overlooked threat when the game itself confirms it: the
+  // opponent's previous piece attacked a piece, and that same piece captures
+  // the same target immediately after the reviewed move.
+  function directThreatContext(moveIndex){
+    if(moveIndex<1||moveIndex+1>=loadedMoves.length)return null;
+    const g=new Chess();
+    let previous=null;
+    for(let i=0;i<moveIndex;i++){
+      try{previous=g.move(loadedMoves[i]);}catch(e){return null;}
+      if(!previous)return null;
+    }
+    const threatFen=g.fen().split(' ');threatFen[1]=previous.color;
+    let threatGame=null;try{threatGame=new Chess(threatFen.join(' '));}catch(e){return null;}
+    const threatened=(threatGame.moves({square:previous.to,verbose:true})||[])
+      .filter(m=>m.captured).map(m=>m.to);
+    if(!threatened.length)return null;
+    let played=null,next=null;
+    try{played=g.move(loadedMoves[moveIndex]);next=g.move(loadedMoves[moveIndex+1]);}catch(e){return null;}
+    if(!played||!next||!next.captured||next.from!==previous.to||!threatened.includes(next.to))return null;
+    return {previousSan:previous.san,attackerSquare:previous.to,targetSquare:next.to,nextSan:next.san};
+  }
+
   function coachingExplanation(r){
+    if(r.threatContext){
+      const t=r.threatContext;
+      return 'The previous move '+t.previousSan+' created a direct attack on your piece on '+t.targetSquare+'. '+r.actualSan+' did not answer that threat, and '+t.nextSan+' captured it.';
+    }
     if(r.isMateEvent&&r.mateNote){
       return r.mateNote+(r.bestSan&&r.bestSan!=='—'&&r.bestSan!==r.actualSan?' Stockfish preferred '+r.bestSan+'.':'');
     }
@@ -1285,8 +1311,16 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
     const best=r.bestSan||'';
     if(r.isMateEvent){key='king';label='King safety';}
     else if(best.includes('x')||best.includes('+')||best.includes('#')){key='tactical';label='Tactical miss';}
-    else if(r.loss>=200){key='threats';label='Overlooked threat';}
+    else if(r.threatContext||r.loss>=200){key='threats';label='Opponent threat overlooked';}
     return (learningProfile[key]||0)>=2?label:null;
+  }
+
+  function classificationIcon(label){
+    if(['Best','Excellent','Checkmate','Mate found'].includes(label))return '🟢';
+    if(label==='Good')return '✅';
+    if(label==='Inaccuracy')return '🟡';
+    if(label==='Mistake')return '🟠';
+    return '🔴';
   }
 
   function renderCurrentMoveLearning(){
@@ -1306,8 +1340,10 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
       const note=document.createElement('div');note.className='small';note.textContent='Your current move’s coaching will appear here.';card.appendChild(note);return;
     }
     if(cursor===0){
-      heading.textContent='Game ready — advance to move 1';card.appendChild(heading);
-      const note=document.createElement('div');note.className='small';note.textContent='The complete game is loaded. Use Next to review one half-move at a time.';card.appendChild(note);return;
+      heading.textContent='GAME READY';card.appendChild(heading);
+      const note=document.createElement('div');note.className='small';note.textContent='Advance to Move 1 to begin reviewing the game.';card.appendChild(note);
+      if(!batchRows.length){const unlock=document.createElement('div');unlock.className='coachingReminder';unlock.textContent='Run Full Game Review to unlock move grading, best moves, evaluation changes and personalized coaching.';card.appendChild(unlock);}
+      return;
     }
 
     const moveIndex=cursor-1, side=moveIndex%2===0?'White':'Black';
@@ -1315,21 +1351,25 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
     heading.textContent='Move '+(Math.floor(moveIndex/2)+1)+' — '+player;card.appendChild(heading);
     const r=batchRows.find(row=>row.i===moveIndex);
     const played=document.createElement('div');played.className='learningPlayed';
-    played.textContent='Played: '+loadedMoves[moveIndex]+(r?' — '+r.rating.label.toUpperCase():'');card.appendChild(played);
+    played.textContent='Played: '+loadedMoves[moveIndex];card.appendChild(played);
     if(!r){
       const note=document.createElement('div');note.className='small';note.textContent='Run Full Game Review to see move grading and coaching.';card.appendChild(note);return;
     }
+    const classification=document.createElement('div');classification.className='learningClassification';classification.textContent=classificationIcon(r.rating.label)+' '+r.rating.label.toUpperCase();card.appendChild(classification);
+    if(r.rating.label==='Good')card.classList.add('learningGood');
+    if(r.rating.label==='Inaccuracy')card.classList.add('learningInaccuracy');
     if(['Mistake'].includes(r.rating.label))card.classList.add('learningWarning');
     if(['Blunder','Mate missed','Mate allowed'].includes(r.rating.label))card.classList.add('learningCritical');
     if(['Best','Excellent','Checkmate','Mate found'].includes(r.rating.label))card.classList.add('learningPositive');
     const before=reviewedEval(r.before),after=reviewedEval(r.after);
     const details=document.createElement('div');details.className='learningDetails';
-    const best=document.createElement('div');best.className='learningDetail';best.textContent='Best: '+r.bestSan;details.appendChild(best);
+    const best=document.createElement('div');best.className='learningDetail';best.textContent='Best move: '+r.bestSan;details.appendChild(best);
     const evaluation=document.createElement('div');evaluation.className='learningDetail';evaluation.textContent='Eval: '+formatReviewedEval(before)+' → '+formatReviewedEval(after);details.appendChild(evaluation);
     if(!r.isMateEvent){const loss=document.createElement('div');loss.className='learningDetail';loss.textContent='Eval loss: '+(r.loss/100).toFixed(2);details.appendChild(loss);}
     card.appendChild(details);
-    const why=document.createElement('div');why.className='learningWhy';why.textContent='Why: '+coachingExplanation(r);card.appendChild(why);
-    const recurring=recurringPatternForRow(r);if(recurring){const badge=document.createElement('div');badge.className='recurringPattern';badge.textContent='Recurring pattern — '+recurring;card.appendChild(badge);}
+    const why=document.createElement('div');why.className='learningWhy';why.innerHTML='<span class="learningSectionLabel">WHY</span>';why.appendChild(document.createTextNode(coachingExplanation(r)));card.appendChild(why);
+    const recurring=recurringPatternForRow(r);if(recurring){const badge=document.createElement('div');badge.className='recurringPattern';badge.textContent='⚠ RECURRING PATTERN\n'+recurring;badge.style.whiteSpace='pre-line';card.appendChild(badge);}
+    if(r.threatContext){const reminder=document.createElement('div');reminder.className='coachingReminder';reminder.innerHTML='<span class="learningSectionLabel">COACHING REMINDER</span>What did your opponent’s last move change?<br>What of yours is now attacked?';card.appendChild(reminder);}
     const selectedEval=after;if(selectedEval)setEvalBar(selectedEval.type==='mate'?(selectedEval.whiteWinning?'M'+selectedEval.mate:'-M'+selectedEval.mate):selectedEval.cp/100);
   }
 
@@ -2300,6 +2340,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
         fen:before.fen,
         loss,
         rating,
+        threatContext:directThreatContext(i),
         isMateEvent:!!(mateRating && ['Checkmate','Mate found','Mate missed','Mate allowed'].includes(mateRating.label)),
         mateNote:(mateRating && ['Checkmate','Mate found','Mate missed','Mate allowed'].includes(mateRating.label)) ? (mateRating.mateNote||null) : null,
         before,
