@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Chess Coach DEV v0.9.3.3</title>
+<title>Chess Coach DEV v0.9.3.4</title>
 <style>
 :root{
   --bg:#111318;--panel:#1a1d24;--text:#f4f4f5;--muted:#a1a1aa;
@@ -481,7 +481,7 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
 </head>
 <body>
 <div class="wrap">
-<h1>Chess Coach DEV v0.9.3.3</h1>
+<h1>Chess Coach DEV v0.9.3.4</h1>
 <div class="sub">Explore alternatives safely with Try a Line.</div>
 
 <div class="layout">
@@ -818,6 +818,7 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+<script src="./ai-coach-token.js"></script>
 <script>
 (function(){
   /*
@@ -898,7 +899,7 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
   let tryLineInfo={score:null,mate:null,pv:[],depth:0};
   let aiCoachRequestId=0;
   const AI_COACH_URL='https://chess-coach-ai.hartman-stuart95.workers.dev/coach/explain-line';
-  const AI_COACH_TOKEN_KEY='chessCoachAccessToken';
+  const aiCoachTokenStore=AiCoachToken.createTokenStore(localStorage);
 
   const TRY_LINE_CONSUMER_IDS=['analyzeBtn','autoAnalyze','reviewMoveBtn','analyzeGameBtn','trainBtn','revealBtn','thinkBtn','pauseStartBtn','pauseRevealBtn','loadBtn','sampleBtn','resetBtn','undoBtn','startMoveBtn','previousMoveBtn','nextMoveBtn','endMoveBtn'];
 
@@ -947,7 +948,7 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
   }
 
   function getAiCoachToken(){
-    try{return (localStorage.getItem(AI_COACH_TOKEN_KEY)||'').trim();}catch(e){return '';}
+    return aiCoachTokenStore.get();
   }
 
   function renderAiCoachConnection(){
@@ -3166,14 +3167,13 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
     if(row.classList.contains('active'))document.getElementById('aiCoachToken').focus();
   });
   document.getElementById('aiCoachTokenSave').addEventListener('click',()=>{
-    const input=document.getElementById('aiCoachToken');const token=input.value.trim();input.value='';
-    if(!token){setAiCoachState('Access code required');return;}
-    try{localStorage.setItem(AI_COACH_TOKEN_KEY,token);}catch(e){setAiCoachState('Unable to connect');return;}
+    const input=document.getElementById('aiCoachToken');const saved=aiCoachTokenStore.save(input.value);input.value='';
+    if(!saved){setAiCoachState('Access code required');renderAiCoachConnection();return;}
     document.getElementById('aiCoachTokenRow').classList.remove('active');renderAiCoachConnection();
     const result=document.getElementById('aiCoachResult');result.classList.remove('active');result.replaceChildren();
   });
   document.getElementById('aiCoachTokenRemove').addEventListener('click',()=>{
-    try{localStorage.removeItem(AI_COACH_TOKEN_KEY);}catch(e){}
+    aiCoachTokenStore.remove();
     document.getElementById('aiCoachToken').value='';clearAiCoachExplanation();renderAiCoachConnection();setAiCoachState('Access code required');
   });
   document.getElementById('restartEngineBtn').addEventListener('click',restartEngine);
