@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Chess Coach DEV v0.9.3.4</title>
+<title>Chess Coach DEV v0.9.3.5</title>
 <style>
 :root{
   --bg:#111318;--panel:#1a1d24;--text:#f4f4f5;--muted:#a1a1aa;
@@ -481,7 +481,7 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
 </head>
 <body>
 <div class="wrap">
-<h1>Chess Coach DEV v0.9.3.4</h1>
+<h1>Chess Coach DEV v0.9.3.5</h1>
 <div class="sub">Explore alternatives safely with Try a Line.</div>
 
 <div class="layout">
@@ -819,6 +819,7 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
 <script src="./ai-coach-token.js"></script>
+<script src="./ai-coach-response.js"></script>
 <script>
 (function(){
   /*
@@ -977,6 +978,18 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
     });
   }
 
+  function setAiCoachError(error){
+    const result=document.getElementById('aiCoachResult');
+    result.classList.add('active');result.replaceChildren();
+    const heading=document.createElement('div');heading.className='aiCoachHeading';heading.textContent='AI Coach error';result.appendChild(heading);
+    const fields=[['Error code',error.code],['Upstream status',String(error.upstreamStatus)],['Message',error.message]];
+    fields.forEach(([label,value])=>{
+      const section=document.createElement('div');section.className='aiCoachSection';
+      const strong=document.createElement('strong');strong.textContent=label;section.appendChild(strong);
+      const body=document.createElement('div');body.textContent=value;section.appendChild(body);result.appendChild(section);
+    });
+  }
+
   function clearAiCoachExplanation(){
     aiCoachRequestId++;
     const result=document.getElementById('aiCoachResult');
@@ -1035,13 +1048,13 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
     setAiCoachState('Asking your coach…');
     try{
       const response=await fetch(AI_COACH_URL,{method:'POST',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},body:request.serialized});
-      let data=null;try{data=await response.json();}catch(e){}
+      const outcome=await AiCoachResponse.readResponse(response,validAiCoachResponse);
       if(requestId!==aiCoachRequestId)return;
-      if(response.status===401){setAiCoachState('Access code required');return;}
-      if(response.status!==200||!validAiCoachResponse(data)){setAiCoachState('Unable to connect');return;}
-      setAiCoachState('Coaching explanation',data);
+      if(outcome.kind==='success'){setAiCoachState('Coaching explanation',outcome.data);return;}
+      if(outcome.kind==='worker-error'){setAiCoachError(outcome.error);return;}
+      setAiCoachState(outcome.message);
     }catch(e){
-      if(requestId===aiCoachRequestId)setAiCoachState('Unable to connect');
+      if(requestId===aiCoachRequestId)setAiCoachState(AiCoachResponse.FALLBACK_MESSAGE);
     }finally{
       if(requestId===aiCoachRequestId)renderTryLine();
     }
