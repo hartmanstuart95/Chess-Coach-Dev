@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Chess Coach DEV v0.9.3.5</title>
+<title>Chess Coach DEV v0.9.3.6</title>
 <style>
 :root{
-  --bg:#111318;--panel:#1a1d24;--text:#f4f4f5;--muted:#a1a1aa;
-  --light:#f1ead9;--dark:#74836f;--sel:#f6c945;--last:#65a8e8;--best:#48d96b;--check:#ef5350;
+  --bg:#0d0c13;--panel:#181622;--text:#f9f7ff;--muted:#aaa6bb;
+  --light:#e5dff0;--dark:#74509f;--sel:#caff75;--last:#caff75;--best:#48d96b;--check:#ef5350;
 }
 *{box-sizing:border-box}
 body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
@@ -42,7 +42,7 @@ h1{font-size:30px;letter-spacing:-.6px;margin:0 0 5px}.sub{color:var(--muted);ma
   border-radius:5px;
   overflow:hidden;
   background:#f7f6f1;
-  border:2px solid #2f343d;
+  border:2px solid #353047;
   box-shadow:
     inset 0 0 0 1px rgba(255,255,255,.16),
     0 2px 7px rgba(0,0,0,.30);
@@ -99,7 +99,7 @@ h1{font-size:30px;letter-spacing:-.6px;margin:0 0 5px}.sub{color:var(--muted);ma
   grid-template-rows:repeat(8,minmax(0,1fr));
   border-radius:14px;
   overflow:hidden;
-  border:1px solid #3a3e48;
+  border:1px solid #353047;
   box-shadow:0 12px 34px rgba(0,0,0,.22);
   touch-action:manipulation;
   user-select:none;
@@ -137,95 +137,95 @@ h1{font-size:30px;letter-spacing:-.6px;margin:0 0 5px}.sub{color:var(--muted);ma
 .dot{position:absolute;width:22%;aspect-ratio:1;border-radius:50%;background:rgba(20,20,20,.28)}
 .coord{position:absolute;font-size:10px;font-weight:700;opacity:.62}.file{right:3px;bottom:2px}.rank{left:3px;top:2px}
 
-.card{background:linear-gradient(180deg,#1b1e25,#171a20);border:1px solid #2d323d;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 8px 24px rgba(0,0,0,.12)}
+.card{background:linear-gradient(180deg,#1d1a29,#15131d);border:1px solid #353047;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 8px 24px rgba(0,0,0,.12)}
 .row{display:flex;gap:8px;flex-wrap:wrap}
 .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .toolbar button{min-width:72px}
 .reviewNav{display:grid;grid-template-columns:auto auto minmax(120px,1fr) auto auto;gap:8px;align-items:center;margin:12px 0}
 .reviewNav button{min-width:0;font-size:14px;font-weight:700;padding:10px 9px}
 .moveIndicator{text-align:center;font-weight:800;color:#e4e4e7}
-.currentMoveCard{border:1px solid #3b4250;border-left:5px solid #0ea5e9;background:linear-gradient(180deg,#20242c,#171a20);border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 8px 24px rgba(0,0,0,.16)}
-.currentMoveCard.learningPositive{border-left-color:#48d96b}.currentMoveCard.learningGood{border-left-color:#7fbf90}.currentMoveCard.learningInaccuracy{border-left-color:#eab308}.currentMoveCard.learningWarning{border-left-color:#f59e0b}.currentMoveCard.learningCritical{border-left-color:#ef4444;background:linear-gradient(180deg,#291e21,#171a20)}
-.learningHeading{font-size:18px;font-weight:850;margin-bottom:7px}.learningPlayed{font-size:20px;font-weight:850;margin-bottom:3px}.learningClassification{font-size:14px;font-weight:900;letter-spacing:.06em;margin-bottom:10px}.learningPositive .learningClassification{color:#86efac}.learningGood .learningClassification{color:#bbf7d0}.learningInaccuracy .learningClassification{color:#fde047}.learningWarning .learningClassification{color:#fdba74}.learningCritical .learningClassification{color:#fca5a5}.learningDetails{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-bottom:9px}.learningDetail{background:#101218;border:1px solid #343a46;border-radius:9px;padding:8px}.learningWhy{line-height:1.5}.learningSectionLabel{display:block;color:var(--muted);font-size:11px;font-weight:900;letter-spacing:.08em;margin:12px 0 3px}.coachingReminder{margin-top:10px;padding:10px;border-left:3px solid #0ea5e9;background:#101820;border-radius:0 9px 9px 0;font-weight:750;line-height:1.45}.recurringPattern{margin-top:10px;border-radius:9px;padding:9px;background:#3b2b13;color:#fde68a;font-size:12px;font-weight:800}
+.currentMoveCard{border:1px solid #353047;border-left:5px solid #6d3ee8;background:linear-gradient(180deg,#211e30,#15131d);border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 8px 24px rgba(0,0,0,.16)}
+.currentMoveCard.learningPositive{border-left-color:#48d96b}.currentMoveCard.learningGood{border-left-color:#7fbf90}.currentMoveCard.learningInaccuracy{border-left-color:#eab308}.currentMoveCard.learningWarning{border-left-color:#f59e0b}.currentMoveCard.learningCritical{border-left-color:#ef4444;background:linear-gradient(180deg,#291e21,#15131d)}
+.learningHeading{font-size:18px;font-weight:850;margin-bottom:7px}.learningPlayed{font-size:20px;font-weight:850;margin-bottom:3px}.learningClassification{font-size:14px;font-weight:900;letter-spacing:.06em;margin-bottom:10px}.learningPositive .learningClassification{color:#86efac}.learningGood .learningClassification{color:#bbf7d0}.learningInaccuracy .learningClassification{color:#fde047}.learningWarning .learningClassification{color:#fdba74}.learningCritical .learningClassification{color:#fca5a5}.learningDetails{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-bottom:9px}.learningDetail{background:#13111a;border:1px solid #353047;border-radius:9px;padding:8px}.learningWhy{line-height:1.5}.learningSectionLabel{display:block;color:var(--muted);font-size:11px;font-weight:900;letter-spacing:.08em;margin:12px 0 3px}.coachingReminder{margin-top:10px;padding:10px;border-left:3px solid #6d3ee8;background:#211e30;border-radius:0 9px 9px 0;font-weight:750;line-height:1.45}.recurringPattern{margin-top:10px;border-radius:9px;padding:9px;background:#3b2b13;color:#fde68a;font-size:12px;font-weight:800}
 @media(max-width:600px){.reviewNav{grid-template-columns:repeat(4,1fr)}.moveIndicator{grid-column:1/-1;grid-row:1}.reviewNav button{font-size:12px;padding:9px 4px}.learningDetails{grid-template-columns:1fr}}
-.toggleRow{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;padding:10px 0;border-top:1px solid #2d323d}
-.switch{position:relative;width:48px;height:28px;display:inline-block}.switch input{display:none}.slider{position:absolute;inset:0;background:#3a404c;border-radius:20px;transition:.2s}.slider:before{content:"";position:absolute;width:22px;height:22px;left:3px;top:3px;background:white;border-radius:50%;transition:.2s}.switch input:checked+.slider{background:#0ea5e9}.switch input:checked+.slider:before{transform:translateX(20px)}
-button{appearance:none;border:1px solid #3b4250;background:#252a33;color:var(--text);border-radius:10px;padding:10px 13px;font-size:16px}
-button.primary{background:#0ea5e9;border-color:#0ea5e9;color:#fff}
+.toggleRow{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;padding:10px 0;border-top:1px solid #353047}
+.switch{position:relative;width:48px;height:28px;display:inline-block}.switch input{display:none}.slider{position:absolute;inset:0;background:#353047;border-radius:20px;transition:.2s}.slider:before{content:"";position:absolute;width:22px;height:22px;left:3px;top:3px;background:white;border-radius:50%;transition:.2s}.switch input:checked+.slider{background:#6d3ee8}.switch input:checked+.slider:before{transform:translateX(20px)}
+button{appearance:none;border:1px solid #353047;background:#201d2d;color:var(--text);border-radius:10px;padding:10px 13px;font-size:16px}
+button.primary{background:#6d3ee8;border-color:#6d3ee8;color:#fff}
 button:disabled{opacity:.48;cursor:not-allowed}
-.tryLineLaunch{background:#7c3aed;border-color:#8b5cf6;color:#fff;font-weight:850;min-height:46px}
-.tryLinePanel{display:none;margin-top:12px;padding:14px;border:2px solid #8b5cf6;border-radius:14px;background:linear-gradient(180deg,#25183d,#171a20)}
+.tryLineLaunch{background:#6d3ee8;border-color:#9b6cff;color:#fff;font-weight:850;min-height:46px}
+.tryLinePanel{display:none;margin-top:12px;padding:14px;border:2px solid #9b6cff;border-radius:14px;background:linear-gradient(180deg,#25183d,#15131d)}
 .tryLinePanel.active{display:block}.tryLineTitle{font-size:17px;font-weight:900;line-height:1.35}.tryLineNotice{color:#ddd6fe;margin-top:4px}
-.tryLineStats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}.tryLineStat{background:#110d18;border:1px solid #4c3a67;border-radius:10px;padding:9px}.tryLineValue{font-size:17px;font-weight:850;margin-top:3px;word-break:break-word}
-.tryLineMoves{margin-top:10px;padding:10px;min-height:44px;background:#110d18;border:1px solid #4c3a67;border-radius:10px;line-height:1.7}
+.tryLineStats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}.tryLineStat{background:#13111a;border:1px solid #353047;border-radius:10px;padding:9px}.tryLineValue{font-size:17px;font-weight:850;margin-top:3px;word-break:break-word}
+.tryLineMoves{margin-top:10px;padding:10px;min-height:44px;background:#13111a;border:1px solid #353047;border-radius:10px;line-height:1.7}
 .tryLineControls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}.tryLineControls button{min-height:46px;font-weight:750}
-.aiCoachPanel{margin-top:12px;padding:12px;border:1px solid #8b5cf6;border-radius:12px;background:#160f24}.aiCoachSetup{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.aiCoachSetup button{font-size:13px;padding:8px 10px}.aiCoachConnected{color:#c4b5fd;font-weight:750}.aiCoachTokenRow{display:none;grid-template-columns:minmax(0,1fr) auto auto;gap:7px;margin-top:9px}.aiCoachTokenRow.active{display:grid}.aiCoachTokenRow input{min-width:0;border:1px solid #4c3a67;background:#0f0b16;color:var(--text);border-radius:9px;padding:9px;font-size:14px}.explainLineBtn{width:100%;margin-top:10px;background:#7c3aed;border-color:#a78bfa;color:#fff;font-weight:900;min-height:46px}.aiCoachResult{display:none;margin-top:10px;padding:11px;border:1px solid #4c3a67;border-radius:10px;background:#110d18;line-height:1.5}.aiCoachResult.active{display:block}.aiCoachHeading{font-weight:900;color:#ddd6fe;margin-bottom:6px}.aiCoachSection{margin-top:9px}.aiCoachSection strong{display:block;color:#c4b5fd;font-size:12px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}.aiCoachDisclaimer{margin-top:9px;color:#a1a1aa;font-size:12px}
+.aiCoachPanel{margin-top:12px;padding:12px;border:1px solid #9b6cff;border-radius:12px;background:#181622}.aiCoachSetup{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.aiCoachSetup button{font-size:13px;padding:8px 10px}.aiCoachConnected{color:#c4b5fd;font-weight:750}.aiCoachTokenRow{display:none;grid-template-columns:minmax(0,1fr) auto auto;gap:7px;margin-top:9px}.aiCoachTokenRow.active{display:grid}.aiCoachTokenRow input{min-width:0;border:1px solid #353047;background:#13111a;color:var(--text);border-radius:9px;padding:9px;font-size:14px}.explainLineBtn{width:100%;margin-top:10px;background:#6d3ee8;border-color:#a78bfa;color:#fff;font-weight:900;min-height:46px}.aiCoachResult{display:none;margin-top:10px;padding:11px;border:1px solid #353047;border-radius:10px;background:#13111a;line-height:1.5}.aiCoachResult.active{display:block}.aiCoachHeading{font-weight:900;color:#ddd6fe;margin-bottom:6px}.aiCoachSection{margin-top:9px}.aiCoachSection strong{display:block;color:#c4b5fd;font-size:12px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}.aiCoachDisclaimer{margin-top:9px;color:#aaa6bb;font-size:12px}
 @media(max-width:520px){.tryLineStats{grid-template-columns:1fr}.tryLineControls{grid-template-columns:1fr 1fr}.tryLineControls button{padding:12px 7px;font-size:14px}}
 @media(max-width:520px){.aiCoachTokenRow{grid-template-columns:1fr 1fr}.aiCoachTokenRow input{grid-column:1/-1}}
-textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250;background:#101218;color:var(--text);padding:10px;font-size:14px;resize:vertical}
+textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #353047;background:#13111a;color:var(--text);padding:10px;font-size:14px;resize:vertical}
 .status{font-size:16px;margin:8px 0}.small{font-size:13px;color:var(--muted)}
-.moves{max-height:290px;overflow:auto;line-height:1.9;padding-right:4px}.movebtn{padding:4px 8px;font-size:14px;margin:2px;border-radius:8px;background:#232832}.activeMove{background:#0ea5e9!important;border-color:#0ea5e9!important;color:#fff}
+.moves{max-height:290px;overflow:auto;line-height:1.9;padding-right:4px}.movebtn{padding:4px 8px;font-size:14px;margin:2px;border-radius:8px;background:#211e30}.activeMove{background:#6d3ee8!important;border-color:#6d3ee8!important;color:#fff}
 .error{color:#fb7185}.ok{color:#86efac}
 .engineGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
-.engineStat{background:#101218;border:1px solid #343a46;border-radius:10px;padding:10px}
+.engineStat{background:#13111a;border:1px solid #353047;border-radius:10px;padding:10px}
 .engineLabel{font-size:12px;color:var(--muted);margin-bottom:4px}
 .engineValue{font-size:20px;font-weight:700}
-.pv{margin-top:10px;padding:10px;border-radius:10px;background:#101218;border:1px solid #343a46;line-height:1.5}
+.pv{margin-top:10px;padding:10px;border-radius:10px;background:#13111a;border:1px solid #353047;line-height:1.5}
 .bestFrom{box-shadow:inset 0 0 0 4px rgba(34,197,94,.55)}
 .bestTo{box-shadow:inset 0 0 0 4px rgba(34,197,94,.9)}
 .reviewGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
-.reviewBox{background:#101218;border:1px solid #343a46;border-radius:10px;padding:10px}
+.reviewBox{background:#13111a;border:1px solid #353047;border-radius:10px;padding:10px}
 .reviewLabel{font-size:12px;color:var(--muted);margin-bottom:4px}
 .reviewBig{font-size:21px;font-weight:800}
-.reviewText{margin-top:10px;padding:11px;border-radius:10px;background:#101218;border:1px solid #343a46;line-height:1.5}
+.reviewText{margin-top:10px;padding:11px;border-radius:10px;background:#13111a;border:1px solid #353047;line-height:1.5}
 .classBest{color:#86efac}.classExcellent{color:#a7f3d0}.classGood{color:#bfdbfe}.classInaccuracy{color:#fde68a}.classMistake{color:#fdba74}.classBlunder{color:#fca5a5}.classMate{color:#f0abfc}
-.progressTrack{height:9px;background:#101218;border:1px solid #343a46;border-radius:999px;overflow:hidden;margin-top:10px}
-.progressFill{height:100%;width:0%;background:#0ea5e9;transition:width .2s ease}
+.progressTrack{height:9px;background:#13111a;border:1px solid #353047;border-radius:999px;overflow:hidden;margin-top:10px}
+.progressFill{height:100%;width:0%;background:#6d3ee8;transition:width .2s ease}
 .summaryGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
-.summaryBox{background:#101218;border:1px solid #343a46;border-radius:10px;padding:9px;text-align:center}
-.summaryBox.clickable{cursor:pointer;transition:.15s}.summaryBox.clickable:hover{background:#171b22}
-.summaryBox.activeSummary{border-color:#0ea5e9;box-shadow:inset 0 0 0 1px #0ea5e9}
+.summaryBox{background:#13111a;border:1px solid #353047;border-radius:10px;padding:9px;text-align:center}
+.summaryBox.clickable{cursor:pointer;transition:.15s}.summaryBox.clickable:hover{background:#29243a}
+.summaryBox.activeSummary{border-color:#6d3ee8;box-shadow:inset 0 0 0 1px #6d3ee8}
 .reviewMovesList{margin-top:12px;display:flex;flex-direction:column;gap:7px;max-height:420px;overflow:auto;padding-right:3px}
-.reviewMoveRow{display:grid;grid-template-columns:58px 1fr auto;gap:9px;align-items:center;width:100%;text-align:left;padding:9px 10px;background:#101218;border:1px solid #343a46;border-radius:10px}
-.reviewMoveRow:hover{background:#171b22}.reviewMoveName{font-weight:800}.reviewMoveMeta{font-size:12px;color:var(--muted)}
+.reviewMoveRow{display:grid;grid-template-columns:58px 1fr auto;gap:9px;align-items:center;width:100%;text-align:left;padding:9px 10px;background:#13111a;border:1px solid #353047;border-radius:10px}
+.reviewMoveRow:hover{background:#29243a}.reviewMoveName{font-weight:800}.reviewMoveMeta{font-size:12px;color:var(--muted)}
 .summaryNum{font-size:20px;font-weight:800}.summaryName{font-size:11px;color:var(--muted);margin-top:2px}
 .keyMoves{margin-top:12px;display:flex;flex-direction:column;gap:7px}
-.keyMove{display:grid;grid-template-columns:56px 1fr auto;gap:9px;align-items:center;width:100%;text-align:left;padding:9px 10px;background:#101218;border:1px solid #343a46;border-radius:10px}
-.keyMove:hover{background:#171b22}.keyMoveMove{font-weight:800}.keyMoveMeta{font-size:12px;color:var(--muted)}.keyMoveLoss{font-weight:800}
-.lessonBox{background:#101218;border:1px solid #343a46;border-radius:12px;padding:12px;margin-top:10px}
+.keyMove{display:grid;grid-template-columns:56px 1fr auto;gap:9px;align-items:center;width:100%;text-align:left;padding:9px 10px;background:#13111a;border:1px solid #353047;border-radius:10px}
+.keyMove:hover{background:#29243a}.keyMoveMove{font-weight:800}.keyMoveMeta{font-size:12px;color:var(--muted)}.keyMoveLoss{font-weight:800}
+.lessonBox{background:#13111a;border:1px solid #353047;border-radius:12px;padding:12px;margin-top:10px}
 .lessonTitle{font-weight:800;margin-bottom:5px}.lessonPrompt{line-height:1.45}
 .lessonActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .puzzleStatus{margin-top:10px;font-weight:700}.puzzleGood{color:#86efac}.puzzleTry{color:#fde68a}
 .hiddenAnswer{filter:blur(6px);user-select:none}.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;position:sticky;top:0;z-index:20;background:var(--bg);padding:4px 0 8px}
-.tabBtn{padding:8px 11px;font-size:14px;border-radius:9px;background:#20242c}
-.tabBtn.activeTab{background:#0ea5e9;border-color:#0ea5e9;color:#fff}
+.tabBtn{padding:8px 11px;font-size:14px;border-radius:9px;background:#211e30}
+.tabBtn.activeTab{background:#6d3ee8;border-color:#6d3ee8;color:#fff}
 .tabPane{display:none}.tabPane.activePane{display:block}
 .focusRow{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}
-.focusBtn{padding:7px 10px;font-size:13px}.focusBtn.activeFocus{background:#0ea5e9;border-color:#0ea5e9;color:#fff}
+.focusBtn{padding:7px 10px;font-size:13px}.focusBtn.activeFocus{background:#6d3ee8;border-color:#6d3ee8;color:#fff}
 .playerHeader{margin:8px 0 10px}.playerName{font-weight:800;font-size:18px}.playerSide{font-size:12px;color:var(--muted)}
 .thinkingGrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:10px}
-.thinkCard{background:#101218;border:1px solid #343a46;border-radius:10px;padding:10px}
+.thinkCard{background:#13111a;border:1px solid #353047;border-radius:10px;padding:10px}
 .thinkLabel{font-size:11px;color:var(--muted);margin-bottom:4px}
 .thinkValue{font-weight:700;line-height:1.35}
-.pauseBox{background:#101218;border:1px solid #343a46;border-radius:12px;padding:12px;margin-top:10px}
+.pauseBox{background:#13111a;border:1px solid #353047;border-radius:12px;padding:12px;margin-top:10px}
 .choiceRow{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
-.choiceBtn{font-size:13px;padding:8px 10px}.choiceBtn.selectedChoice{background:#0ea5e9;border-color:#0ea5e9}
+.choiceBtn{font-size:13px;padding:8px 10px}.choiceBtn.selectedChoice{background:#6d3ee8;border-color:#6d3ee8}
 .profileGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
-.profileStat{background:#101218;border:1px solid #343a46;border-radius:10px;padding:9px}
+.profileStat{background:#13111a;border:1px solid #353047;border-radius:10px;padding:9px}
 .profileNum{font-size:20px;font-weight:800}.profileName{font-size:11px;color:var(--muted)}
-.patternCard{background:#101218;border:1px solid #343a46;border-radius:12px;padding:12px;margin-top:10px}
+.patternCard{background:#13111a;border:1px solid #353047;border-radius:12px;padding:12px;margin-top:10px}
 .patternHeadline{font-weight:800;font-size:18px;line-height:1.3}
 .patternSub{font-size:13px;color:var(--muted);margin-top:5px;line-height:1.45}
 .patternList{display:flex;flex-direction:column;gap:8px;margin-top:10px}
-.patternItem{background:#151820;border:1px solid #303641;border-radius:10px;padding:10px}
+.patternItem{background:#181622;border:1px solid #353047;border-radius:10px;padding:10px}
 .patternItem strong{display:block;margin-bottom:3px}
 .patternBar{height:7px;background:#242933;border-radius:999px;overflow:hidden;margin-top:7px}
-.patternFill{height:100%;background:#0ea5e9;border-radius:999px}
+.patternFill{height:100%;background:#6d3ee8;border-radius:999px}
 .badge{display:inline-block;background:#173341;color:#9ee6ff;padding:4px 8px;border-radius:999px;font-size:12px;margin-bottom:8px}
 
 /* === Chess Coach v0.9.2B.8.1 board visual system === */
 .board{
-  background:#111318;
+  background:#0d0c13;
   border:2px solid #353a45;
   box-shadow:0 14px 36px rgba(0,0,0,.30);
 }
@@ -338,10 +338,10 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
 
 
 .openingGrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:10px}
-.openingStat{background:#101218;border:1px solid #343a46;border-radius:10px;padding:10px}
+.openingStat{background:#13111a;border:1px solid #353047;border-radius:10px;padding:10px}
 .openingLabel{font-size:11px;color:var(--muted);margin-bottom:4px}
 .openingValue{font-weight:800;line-height:1.35}
-.openingNote{margin-top:10px;padding:11px;border-radius:10px;background:#101218;border:1px solid #343a46;line-height:1.45}
+.openingNote{margin-top:10px;padding:11px;border-radius:10px;background:#13111a;border:1px solid #353047;line-height:1.45}
 .openingGood{color:#86efac}.openingWarn{color:#fde68a}.openingBad{color:#fca5a5}
 
 
@@ -365,7 +365,7 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
   text-shadow:0 1px 0 #fff,0 2px 1px rgba(0,0,0,.24);
 }
 .knightGlyph.blackKnight{
-  color:#111318;
+  color:#0d0c13;
   -webkit-text-stroke:0.35px #050607;
   text-shadow:0 1px 0 rgba(255,255,255,.08),0 2px 1px rgba(0,0,0,.30);
 }
@@ -378,8 +378,8 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
   align-items:stretch;
 }
 .materialSide,.materialBalance{
-  background:#151820;
-  border:1px solid #303641;
+  background:#181622;
+  border:1px solid #353047;
   border-radius:10px;
   padding:9px 11px;
 }
@@ -417,8 +417,8 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
 
 #reloadLatestBtn{
   border-style:dashed;
-  color:#b9e8ff;
-  background:#18232b;
+  color:#ddd6fe;
+  background:#211e30;
 }
 #reloadLatestBtn:active{
   transform:translateY(1px);
@@ -438,8 +438,8 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
 .promotionOverlay.show{display:flex}
 .promotionCard{
   width:min(92vw,420px);
-  background:#171a20;
-  border:1px solid #3a404c;
+  background:#15131d;
+  border:1px solid #353047;
   border-radius:16px;
   padding:16px;
   box-shadow:0 20px 55px rgba(0,0,0,.45);
@@ -477,11 +477,33 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
   margin-top:10px;
   font-size:13px;
 }
+
+/* Chess Coach Lab palette with device-independent Cburnett SVG pieces. */
+body{background:radial-gradient(circle at 76% -10%,#2b164d 0,transparent 34%),var(--bg)}
+.card{background:linear-gradient(145deg,#1d1a29,#15131d)}
+.board .piece{
+  width:90%;height:90%;
+  font-size:0;
+  transform:translateY(-1%);
+  filter:drop-shadow(0 2px 1px #0005);
+  text-shadow:none;
+  -webkit-text-stroke:0;
+}
+.board .piece img{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none}
+.promotionIcon{display:block;width:42px;height:42px;font-size:0}
+.promotionIcon img{display:block;width:100%;height:100%;object-fit:contain}
+.light .coord{color:var(--dark);text-shadow:none}
+.dark .coord{color:var(--light);text-shadow:none}
+.sq.last::after{background:#caff7535;box-shadow:none}
+.dot{background:#caff75cf}
+button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px solid #caff75;outline-offset:2px}
+.sq:focus-visible{outline-offset:-4px}
+button:hover:not(:disabled){border-color:#9b6cff}
 </style>
 </head>
 <body>
 <div class="wrap">
-<h1>Chess Coach DEV v0.9.3.5</h1>
+<h1>Chess Coach DEV v0.9.3.6</h1>
 <div class="sub">Explore alternatives safely with Try a Line.</div>
 
 <div class="layout">
@@ -808,10 +830,10 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
     <div id="promotionTitle" class="promotionTitle">Promote pawn</div>
     <div id="promotionSub" class="promotionSub">Choose the piece for promotion.</div>
     <div class="promotionChoices">
-      <button class="promotionBtn" data-promotion="q"><span class="promotionIcon">♛</span><span>Queen</span></button>
-      <button class="promotionBtn" data-promotion="r"><span class="promotionIcon">♜</span><span>Rook</span></button>
-      <button class="promotionBtn" data-promotion="b"><span class="promotionIcon">♝</span><span>Bishop</span></button>
-      <button class="promotionBtn" data-promotion="n"><span class="promotionIcon">♞</span><span>Knight</span></button>
+      <button class="promotionBtn" data-promotion="q"><span class="promotionIcon"></span><span>Queen</span></button>
+      <button class="promotionBtn" data-promotion="r"><span class="promotionIcon"></span><span>Rook</span></button>
+      <button class="promotionBtn" data-promotion="b"><span class="promotionIcon"></span><span>Bishop</span></button>
+      <button class="promotionBtn" data-promotion="n"><span class="promotionIcon"></span><span>Knight</span></button>
     </div>
     <button id="promotionCancel" class="promotionCancel">Cancel</button>
   </div>
@@ -829,10 +851,9 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
    * Geometry preserved; white fill warmed slightly for Chess Coach.
    */
   /*
-   * Knight artwork: Chessnut set from lichess-org/lila public/piece/chessnut.
-   * Used only for wN/bN; all other pieces remain unchanged.
+   * Knights use the matching Cburnett SVG artwork; colors match the rest of the set.
    */
-  const CBURNETT_PIECES={"wP":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 45 45\"><path fill=\"#f5f1e8\" stroke=\"#000\" stroke-linecap=\"round\" stroke-width=\"1.5\" d=\"M22.5 9c-2.21 0-4 1.79-4 4 0 .89.29 1.71.78 2.38C17.33 16.5 16 18.59 16 21c0 2.03.94 3.84 2.41 5.03-3 1.06-7.41 5.55-7.41 13.47h23c0-7.92-4.41-12.41-7.41-13.47 1.47-1.19 2.41-3 2.41-5.03 0-2.41-1.33-4.5-3.28-5.62.49-.67.78-1.49.78-2.38 0-2.21-1.79-4-4-4z\"/></svg>","wN":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 45 45\">\n<g fill=\"none\" stroke=\"#000\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.5\">\n  <path fill=\"#f5f1e8\" d=\"M12 36.5h22.5c-.6-6.8-2.4-12.1-6.1-15.4-2.6-2.4-5.6-3.9-8.9-4.5l2.8-5.1 4.3 2.5 3.2-3.8 1 6.3c3.8 2.6 6 6 6.6 10.4.5 4-1.1 7.2-4.2 9.6H12z\"/>\n  <path fill=\"#f5f1e8\" d=\"M20.2 16.6c-4.2 1-7.8 3.7-10.5 7.6-1.6 2.3-2.3 4.7-1.4 6 .8 1.2 2.7.4 4.5-.8l6.6-4.6c2.6-1.8 4.2-4.4 4.3-6.9z\"/>\n  <path d=\"M15.2 36.5h17.4\"/>\n  <path d=\"M13.4 33.2h20.1\"/>\n  <path d=\"M16.4 22.3c2.8-.9 5.2-.8 7.5.2\"/>\n  <circle cx=\"25.6\" cy=\"17.9\" r=\".8\" fill=\"#000\" stroke=\"none\"/>\n  <path d=\"M9.5 27.8c1 .1 1.8.5 2.5 1.1\"/>\n</g>\n</svg>","wB":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 45 45\"><g fill=\"none\" fill-rule=\"evenodd\" stroke=\"#000\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.5\"><g fill=\"#f5f1e8\" stroke-linecap=\"butt\"><path d=\"M9 36c3.39-.97 10.11.43 13.5-2 3.39 2.43 10.11 1.03 13.5 2 0 0 1.65.54 3 2-.68.97-1.65.99-3 .5-3.39-.97-10.11.46-13.5-1-3.39 1.46-10.11.03-13.5 1-1.35.49-2.32.47-3-.5 1.35-1.94 3-2 3-2z\"/><path d=\"M15 32c2.5 2.5 12.5 2.5 15 0 .5-1.5 0-2 0-2 0-2.5-2.5-4-2.5-4 5.5-1.5 6-11.5-5-15.5-11 4-10.5 14-5 15.5 0 0-2.5 1.5-2.5 4 0 0-.5.5 0 2z\"/><path d=\"M25 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 1 1 5 0z\"/></g><path stroke-linejoin=\"miter\" d=\"M17.5 26h10M15 30h15m-7.5-14.5v5M20 18h5\"/></g></svg>","wR":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 45 45\"><g fill=\"#f5f1e8\" fill-rule=\"evenodd\" stroke=\"#000\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.5\"><path stroke-linecap=\"butt\" d=\"M9 39h27v-3H9zm3-3v-4h21v4zm-1-22V9h4v2h5V9h5v2h5V9h4v5\"/><path d=\"m34 14-3 3H14l-3-3\"/><path stroke-linecap=\"butt\" stroke-linejoin=\"miter\" d=\"M31 17v12.5H14V17\"/><path d=\"m31 29.5 1.5 2.5h-20l1.5-2.5\"/><path fill=\"none\" stroke-linejoin=\"miter\" d=\"M11 14h23\"/></g></svg>","wQ":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 45 45\"><g fill=\"#f5f1e8\" fill-rule=\"evenodd\" stroke=\"#000\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.5\"><path d=\"M8 12a2 2 0 1 1-4 0 2 2 0 1 1 4 0m16.5-4.5a2 2 0 1 1-4 0 2 2 0 1 1 4 0M41 12a2 2 0 1 1-4 0 2 2 0 1 1 4 0M16 8.5a2 2 0 1 1-4 0 2 2 0 1 1 4 0M33 9a2 2 0 1 1-4 0 2 2 0 1 1 4 0\"/><path stroke-linecap=\"butt\" d=\"M9 26c8.5-1.5 21-1.5 27 0l2-12-7 11V11l-5.5 13.5-3-15-3 15-5.5-14V25L7 14z\"/><path stroke-linecap=\"butt\" d=\"M9 26c0 2 1.5 2 2.5 4 1 1.5 1 1 .5 3.5-1.5 1-1.5 2.5-1.5 2.5-1.5 1.5.5 2.5.5 2.5 6.5 1 16.5 1 23 0 0 0 1.5-1 0-2.5 0 0 .5-1.5-1-2.5-.5-2.5-.5-2 .5-3.5 1-2 2.5-2 2.5-4-8.5-1.5-18.5-1.5-27 0z\"/><path fill=\"none\" d=\"M11.5 30c3.5-1 18.5-1 22 0M12 33.5c6-1 15-1 21 0\"/></g></svg>","wK":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 45 45\"><g fill=\"none\" fill-rule=\"evenodd\" stroke=\"#000\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.5\"><path stroke-linejoin=\"miter\" d=\"M22.5 11.63V6M20 8h5\"/><path fill=\"#f5f1e8\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" d=\"M22.5 25s4.5-7.5 3-10.5c0 0-1-2.5-3-2.5s-3 2.5-3 2.5c-1.5 3 3 10.5 3 10.5\"/><path fill=\"#f5f1e8\" d=\"M11.5 37c5.5 3.5 15.5 3.5 21 0v-7s9-4.5 6-10.5c-4-6.5-13.5-3.5-16 4V27v-3.5c-3.5-7.5-13-10.5-16-4-3 6 5 10 5 10z\"/><path d=\"M11.5 30c5.5-3 15.5-3 21 0m-21 3.5c5.5-3 15.5-3 21 0m-21 3.5c5.5-3 15.5-3 21 0\"/></g></svg>","bP":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 45 45\"><path stroke=\"#000\" stroke-linecap=\"round\" stroke-width=\"1.5\" d=\"M22.5 9a4 4 0 0 0-3.22 6.38 6.48 6.48 0 0 0-.87 10.65c-3 1.06-7.41 5.55-7.41 13.47h23c0-7.92-4.41-12.41-7.41-13.47a6.46 6.46 0 0 0-.87-10.65A4.01 4.01 0 0 0 22.5 9z\"/></svg>","bN":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 45 45\">\n<g fill=\"none\" stroke=\"#000\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.5\">\n  <path fill=\"#000\" d=\"M12 36.5h22.5c-.6-6.8-2.4-12.1-6.1-15.4-2.6-2.4-5.6-3.9-8.9-4.5l2.8-5.1 4.3 2.5 3.2-3.8 1 6.3c3.8 2.6 6 6 6.6 10.4.5 4-1.1 7.2-4.2 9.6H12z\"/>\n  <path fill=\"#000\" d=\"M20.2 16.6c-4.2 1-7.8 3.7-10.5 7.6-1.6 2.3-2.3 4.7-1.4 6 .8 1.2 2.7.4 4.5-.8l6.6-4.6c2.6-1.8 4.2-4.4 4.3-6.9z\"/>\n  <path stroke=\"#c9cdd2\" d=\"M15.2 36.5h17.4\"/>\n  <path stroke=\"#c9cdd2\" d=\"M13.4 33.2h20.1\"/>\n  <path stroke=\"#c9cdd2\" d=\"M16.4 22.3c2.8-.9 5.2-.8 7.5.2\"/>\n  <circle cx=\"25.6\" cy=\"17.9\" r=\".8\" fill=\"#c9cdd2\" stroke=\"none\"/>\n  <path stroke=\"#c9cdd2\" d=\"M9.5 27.8c1 .1 1.8.5 2.5 1.1\"/>\n</g>\n</svg>","bB":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 45 45\"><g fill=\"none\" fill-rule=\"evenodd\" stroke=\"#000\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.5\"><g fill=\"#000\" stroke-linecap=\"butt\"><path d=\"M9 36c3.4-1 10.1.4 13.5-2 3.4 2.4 10.1 1 13.5 2 0 0 1.6.5 3 2-.7 1-1.6 1-3 .5-3.4-1-10.1.5-13.5-1-3.4 1.5-10.1 0-13.5 1-1.4.5-2.3.5-3-.5 1.4-2 3-2 3-2z\"/><path d=\"M15 32c2.5 2.5 12.5 2.5 15 0 .5-1.5 0-2 0-2 0-2.5-2.5-4-2.5-4 5.5-1.5 6-11.5-5-15.5-11 4-10.5 14-5 15.5 0 0-2.5 1.5-2.5 4 0 0-.5.5 0 2z\"/><path d=\"M25 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 1 1 5 0z\"/></g><path stroke=\"#c9cdd2\" stroke-linejoin=\"miter\" d=\"M17.5 26h10M15 30h15m-7.5-14.5v5M20 18h5\"/></g></svg>","bR":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 45 45\"><g fill-rule=\"evenodd\" stroke=\"#000\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.5\"><path stroke-linecap=\"butt\" d=\"M9 39h27v-3H9zm3.5-7 1.5-2.5h17l1.5 2.5zm-.5 4v-4h21v4z\"/><path stroke-linecap=\"butt\" stroke-linejoin=\"miter\" d=\"M14 29.5v-13h17v13z\"/><path stroke-linecap=\"butt\" d=\"M14 16.5 11 14h23l-3 2.5zM11 14V9h4v2h5V9h5v2h5V9h4v5z\"/><path fill=\"none\" stroke=\"#c9cdd2\" stroke-linejoin=\"miter\" stroke-width=\"1\" d=\"M12 35.5h21m-20-4h19m-18-2h17m-17-13h17M11 14h23\"/></g></svg>","bQ":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 45 45\"><g fill-rule=\"evenodd\" stroke=\"#000\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.5\"><g stroke=\"none\"><circle cx=\"6\" cy=\"12\" r=\"2.75\"/><circle cx=\"14\" cy=\"9\" r=\"2.75\"/><circle cx=\"22.5\" cy=\"8\" r=\"2.75\"/><circle cx=\"31\" cy=\"9\" r=\"2.75\"/><circle cx=\"39\" cy=\"12\" r=\"2.75\"/></g><path stroke-linecap=\"butt\" d=\"M9 26c8.5-1.5 21-1.5 27 0l2.5-12.5L31 25l-.3-14.1-5.2 13.6-3-14.5-3 14.5-5.2-13.6L14 25 6.5 13.5z\"/><path stroke-linecap=\"butt\" d=\"M9 26c0 2 1.5 2 2.5 4 1 1.5 1 1 .5 3.5-1.5 1-1.5 2.5-1.5 2.5-1.5 1.5.5 2.5.5 2.5 6.5 1 16.5 1 23 0 0 0 1.5-1 0-2.5 0 0 .5-1.5-1-2.5-.5-2.5-.5-2 .5-3.5 1-2 2.5-2 2.5-4-8.5-1.5-18.5-1.5-27 0z\"/><path fill=\"none\" stroke-linecap=\"butt\" d=\"M11 38.5a35 35 1 0 0 23 0\"/><path fill=\"none\" stroke=\"#c9cdd2\" d=\"M11 29a35 35 1 0 1 23 0m-21.5 2.5h20m-21 3a35 35 1 0 0 22 0m-23 3a35 35 1 0 0 24 0\"/></g></svg>","bK":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 45 45\"><g fill=\"none\" fill-rule=\"evenodd\" stroke=\"#000\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.5\"><path stroke-linejoin=\"miter\" d=\"M22.5 11.6V6\"/><path fill=\"#000\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" d=\"M22.5 25s4.5-7.5 3-10.5c0 0-1-2.5-3-2.5s-3 2.5-3 2.5c-1.5 3 3 10.5 3 10.5\"/><path fill=\"#000\" d=\"M11.5 37a22.3 22.3 0 0 0 21 0v-7s9-4.5 6-10.5c-4-6.5-13.5-3.5-16 4V27v-3.5c-3.5-7.5-13-10.5-16-4-3 6 5 10 5 10z\"/><path stroke-linejoin=\"miter\" d=\"M20 8h5\"/><path stroke=\"#c9cdd2\" d=\"M32 29.5s8.5-4 6-9.7C34.1 14 25 18 22.5 24.6v2.1-2.1C20 18 9.9 14 7 19.9c-2.5 5.6 4.8 9 4.8 9\"/><path stroke=\"#c9cdd2\" d=\"M11.5 30c5.5-3 15.5-3 21 0m-21 3.5c5.5-3 15.5-3 21 0m-21 3.5c5.5-3 15.5-3 21 0\"/></g></svg>"};
+  const CBURNETT_PIECES={"wP":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 45 45\"><path fill=\"#f5f1e8\" stroke=\"#000\" stroke-linecap=\"round\" stroke-width=\"1.5\" d=\"M22.5 9c-2.21 0-4 1.79-4 4 0 .89.29 1.71.78 2.38C17.33 16.5 16 18.59 16 21c0 2.03.94 3.84 2.41 5.03-3 1.06-7.41 5.55-7.41 13.47h23c0-7.92-4.41-12.41-7.41-13.47 1.47-1.19 2.41-3 2.41-5.03 0-2.41-1.33-4.5-3.28-5.62.49-.67.78-1.49.78-2.38 0-2.21-1.79-4-4-4z\"/></svg>","wN":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"45\" height=\"45\" viewBox=\"0 0 45 45\"><g fill=\"none\" fill-rule=\"evenodd\" stroke=\"#000\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.5\"><path fill=\"#f5f1e8\" d=\"M22 10c10.5 1 16.5 8 16 29H15c0-9 10-6.5 8-21\"/><path fill=\"#f5f1e8\" d=\"M24 18c.38 2.91-5.55 7.37-8 9-3 2-2.82 4.34-5 4-1.042-.94 1.41-3.04 0-3-1 0 .19 1.23-1 2-1 0-4.003 1-4-4 0-2 6-12 6-12s1.89-1.9 2-3.5c-.73-.994-.5-2-.5-3 1-1 3 2.5 3 2.5h2s.78-1.992 2.5-3c1 0 1 3 1 3\"/><path fill=\"#000\" d=\"M9.5 25.5a.5.5 0 1 1-1 0 .5.5 0 1 1 1 0m5.433-9.75a.5 1.5 30 1 1-.866-.5.5 1.5 30 1 1 .866.5\"/></g></svg>","wB":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 45 45\"><g fill=\"none\" fill-rule=\"evenodd\" stroke=\"#000\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.5\"><g fill=\"#f5f1e8\" stroke-linecap=\"butt\"><path d=\"M9 36c3.39-.97 10.11.43 13.5-2 3.39 2.43 10.11 1.03 13.5 2 0 0 1.65.54 3 2-.68.97-1.65.99-3 .5-3.39-.97-10.11.46-13.5-1-3.39 1.46-10.11.03-13.5 1-1.35.49-2.32.47-3-.5 1.35-1.94 3-2 3-2z\"/><path d=\"M15 32c2.5 2.5 12.5 2.5 15 0 .5-1.5 0-2 0-2 0-2.5-2.5-4-2.5-4 5.5-1.5 6-11.5-5-15.5-11 4-10.5 14-5 15.5 0 0-2.5 1.5-2.5 4 0 0-.5.5 0 2z\"/><path d=\"M25 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 1 1 5 0z\"/></g><path stroke-linejoin=\"miter\" d=\"M17.5 26h10M15 30h15m-7.5-14.5v5M20 18h5\"/></g></svg>","wR":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 45 45\"><g fill=\"#f5f1e8\" fill-rule=\"evenodd\" stroke=\"#000\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.5\"><path stroke-linecap=\"butt\" d=\"M9 39h27v-3H9zm3-3v-4h21v4zm-1-22V9h4v2h5V9h5v2h5V9h4v5\"/><path d=\"m34 14-3 3H14l-3-3\"/><path stroke-linecap=\"butt\" stroke-linejoin=\"miter\" d=\"M31 17v12.5H14V17\"/><path d=\"m31 29.5 1.5 2.5h-20l1.5-2.5\"/><path fill=\"none\" stroke-linejoin=\"miter\" d=\"M11 14h23\"/></g></svg>","wQ":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 45 45\"><g fill=\"#f5f1e8\" fill-rule=\"evenodd\" stroke=\"#000\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.5\"><path d=\"M8 12a2 2 0 1 1-4 0 2 2 0 1 1 4 0m16.5-4.5a2 2 0 1 1-4 0 2 2 0 1 1 4 0M41 12a2 2 0 1 1-4 0 2 2 0 1 1 4 0M16 8.5a2 2 0 1 1-4 0 2 2 0 1 1 4 0M33 9a2 2 0 1 1-4 0 2 2 0 1 1 4 0\"/><path stroke-linecap=\"butt\" d=\"M9 26c8.5-1.5 21-1.5 27 0l2-12-7 11V11l-5.5 13.5-3-15-3 15-5.5-14V25L7 14z\"/><path stroke-linecap=\"butt\" d=\"M9 26c0 2 1.5 2 2.5 4 1 1.5 1 1 .5 3.5-1.5 1-1.5 2.5-1.5 2.5-1.5 1.5.5 2.5.5 2.5 6.5 1 16.5 1 23 0 0 0 1.5-1 0-2.5 0 0 .5-1.5-1-2.5-.5-2.5-.5-2 .5-3.5 1-2 2.5-2 2.5-4-8.5-1.5-18.5-1.5-27 0z\"/><path fill=\"none\" d=\"M11.5 30c3.5-1 18.5-1 22 0M12 33.5c6-1 15-1 21 0\"/></g></svg>","wK":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 45 45\"><g fill=\"none\" fill-rule=\"evenodd\" stroke=\"#000\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.5\"><path stroke-linejoin=\"miter\" d=\"M22.5 11.63V6M20 8h5\"/><path fill=\"#f5f1e8\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" d=\"M22.5 25s4.5-7.5 3-10.5c0 0-1-2.5-3-2.5s-3 2.5-3 2.5c-1.5 3 3 10.5 3 10.5\"/><path fill=\"#f5f1e8\" d=\"M11.5 37c5.5 3.5 15.5 3.5 21 0v-7s9-4.5 6-10.5c-4-6.5-13.5-3.5-16 4V27v-3.5c-3.5-7.5-13-10.5-16-4-3 6 5 10 5 10z\"/><path d=\"M11.5 30c5.5-3 15.5-3 21 0m-21 3.5c5.5-3 15.5-3 21 0m-21 3.5c5.5-3 15.5-3 21 0\"/></g></svg>","bP":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 45 45\"><path stroke=\"#000\" stroke-linecap=\"round\" stroke-width=\"1.5\" d=\"M22.5 9a4 4 0 0 0-3.22 6.38 6.48 6.48 0 0 0-.87 10.65c-3 1.06-7.41 5.55-7.41 13.47h23c0-7.92-4.41-12.41-7.41-13.47a6.46 6.46 0 0 0-.87-10.65A4.01 4.01 0 0 0 22.5 9z\"/></svg>","bN":"<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"45\" height=\"45\" viewBox=\"0 0 45 45\"><g fill=\"none\" fill-rule=\"evenodd\" stroke=\"#000\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.5\"><path fill=\"#000\" d=\"M22 10c10.5 1 16.5 8 16 29H15c0-9 10-6.5 8-21\"/><path fill=\"#000\" d=\"M24 18c.38 2.91-5.55 7.37-8 9-3 2-2.82 4.34-5 4-1.04-.94 1.41-3.04 0-3-1 0 .19 1.23-1 2-1 0-4 1-4-4 0-2 6-12 6-12s1.89-1.9 2-3.5c-.73-1-.5-2-.5-3 1-1 3 2.5 3 2.5h2s.78-2 2.5-3c1 0 1 3 1 3\"/><path fill=\"#c9cdd2\" stroke=\"#c9cdd2\" d=\"M9.5 25.5a.5.5 0 1 1-1 0 .5.5 0 1 1 1 0m5.43-9.75a.5 1.5 30 1 1-.86-.5.5 1.5 30 1 1 .86.5\"/><path fill=\"#c9cdd2\" stroke=\"none\" d=\"m24.55 10.4-.45 1.45.5.15c3.15 1 5.65 2.49 7.9 6.75S35.75 29.06 35.25 39l-.05.5h2.25l.05-.5c.5-10.06-.88-16.85-3.25-21.34s-5.79-6.64-9.19-7.16z\"/></g></svg>","bB":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 45 45\"><g fill=\"none\" fill-rule=\"evenodd\" stroke=\"#000\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.5\"><g fill=\"#000\" stroke-linecap=\"butt\"><path d=\"M9 36c3.4-1 10.1.4 13.5-2 3.4 2.4 10.1 1 13.5 2 0 0 1.6.5 3 2-.7 1-1.6 1-3 .5-3.4-1-10.1.5-13.5-1-3.4 1.5-10.1 0-13.5 1-1.4.5-2.3.5-3-.5 1.4-2 3-2 3-2z\"/><path d=\"M15 32c2.5 2.5 12.5 2.5 15 0 .5-1.5 0-2 0-2 0-2.5-2.5-4-2.5-4 5.5-1.5 6-11.5-5-15.5-11 4-10.5 14-5 15.5 0 0-2.5 1.5-2.5 4 0 0-.5.5 0 2z\"/><path d=\"M25 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 1 1 5 0z\"/></g><path stroke=\"#c9cdd2\" stroke-linejoin=\"miter\" d=\"M17.5 26h10M15 30h15m-7.5-14.5v5M20 18h5\"/></g></svg>","bR":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 45 45\"><g fill-rule=\"evenodd\" stroke=\"#000\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.5\"><path stroke-linecap=\"butt\" d=\"M9 39h27v-3H9zm3.5-7 1.5-2.5h17l1.5 2.5zm-.5 4v-4h21v4z\"/><path stroke-linecap=\"butt\" stroke-linejoin=\"miter\" d=\"M14 29.5v-13h17v13z\"/><path stroke-linecap=\"butt\" d=\"M14 16.5 11 14h23l-3 2.5zM11 14V9h4v2h5V9h5v2h5V9h4v5z\"/><path fill=\"none\" stroke=\"#c9cdd2\" stroke-linejoin=\"miter\" stroke-width=\"1\" d=\"M12 35.5h21m-20-4h19m-18-2h17m-17-13h17M11 14h23\"/></g></svg>","bQ":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 45 45\"><g fill-rule=\"evenodd\" stroke=\"#000\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.5\"><g stroke=\"none\"><circle cx=\"6\" cy=\"12\" r=\"2.75\"/><circle cx=\"14\" cy=\"9\" r=\"2.75\"/><circle cx=\"22.5\" cy=\"8\" r=\"2.75\"/><circle cx=\"31\" cy=\"9\" r=\"2.75\"/><circle cx=\"39\" cy=\"12\" r=\"2.75\"/></g><path stroke-linecap=\"butt\" d=\"M9 26c8.5-1.5 21-1.5 27 0l2.5-12.5L31 25l-.3-14.1-5.2 13.6-3-14.5-3 14.5-5.2-13.6L14 25 6.5 13.5z\"/><path stroke-linecap=\"butt\" d=\"M9 26c0 2 1.5 2 2.5 4 1 1.5 1 1 .5 3.5-1.5 1-1.5 2.5-1.5 2.5-1.5 1.5.5 2.5.5 2.5 6.5 1 16.5 1 23 0 0 0 1.5-1 0-2.5 0 0 .5-1.5-1-2.5-.5-2.5-.5-2 .5-3.5 1-2 2.5-2 2.5-4-8.5-1.5-18.5-1.5-27 0z\"/><path fill=\"none\" stroke-linecap=\"butt\" d=\"M11 38.5a35 35 1 0 0 23 0\"/><path fill=\"none\" stroke=\"#c9cdd2\" d=\"M11 29a35 35 1 0 1 23 0m-21.5 2.5h20m-21 3a35 35 1 0 0 22 0m-23 3a35 35 1 0 0 24 0\"/></g></svg>","bK":"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 45 45\"><g fill=\"none\" fill-rule=\"evenodd\" stroke=\"#000\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.5\"><path stroke-linejoin=\"miter\" d=\"M22.5 11.6V6\"/><path fill=\"#000\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" d=\"M22.5 25s4.5-7.5 3-10.5c0 0-1-2.5-3-2.5s-3 2.5-3 2.5c-1.5 3 3 10.5 3 10.5\"/><path fill=\"#000\" d=\"M11.5 37a22.3 22.3 0 0 0 21 0v-7s9-4.5 6-10.5c-4-6.5-13.5-3.5-16 4V27v-3.5c-3.5-7.5-13-10.5-16-4-3 6 5 10 5 10z\"/><path stroke-linejoin=\"miter\" d=\"M20 8h5\"/><path stroke=\"#c9cdd2\" d=\"M32 29.5s8.5-4 6-9.7C34.1 14 25 18 22.5 24.6v2.1-2.1C20 18 9.9 14 7 19.9c-2.5 5.6 4.8 9 4.8 9\"/><path stroke=\"#c9cdd2\" d=\"M11.5 30c5.5-3 15.5-3 21 0m-21 3.5c5.5-3 15.5-3 21 0m-21 3.5c5.5-3 15.5-3 21 0\"/></g></svg>"};
 
   function pieceSVGData(type,color){
     const key=(color==='w'?'w':'b')+type.toUpperCase();
@@ -1681,18 +1702,11 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
       if(p){
         const span=document.createElement('span');
         span.className='piece';
-        if(p.type==='n'){
-          const knight=document.createElement('span');
-          knight.className='knightGlyph '+(p.color==='w'?'whiteKnight':'blackKnight');
-          knight.textContent='♞';
-          span.appendChild(knight);
-        }else{
-          const img=document.createElement('img');
-          img.alt='';
-          img.draggable=false;
-          img.src=pieceSVGData(p.type,p.color);
-          span.appendChild(img);
-        }
+        const img=document.createElement('img');
+        img.alt='';
+        img.draggable=false;
+        img.src=pieceSVGData(p.type,p.color);
+        span.appendChild(img);
         div.appendChild(span);
       }else if(legalTargets.includes(sq)){
         const dot=document.createElement('span');
@@ -1735,14 +1749,6 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
 
   let pendingPromotion=null;
 
-  function promotionDisplayGlyph(piece,color){
-    const glyphs={
-      w:{q:'♕',r:'♖',b:'♗',n:'♘'},
-      b:{q:'♛',r:'♜',b:'♝',n:'♞'}
-    };
-    return glyphs[color][piece];
-  }
-
   function showPromotionChooser(from,to,color){
     pendingPromotion={from,to,color};
     const overlay=document.getElementById('promotionOverlay');
@@ -1750,7 +1756,11 @@ textarea{width:100%;min-height:160px;border-radius:10px;border:1px solid #3b4250
       (color==='w'?'White':'Black')+' pawn reached '+to+'. Choose promotion piece.';
     overlay.querySelectorAll('[data-promotion]').forEach(btn=>{
       const type=btn.dataset.promotion;
-      btn.querySelector('.promotionIcon').textContent=promotionDisplayGlyph(type,color);
+      const img=document.createElement('img');
+      img.alt='';
+      img.draggable=false;
+      img.src=pieceSVGData(type,color);
+      btn.querySelector('.promotionIcon').replaceChildren(img);
     });
     overlay.classList.add('show');
     overlay.setAttribute('aria-hidden','false');
