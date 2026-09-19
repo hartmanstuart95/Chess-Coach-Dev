@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Chess Coach DEV v0.9.3.7</title>
+<title>Chess Coach DEV v0.9.3.8</title>
 <style>
 :root{
   --bg:#0d0c13;--panel:#181622;--text:#f9f7ff;--muted:#aaa6bb;
@@ -514,11 +514,19 @@ button:hover:not(:disabled){border-color:#9b6cff}
 .engineHelpOff #reviewTab .keyMoves,
 .engineHelpOff #reviewTab .reviewMovesList{display:none!important}
 .engineOffNote{margin-top:8px;padding:9px;border-radius:9px;background:#211e30;color:#caff75;font-weight:750}
+
+.positionSetupPanel,.botGamePanel{display:none;margin-top:12px;padding:14px;border:2px solid #9b6cff;border-radius:14px;background:linear-gradient(180deg,#25183d,#15131d)}
+.positionSetupPanel.active,.botGamePanel.active{display:block}
+.piecePalette{display:grid;grid-template-columns:repeat(7,minmax(42px,1fr));gap:7px;margin:12px 0}
+.palettePiece{min-width:0;height:54px;padding:5px}.palettePiece img{width:42px;height:42px;max-width:100%}.palettePiece.selectedTool{border-color:#caff75;box-shadow:inset 0 0 0 2px #caff75}
+.setupOptions,.botOptions{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;margin:10px 0}.setupOptions label,.botOptions label,.fenLabel{display:flex;flex-direction:column;gap:5px;color:var(--muted);font-size:12px;font-weight:750}.setupOptions select,.botOptions select,.fenLabel input{border:1px solid #353047;background:#13111a;color:var(--text);border-radius:9px;padding:9px;font-size:14px}
+.setupOptions fieldset{display:flex;gap:8px;flex-wrap:wrap;border:1px solid #353047;border-radius:10px;color:var(--muted);font-size:12px}.setupOptions fieldset label{display:flex;flex-direction:row;align-items:center}.fenLabel input{width:100%;font-family:ui-monospace,monospace}.setupActions{margin-top:10px}.botGamePanel .tryLineMoves{margin-bottom:10px}
+@media(max-width:560px){.piecePalette{grid-template-columns:repeat(7,1fr);gap:4px}.palettePiece{height:46px;padding:3px}.palettePiece img{width:36px;height:36px}.setupOptions fieldset{display:grid;grid-template-columns:1fr 1fr}.setupActions button{flex:1 1 44%}}
 </style>
 </head>
 <body>
 <div class="wrap">
-<h1>Chess Coach DEV v0.9.3.7</h1>
+<h1>Chess Coach DEV v0.9.3.8</h1>
 <div class="sub">Explore alternatives safely with Try a Line.</div>
 
 <div class="layout">
@@ -560,11 +568,34 @@ button:hover:not(:disabled){border-color:#9b6cff}
     <div class="toolbar">
       <button id="tryLineBtn" class="tryLineLaunch">♟ Try a Line</button>
       <button id="engineHelpBtn" aria-pressed="true">Stockfish: ON</button>
+      <button id="setupPositionBtn">Set Up Position</button>
       <button id="flipBtn">Flip board</button>
       <button id="undoBtn">Undo</button>
       <button id="resetBtn">Reset</button>
       <button id="reloadLatestBtn" title="Force Safari to request the newest GitHub Pages build">↻ Reload Latest</button>
     </div>
+    <section id="positionSetupPanel" class="positionSetupPanel" aria-live="polite">
+      <div class="tryLineTitle">Set Up Position</div>
+      <div class="small">Choose a piece, then tap squares to place it. Select Eraser to remove pieces.</div>
+      <div id="piecePalette" class="piecePalette" aria-label="Chess piece palette"></div>
+      <div class="setupOptions">
+        <label>Side to move<select id="setupTurn"><option value="w">White</option><option value="b">Black</option></select></label>
+        <fieldset><legend>Castling</legend><label><input id="castleWK" type="checkbox"> White O-O</label><label><input id="castleWQ" type="checkbox"> White O-O-O</label><label><input id="castleBK" type="checkbox"> Black O-O</label><label><input id="castleBQ" type="checkbox"> Black O-O-O</label></fieldset>
+      </div>
+      <label class="fenLabel">FEN<input id="setupFen" type="text" spellcheck="false" autocomplete="off"></label>
+      <div class="row setupActions"><button id="setupLoadFen">Load FEN</button><button id="setupCopyFen">Copy FEN</button><button id="setupStandard">Starting Position</button><button id="setupClear">Clear Board</button></div>
+      <div id="setupStatus" class="small" aria-live="polite">Position editor ready.</div>
+      <div class="botOptions">
+        <label>Play as<select id="botPlayerColor"><option value="w">White</option><option value="b">Black</option></select></label>
+        <label>Bot strength<select id="botLevel"><option value="5">Beginner</option><option value="8" selected>Improving</option><option value="11">Club</option><option value="14">Advanced</option></select></label>
+      </div>
+      <div class="row setupActions"><button id="setupUsePosition">Use Position</button><button id="setupPlayBot" class="primary">Play Against Stockfish</button><button id="setupCancel">Cancel</button></div>
+    </section>
+    <section id="botGamePanel" class="botGamePanel" aria-live="polite">
+      <div class="tryLineTitle">Practice Game vs Stockfish</div><div id="botGameStatus" class="small">Your move.</div>
+      <div id="botGameMoves" class="tryLineMoves">No moves yet.</div>
+      <div class="row setupActions"><button id="botTakeback">Take Back</button><button id="botRestart">Restart Position</button><button id="botEnd">End Practice</button></div>
+    </section>
     <section id="tryLinePanel" class="tryLinePanel" aria-live="polite">
       <div class="tryLineTitle">Try a Line — experimental moves do not change your original game.</div>
       <div id="tryLineStatus" class="tryLineNotice small">Stockfish is preparing the starting position…</div>
@@ -608,6 +639,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
       <button class="tabBtn" data-tab="coachTab">Coach</button>
       <button class="tabBtn" data-tab="trainTab">Train</button>
       <button class="tabBtn" data-tab="middleTab">Middlegame</button>
+      <button class="tabBtn" data-tab="practiceTab">Practice</button>
     </div>
     <div id="gameTab" class="tabPane activePane"><div class="card">
       <div class="badge">PGN</div>
@@ -651,6 +683,12 @@ button:hover:not(:disabled){border-color:#9b6cff}
     </div>
 
     </div>
+    <div id="practiceTab" class="tabPane"><div class="card">
+      <div class="badge">POSITION PRACTICE</div><strong> Build it. Play it. Learn it.</strong>
+      <p class="small">Create any legal position, import a FEN, or start from the board you are studying.</p>
+      <div class="row" style="margin-top:10px"><button id="practiceSetupBtn" class="primary">Set Up Position</button><button id="practiceCurrentBotBtn">Play Current Position</button></div>
+      <p class="small" style="margin-top:10px">Stockfish can play while Engine Help is off, so you can practice without seeing evaluations or suggested moves.</p>
+    </div></div>
     <div id="engineTab" class="tabPane"><div class="card">
       <div class="badge">ENGINE</div>
       <strong> Stockfish analysis</strong>
@@ -860,6 +898,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
 <script src="./ai-coach-token.js"></script>
 <script src="./ai-coach-response.js"></script>
 <script src="./study-session.js"></script>
+<script src="./position-tools.js"></script>
 <script>
 (function(){
   /*
@@ -943,9 +982,123 @@ button:hover:not(:disabled){border-color:#9b6cff}
   let tryLine=null;
   let tryLineGeneration=0;
   let tryLineInfo={score:null,mate:null,pv:[],depth:0};
+  let setupMode=false;
+  let setupPieces={};
+  let setupSelectedPiece=null;
+  let setupSnapshot=null;
+  let botGame=null;
   let aiCoachRequestId=0;
   const AI_COACH_URL='https://chess-coach-ai.hartman-stuart95.workers.dev/coach/explain-line';
   const aiCoachTokenStore=AiCoachToken.createTokenStore(localStorage);
+
+  const STANDARD_FEN='rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+  const PRACTICE_CONSUMER_IDS=['tryLineBtn','flipBtn','undoBtn','resetBtn','loadBtn','sampleBtn','analyzeGameBtn','reviewMoveBtn','startMoveBtn','previousMoveBtn','nextMoveBtn','endMoveBtn'];
+
+  function appSnapshot(){
+    return {fen:game.fen(),cursor,loadedMoves:loadedMoves.slice(),lastMove:lastMove?{...lastMove}:null,pgn:pgnInput.value,orientation,
+      batchRows:batchRows.slice(),batchEvaluations:batchEvaluations.slice()};
+  }
+
+  function restoreAppSnapshot(snapshot){
+    game=new Chess(snapshot.fen);cursor=snapshot.cursor;loadedMoves=snapshot.loadedMoves.slice();lastMove=snapshot.lastMove;pgnInput.value=snapshot.pgn;orientation=snapshot.orientation;
+    batchRows=snapshot.batchRows.slice();batchEvaluations=snapshot.batchEvaluations.slice();selected=null;legalTargets=[];
+  }
+
+  function setPracticeConsumersDisabled(disabled){
+    PRACTICE_CONSUMER_IDS.forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=disabled;});
+    document.querySelectorAll('.movebtn').forEach(el=>el.disabled=disabled);
+  }
+
+  function currentSetupPosition(){
+    let castling='';
+    if(document.getElementById('castleWK').checked)castling+='K';if(document.getElementById('castleWQ').checked)castling+='Q';
+    if(document.getElementById('castleBK').checked)castling+='k';if(document.getElementById('castleBQ').checked)castling+='q';
+    return {pieces:{...setupPieces},turn:document.getElementById('setupTurn').value,castling:castling||'-',enPassant:'-',halfmove:0,fullmove:1};
+  }
+
+  function syncSetupControls(position){
+    setupPieces={...position.pieces};document.getElementById('setupTurn').value=position.turn;
+    document.getElementById('castleWK').checked=position.castling.includes('K');document.getElementById('castleWQ').checked=position.castling.includes('Q');
+    document.getElementById('castleBK').checked=position.castling.includes('k');document.getElementById('castleBQ').checked=position.castling.includes('q');
+    document.getElementById('setupFen').value=ChessPositionTools.buildFen(currentSetupPosition());
+  }
+
+  function updateSetupFen(){
+    if(!setupMode)return;
+    try{document.getElementById('setupFen').value=ChessPositionTools.buildFen(currentSetupPosition());}catch(e){}
+  }
+
+  function renderPiecePalette(){
+    const palette=document.getElementById('piecePalette');palette.replaceChildren();
+    [['w','p'],['w','n'],['w','b'],['w','r'],['w','q'],['w','k'],['erase','erase'],['b','p'],['b','n'],['b','b'],['b','r'],['b','q'],['b','k']].forEach(([color,type])=>{
+      const btn=document.createElement('button');btn.type='button';btn.className='palettePiece';btn.dataset.tool=color==='erase'?'erase':color+type;
+      if(btn.dataset.tool===setupSelectedPiece)btn.classList.add('selectedTool');
+      if(color==='erase')btn.textContent='⌫';else{const img=document.createElement('img');img.alt=(color==='w'?'White ':'Black ')+type;img.src=pieceSVGData(type,color);btn.appendChild(img);}
+      btn.addEventListener('click',()=>{setupSelectedPiece=btn.dataset.tool;renderPiecePalette();});palette.appendChild(btn);
+    });
+  }
+
+  function enterSetupPosition(fen=game.fen()){
+    if(tryLine||botGame)return;
+    setupSnapshot=appSnapshot();
+    try{syncSetupControls(ChessPositionTools.parseFen(fen));}catch(e){syncSetupControls(ChessPositionTools.parseFen(STANDARD_FEN));}
+    setupMode=true;setupSelectedPiece='wp';selected=null;legalTargets=[];cancelEngineAdvice();setPracticeConsumersDisabled(true);
+    document.getElementById('positionSetupPanel').classList.add('active');document.getElementById('setupPositionBtn').disabled=true;
+    renderPiecePalette();render();document.getElementById('setupStatus').textContent='Choose a piece, then tap the board.';
+  }
+
+  function leaveSetupPosition(restore=true){
+    if(!setupMode)return;
+    setupMode=false;setupSelectedPiece=null;document.getElementById('positionSetupPanel').classList.remove('active');document.getElementById('setupPositionBtn').disabled=false;
+    if(restore&&setupSnapshot)restoreAppSnapshot(setupSnapshot);setPracticeConsumersDisabled(false);setupSnapshot=null;render();
+  }
+
+  function validatedSetupFen(){
+    const result=ChessPositionTools.validate(currentSetupPosition());
+    if(!result.valid)return result;
+    const candidate=new Chess();let loaded=false;try{loaded=candidate.load(result.fen);}catch(e){}
+    return loaded?result:{valid:false,message:'That position is not legal. Check the kings, checks, and castling rights.'};
+  }
+
+  function useSetupPosition(){
+    const result=validatedSetupFen();if(!result.valid){document.getElementById('setupStatus').textContent=result.message;return false;}
+    setupMode=false;document.getElementById('positionSetupPanel').classList.remove('active');document.getElementById('setupPositionBtn').disabled=false;
+    game=new Chess(result.fen);loadedMoves=[];cursor=0;lastMove=null;batchRows=[];batchEvaluations=[];pgnInput.value='';selected=null;legalTargets=[];setPracticeConsumersDisabled(false);
+    document.getElementById('setupStatus').textContent='Position ready.';render();return result.fen;
+  }
+
+  function renderBotMoves(){
+    const el=document.getElementById('botGameMoves');if(!botGame||!botGame.moves.length){el.textContent='No moves yet.';return;}
+    el.textContent=botGame.moves.map((m,i)=>(i%2===0?(Math.floor(i/2)+1)+'. ':'')+m).join(' ');
+  }
+
+  function startBotGame(fen,playerColor,depth,snapshot){
+    let candidate=new Chess();if(!candidate.load(fen)){document.getElementById('setupStatus').textContent='Could not start that position.';return;}
+    setupMode=false;document.getElementById('positionSetupPanel').classList.remove('active');document.getElementById('setupPositionBtn').disabled=true;
+    game=candidate;loadedMoves=[];cursor=0;lastMove=null;selected=null;legalTargets=[];bestMoveHighlight=null;
+    botGame={baseFen:fen,playerColor,botColor:playerColor==='w'?'b':'w',depth:Number(depth)||8,moves:[],locked:false,snapshot:snapshot||appSnapshot()};
+    setPracticeConsumersDisabled(true);document.getElementById('botGamePanel').classList.add('active');renderBotMoves();render();scheduleBotMove();
+  }
+
+  function scheduleBotMove(){
+    if(!botGame)return;
+    if(game.game_over()){botGame.locked=false;document.getElementById('botGameStatus').textContent=game.in_checkmate()?'Checkmate. Practice complete.':'Game over.';render();return;}
+    if(game.turn()!==botGame.botColor){botGame.locked=false;document.getElementById('botGameStatus').textContent='Your move.';render();return;}
+    botGame.locked=true;document.getElementById('botGameStatus').textContent='Stockfish is thinking…';render();
+    if(engineReady&&engine)requestEngineJob('bot',game.fen(),botGame.depth);else initEngine();
+  }
+
+  function finishBotMove(job,bestmove){
+    if(!botGame||job.fen!==game.fen()||game.turn()!==botGame.botColor)return;
+    const move=game.move({from:bestmove.slice(0,2),to:bestmove.slice(2,4),promotion:bestmove[4]||'q'});if(!move)return;
+    botGame.moves.push(move.san);lastMove={from:move.from,to:move.to};botGame.locked=false;renderBotMoves();render();scheduleBotMove();
+  }
+
+  function endBotGame(){
+    if(!botGame)return;const snapshot=botGame.snapshot;botGame=null;engineAdviceGeneration++;if(engine)engine.postMessage('stop');engineJob=null;
+    document.getElementById('botGamePanel').classList.remove('active');document.getElementById('setupPositionBtn').disabled=false;setPracticeConsumersDisabled(false);
+    restoreAppSnapshot(snapshot);render();scheduleAutoAnalysis();
+  }
 
   function enginePreference(){
     try{const value=localStorage.getItem(ENGINE_PREFERENCE_KEY);return value===null?null:value==='on';}catch(e){return null;}
@@ -973,7 +1126,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
 
   function setEngineHelp(enabled,persist=true){
     engineHelpEnabled=Boolean(enabled);
-    if(!engineHelpEnabled)cancelEngineAdvice();
+    if(!engineHelpEnabled&&!botGame)cancelEngineAdvice();
     if(persist)saveEnginePreference();
     applyEngineHelpUi();renderTryLine();render();scheduleSessionSave();
     if(engineHelpEnabled){
@@ -986,10 +1139,12 @@ button:hover:not(:disabled){border-color:#9b6cff}
 
   function sessionSnapshot(){
     const pgn=pgnInput.value.trim();
-    if(!pgn&&!loadedMoves.length&&!tryLine)return null;
+    if(!pgn&&!loadedMoves.length&&!tryLine&&!setupMode&&!botGame&&game.fen()===STANDARD_FEN)return null;
     return {version:1,savedAt:Date.now(),pgn,loadedMoves:loadedMoves.slice(),cursor,canonicalFen:tryLine?tryLine.snapshot.fen:game.fen(),
       orientation,currentFocus,activeTab:activeTabId(),engineEnabled:engineHelpEnabled,autoAnalyze:document.getElementById('autoAnalyze').checked,
-      pgnHeaders:{...pgnHeaders},mySide,batchRows:batchRows.slice(),batchEvaluations:batchEvaluations.slice(),reviewCategory,
+      pgnHeaders:{...pgnHeaders},mySide,batchRows:batchRows.slice(),batchEvaluations:batchEvaluations.slice(),reviewCategory,customFen:(!loadedMoves.length?game.fen():null),
+      setup:setupMode?{position:currentSetupPosition(),selectedPiece:setupSelectedPiece,snapshot:setupSnapshot}:null,
+      botGame:botGame?{...botGame,moves:botGame.moves.slice(),currentFen:game.fen()}:null,
       tryLine:tryLine?{startFen:tryLine.startFen,startFullmove:tryLine.startFullmove,startTurn:tryLine.startTurn,startLabel:tryLine.startLabel,
         moves:tryLine.moves.slice(),currentFen:game.fen(),baseEval:tryLine.baseEval,currentEval:tryLine.currentEval,
         stockfishRecommendedResponseSan:tryLine.stockfishRecommendedResponseSan,stockfishPrincipalVariationSan:tryLine.stockfishPrincipalVariationSan,
@@ -1018,18 +1173,21 @@ button:hover:not(:disabled){border-color:#9b6cff}
       batchRows=Array.isArray(saved.batchRows)?saved.batchRows:[];batchEvaluations=Array.isArray(saved.batchEvaluations)?saved.batchEvaluations:[];reviewCategory=saved.reviewCategory||'key';
       engineHelpEnabled=saved.engineEnabled;document.getElementById('autoAnalyze').checked=Boolean(saved.autoAnalyze);
       const position=buildPositionAt(cursor);if(!position)throw new Error('Invalid saved cursor');game=position.game;lastMove=position.last?{from:position.last.from,to:position.last.to}:null;
+      if(saved.customFen&&!saved.loadedMoves.length)game=new Chess(saved.customFen);
       if(saved.tryLine){
         const lineGame=new Chess(saved.tryLine.startFen);for(const san of saved.tryLine.moves)if(!lineGame.move(san))throw new Error('Invalid saved variation');
         if(saved.tryLine.currentFen&&lineGame.fen()!==saved.tryLine.currentFen)throw new Error('Variation mismatch');
         game=lineGame;tryLine={...saved.tryLine,moves:saved.tryLine.moves.slice(),snapshot:{...saved.tryLine.snapshot,loadedMoves:saved.tryLine.snapshot.loadedMoves.slice()},locked:false};
         tryLineGeneration++;setTryLineConsumersDisabled(true);document.getElementById('tryLineBtn').disabled=true;
       }
+      if(saved.setup){setupSnapshot=saved.setup.snapshot;syncSetupControls(saved.setup.position);setupSelectedPiece=saved.setup.selectedPiece||'wp';setupMode=true;setPracticeConsumersDisabled(true);document.getElementById('positionSetupPanel').classList.add('active');document.getElementById('setupPositionBtn').disabled=true;renderPiecePalette();}
+      if(saved.botGame){game=new Chess(saved.botGame.currentFen);botGame={...saved.botGame,moves:saved.botGame.moves.slice(),locked:false};setPracticeConsumersDisabled(true);document.getElementById('botGamePanel').classList.add('active');document.getElementById('setupPositionBtn').disabled=true;renderBotMoves();}
       detectMySide();updateFocusHeader();
       document.querySelectorAll('.focusBtn').forEach(btn=>btn.classList.toggle('activeFocus',btn.dataset.focus===currentFocus));
       switchTab(saved.activeTab||'gameTab');applyEngineHelpUi();renderTryLine();render();
       if(batchRows.length){renderFocusedReview();renderPatternInsights();document.getElementById('gameReviewStatus').textContent='Full game review restored • '+batchRows.length+' moves classified.';}
       feedbackEl.textContent='Previous study session restored.';feedbackEl.className='small ok';
-      if(engineHelpEnabled)setTimeout(()=>{if(tryLine)initEngine();else scheduleAutoAnalysis();},0);
+      if(engineHelpEnabled||botGame)setTimeout(()=>{if(botGame)scheduleBotMove();else if(tryLine)initEngine();else scheduleAutoAnalysis();},0);
       return true;
     }catch(e){sessionStore.clear();tryLine=null;loadedMoves=[];cursor=0;game=new Chess();return false;}
     finally{restoringSession=false;}
@@ -1817,8 +1975,8 @@ button:hover:not(:disabled){border-color:#9b6cff}
       if(engineHelpEnabled&&bestMoveHighlight&&bestMoveHighlight.from===sq)div.classList.add('bestFrom');
       if(engineHelpEnabled&&bestMoveHighlight&&bestMoveHighlight.to===sq)div.classList.add('bestTo');
 
-      const p=game.get(sq);
-      if(p && p.type==='k' && p.color===game.turn() && game.in_check()){
+      const p=setupMode?setupPieces[sq]:game.get(sq);
+      if(!setupMode&&p && p.type==='k' && p.color===game.turn() && game.in_check()){
         div.classList.add('inCheck');
       }
       if(p){
@@ -1856,16 +2014,14 @@ button:hover:not(:disabled){border-color:#9b6cff}
       boardEl.appendChild(div);
     });
 
-    let txt=game.turn()==='w'?'White to move':'Black to move';
-    if(game.in_checkmate())txt+=' — Checkmate';
-    else if(game.in_check())txt+=' — Check';
-    else if(game.in_draw())txt+=' — Draw';
+    let txt=setupMode?'Position setup':(game.turn()==='w'?'White to move':'Black to move');
+    if(!setupMode&&game.in_checkmate())txt+=' — Checkmate';
+    else if(!setupMode&&game.in_check())txt+=' — Check';
+    else if(!setupMode&&game.in_draw())txt+=' — Draw';
 
     statusEl.textContent=txt;
-    fenEl.textContent=game.fen();
-    updateMaterialCounter();
-    renderMoves();
-    renderCurrentMoveLearning();
+    fenEl.textContent=setupMode?ChessPositionTools.buildFen(currentSetupPosition()):game.fen();
+    if(!setupMode){updateMaterialCounter();renderMoves();renderCurrentMoveLearning();}
     if(tryLine)setTryLineConsumersDisabled(true);
     scheduleSessionSave();
   }
@@ -1908,6 +2064,10 @@ button:hover:not(:disabled){border-color:#9b6cff}
       feedbackEl.className='small ok';
       requestTryLineAnalysis('current');
       return;
+    }
+
+    if(botGame){
+      botGame.moves.push(move.san);botGame.locked=true;feedbackEl.textContent='Played '+move.san;feedbackEl.className='small ok';renderBotMoves();render();scheduleBotMove();return;
     }
 
     if(pauseMode){
@@ -1968,6 +2128,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
   }
 
   function attemptManualMove(from,to,promotion){
+    if(botGame&&(botGame.locked||game.turn()!==botGame.playerColor))return false;
     if(tryLine?.locked){
       feedbackEl.textContent='Wait for Stockfish to finish before playing the next move.';
       feedbackEl.className='small';
@@ -1997,6 +2158,15 @@ button:hover:not(:disabled){border-color:#9b6cff}
     feedbackEl.textContent='';
 
     if(pendingPromotion)return;
+
+    if(setupMode){
+      if(!setupSelectedPiece){document.getElementById('setupStatus').textContent='Choose a piece or the eraser first.';return;}
+      if(setupSelectedPiece==='erase')delete setupPieces[sq];
+      else setupPieces[sq]={color:setupSelectedPiece[0],type:setupSelectedPiece[1]};
+      updateSetupFen();render();return;
+    }
+
+    if(botGame&&(botGame.locked||game.turn()!==botGame.playerColor))return;
 
     if(!selected){
       const p=game.get(sq);
@@ -2430,7 +2600,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
   }
 
   function requestEngineJob(owner,fen,depth,retries=0,lineToken=null,tryLineKind=null){
-    if(!engineHelpEnabled||!engineReady||!engine)return false;
+    if((!engineHelpEnabled&&owner!=='bot')||!engineReady||!engine)return false;
     if(batchMode&&owner!=='batch')return false; // Full Game Review is exclusive.
     engineJob={owner,fen,depth,retries,lineToken,tryLineKind,adviceGeneration:engineAdviceGeneration,phase:'flushing'};
     engine.postMessage('stop');
@@ -3112,7 +3282,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
     if(line==='readyok'){
       engineReady=true;
       engineLoading=false;
-      if(!engineHelpEnabled){document.getElementById('engineStatus').textContent='Study Mode • Stockfish help is off.';return;}
+      if(!engineHelpEnabled&&!botGame){document.getElementById('engineStatus').textContent='Study Mode • Stockfish help is off.';return;}
       document.getElementById('engineStatus').textContent='Engine ready.';
       if(engineJob&&engineJob.phase==='flushing'){
         engineJob.phase='searching';
@@ -3123,6 +3293,8 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
       if(batchMode==='waiting'){
         batchMode='running';
         startBatchPosition();
+      }else if(botGame&&game.turn()===botGame.botColor){
+        requestEngineJob('bot',game.fen(),botGame.depth);
       }else if(tryLine){
         requestTryLineAnalysis(tryLine.baseEval?'current':'base');
       }else if(reviewStage!=='waiting'){
@@ -3132,8 +3304,9 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
     }
 
     // bestmove/info emitted before readyok belongs to the stopped predecessor.
-    if(!engineHelpEnabled||!engineJob||engineJob.phase!=='searching')return;
+    if(!engineJob||engineJob.phase!=='searching')return;
     const job=engineJob;
+    if(!engineHelpEnabled&&job.owner!=='bot')return;
     if(job.adviceGeneration!==engineAdviceGeneration)return;
 
     if(line.startsWith('info ')){
@@ -3220,6 +3393,9 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
       renderTryLine();render();
       return;
     }
+    if(job.owner==='bot'){
+      finishBotMove(job,bm);return;
+    }
     if(job.owner==='live'){
       if(activeAnalysisFen!==job.fen||game.fen()!==job.fen)return;
       if(bm!=='(none)'){
@@ -3233,9 +3409,10 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
   }
 
   async function initEngine(){
-    if(!engineHelpEnabled){applyEngineHelpUi();return;}
+    if(!engineHelpEnabled&&!botGame){applyEngineHelpUi();return;}
     if(engineReady){
-      if(tryLine)requestTryLineAnalysis(tryLine.baseEval?'current':'base');
+      if(botGame)scheduleBotMove();
+      else if(tryLine)requestTryLineAnalysis(tryLine.baseEval?'current':'base');
       else runAnalysis();
       return;
     }
@@ -3301,7 +3478,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
   }
 
   function scheduleAutoAnalysis(){
-    if(!engineHelpEnabled||batchMode||!document.getElementById('autoAnalyze')?.checked)return;
+    if(!engineHelpEnabled||botGame||batchMode||!document.getElementById('autoAnalyze')?.checked)return;
     clearTimeout(analysisTimer);
     analysisTimer=setTimeout(()=>{
       if(engineReady)runAnalysis();
@@ -3311,6 +3488,32 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
 
   document.getElementById('analyzeBtn').addEventListener('click',initEngine);
   ['engineHelpBtn','engineHelpTabBtn'].forEach(id=>document.getElementById(id).addEventListener('click',()=>setEngineHelp(!engineHelpEnabled,true)));
+  ['setupPositionBtn','practiceSetupBtn'].forEach(id=>document.getElementById(id).addEventListener('click',()=>enterSetupPosition(game.fen())));
+  document.getElementById('practiceCurrentBotBtn').addEventListener('click',()=>startBotGame(game.fen(),game.turn(),8,appSnapshot()));
+  ['setupTurn','castleWK','castleWQ','castleBK','castleBQ'].forEach(id=>document.getElementById(id).addEventListener('change',updateSetupFen));
+  document.getElementById('setupLoadFen').addEventListener('click',()=>{
+    try{syncSetupControls(ChessPositionTools.parseFen(document.getElementById('setupFen').value));render();document.getElementById('setupStatus').textContent='FEN loaded into the editor.';}
+    catch(e){document.getElementById('setupStatus').textContent=e.message;}
+  });
+  document.getElementById('setupCopyFen').addEventListener('click',async()=>{
+    const fen=ChessPositionTools.buildFen(currentSetupPosition());document.getElementById('setupFen').value=fen;
+    try{await navigator.clipboard.writeText(fen);document.getElementById('setupStatus').textContent='FEN copied.';}catch(e){document.getElementById('setupFen').select();document.getElementById('setupStatus').textContent='FEN selected. Use Copy from the browser menu.';}
+  });
+  document.getElementById('setupStandard').addEventListener('click',()=>{syncSetupControls(ChessPositionTools.parseFen(STANDARD_FEN));render();});
+  document.getElementById('setupClear').addEventListener('click',()=>{setupPieces={};updateSetupFen();render();document.getElementById('setupStatus').textContent='Board cleared. Add both kings before starting.';});
+  document.getElementById('setupCancel').addEventListener('click',()=>leaveSetupPosition(true));
+  document.getElementById('setupUsePosition').addEventListener('click',()=>{if(useSetupPosition())feedbackEl.textContent='Custom position loaded.';});
+  document.getElementById('setupPlayBot').addEventListener('click',()=>{
+    const result=validatedSetupFen();if(!result.valid){document.getElementById('setupStatus').textContent=result.message;return;}
+    const snapshot=setupSnapshot||appSnapshot();startBotGame(result.fen,document.getElementById('botPlayerColor').value,document.getElementById('botLevel').value,snapshot);setupSnapshot=null;
+  });
+  document.getElementById('botEnd').addEventListener('click',endBotGame);
+  document.getElementById('botRestart').addEventListener('click',()=>{if(!botGame)return;engineAdviceGeneration++;if(engine)engine.postMessage('stop');engineJob=null;game=new Chess(botGame.baseFen);botGame.moves=[];botGame.locked=false;lastMove=null;renderBotMoves();render();scheduleBotMove();});
+  document.getElementById('botTakeback').addEventListener('click',()=>{
+    if(!botGame||!botGame.moves.length)return;engineAdviceGeneration++;if(engine)engine.postMessage('stop');engineJob=null;
+    const count=game.turn()===botGame.playerColor?2:1;for(let i=0;i<count&&botGame.moves.length;i++){game.undo();botGame.moves.pop();}
+    botGame.locked=false;lastMove=null;renderBotMoves();render();document.getElementById('botGameStatus').textContent='Move taken back. Your move.';
+  });
   document.getElementById('tryLineBtn').addEventListener('click',startTryLine);
   document.getElementById('tryLineUndo').addEventListener('click',undoTryLineMove);
   document.getElementById('tryLineRestart').addEventListener('click',restartTryLine);
