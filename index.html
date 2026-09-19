@@ -958,6 +958,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
   function cancelEngineAdvice(){
     clearTimeout(analysisTimer);clearEngineWatchdog();engineAdviceGeneration++;
     activeAnalysisFen=null;engineJob=null;bestMoveHighlight=null;
+    if(tryLine){tryLine.stockfishRecommendedResponseSan=null;tryLine.stockfishPrincipalVariationSan=null;}
     if(engine){try{engine.postMessage('stop');engine.postMessage('isready');}catch(e){}}
     if(batchMode){batchMode=null;const btn=document.getElementById('analyzeGameBtn');btn.disabled=false;btn.textContent='Analyze full game';}
     reviewStage=null;reviewData=null;
@@ -1077,7 +1078,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
     }
     document.getElementById('tryLineUndo').disabled=!tryLine.moves.length||tryLine.locked;
     document.getElementById('tryLineRestart').disabled=tryLine.locked;
-    document.getElementById('explainLineBtn').disabled=tryLine.locked||!tryLine.moves.length||!tryLine.currentEval||!tryLine.stockfishRecommendedResponseSan||!tryLine.stockfishPrincipalVariationSan;
+    document.getElementById('explainLineBtn').disabled=!engineHelpEnabled||tryLine.locked||!tryLine.moves.length||!tryLine.currentEval||!tryLine.stockfishRecommendedResponseSan||!tryLine.stockfishPrincipalVariationSan;
   }
 
   function getAiCoachToken(){
@@ -1194,8 +1195,8 @@ button:hover:not(:disabled){border-color:#9b6cff}
 
   function requestTryLineAnalysis(kind){
     if(!tryLine)return;
-    if(!engineHelpEnabled){tryLine.locked=false;tryLine.stockfishRecommendedResponseSan=null;tryLine.stockfishPrincipalVariationSan=null;bestMoveHighlight=null;renderTryLine();render();return;}
     clearAiCoachExplanation();
+    if(!engineHelpEnabled){tryLine.locked=false;tryLine.stockfishRecommendedResponseSan=null;tryLine.stockfishPrincipalVariationSan=null;bestMoveHighlight=null;renderTryLine();render();return;}
     tryLine.stockfishRecommendedResponseSan=null;
     tryLine.stockfishPrincipalVariationSan=null;
     tryLine.locked=true;
