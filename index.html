@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Chess Coach DEV v0.9.3.6</title>
+<title>Chess Coach DEV v0.9.3.7</title>
 <style>
 :root{
   --bg:#0d0c13;--panel:#181622;--text:#f9f7ff;--muted:#aaa6bb;
@@ -499,11 +499,26 @@ body{background:radial-gradient(circle at 76% -10%,#2b164d 0,transparent 34%),va
 button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px solid #caff75;outline-offset:2px}
 .sq:focus-visible{outline-offset:-4px}
 button:hover:not(:disabled){border-color:#9b6cff}
+
+.engineHelpOff #evalBar{visibility:hidden}
+.engineHelpOff .engineAdvice{display:none!important}
+.engineHelpOff #currentMoveCard .learningClassification,
+.engineHelpOff #currentMoveCard .learningDetails,
+.engineHelpOff #currentMoveCard .learningWhy,
+.engineHelpOff #currentMoveCard .coachingReminder,
+.engineHelpOff #currentMoveCard .recurringPattern{display:none}
+.engineHelpOff #openingCoachNote,
+.engineHelpOff #reviewTab .reviewGrid,
+.engineHelpOff #reviewTab .reviewText,
+.engineHelpOff #reviewTab .summaryGrid,
+.engineHelpOff #reviewTab .keyMoves,
+.engineHelpOff #reviewTab .reviewMovesList{display:none!important}
+.engineOffNote{margin-top:8px;padding:9px;border-radius:9px;background:#211e30;color:#caff75;font-weight:750}
 </style>
 </head>
 <body>
 <div class="wrap">
-<h1>Chess Coach DEV v0.9.3.6</h1>
+<h1>Chess Coach DEV v0.9.3.7</h1>
 <div class="sub">Explore alternatives safely with Try a Line.</div>
 
 <div class="layout">
@@ -544,6 +559,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
     </div>
     <div class="toolbar">
       <button id="tryLineBtn" class="tryLineLaunch">♟ Try a Line</button>
+      <button id="engineHelpBtn" aria-pressed="true">Stockfish: ON</button>
       <button id="flipBtn">Flip board</button>
       <button id="undoBtn">Undo</button>
       <button id="resetBtn">Reset</button>
@@ -552,15 +568,15 @@ button:hover:not(:disabled){border-color:#9b6cff}
     <section id="tryLinePanel" class="tryLinePanel" aria-live="polite">
       <div class="tryLineTitle">Try a Line — experimental moves do not change your original game.</div>
       <div id="tryLineStatus" class="tryLineNotice small">Stockfish is preparing the starting position…</div>
-      <div class="tryLineStats">
+      <div class="tryLineStats engineAdvice">
         <div class="tryLineStat"><div class="engineLabel">Starting move</div><div id="tryLineStartMove" class="tryLineValue">—</div></div>
         <div class="tryLineStat"><div class="engineLabel">Current evaluation</div><div id="tryLineEval" class="tryLineValue">—</div></div>
         <div class="tryLineStat"><div class="engineLabel">Change from start</div><div id="tryLineDelta" class="tryLineValue">—</div></div>
       </div>
       <div class="engineLabel" style="margin-top:10px">Experimental variation</div>
       <div id="tryLineMoves" class="tryLineMoves">No experimental moves yet.</div>
-      <div class="engineLabel" style="margin-top:10px">Stockfish recommended response</div>
-      <div id="tryLineBest" class="tryLineValue">—</div>
+      <div class="engineAdvice"><div class="engineLabel" style="margin-top:10px">Stockfish recommended response</div>
+      <div id="tryLineBest" class="tryLineValue">—</div></div>
       <div class="aiCoachPanel">
         <div class="aiCoachSetup">
           <button id="aiCoachConnect" type="button">Connect AI Coach</button>
@@ -640,6 +656,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
       <strong> Stockfish analysis</strong>
       <p class="small">Analyze the position currently shown on the board.</p>
       <div class="row">
+        <button id="engineHelpTabBtn" aria-pressed="true">Stockfish: ON</button>
         <button id="analyzeBtn" class="primary">Analyze position</button>
         <button id="restartEngineBtn" title="Stop the current worker and start a fresh Stockfish engine">Restart engine</button>
       </div>
@@ -654,7 +671,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
         </label>
       </div>
       <div id="engineStatus" class="small" style="margin-top:8px" aria-live="polite">Engine not started.</div>
-      <div class="engineGrid">
+      <div class="engineGrid engineAdvice">
         <div class="engineStat">
           <div class="engineLabel">Evaluation</div>
           <div id="evalValue" class="engineValue">—</div>
@@ -664,7 +681,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
           <div id="bestMoveValue" class="engineValue">—</div>
         </div>
       </div>
-      <div class="pv">
+      <div class="pv engineAdvice">
         <div class="engineLabel">Best line</div>
         <div id="pvValue">—</div>
       </div>
@@ -842,6 +859,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
 <script src="./ai-coach-token.js"></script>
 <script src="./ai-coach-response.js"></script>
+<script src="./study-session.js"></script>
 <script>
 (function(){
   /*
@@ -887,6 +905,12 @@ button:hover:not(:disabled){border-color:#9b6cff}
   let engineWatchdog=null;
   let engineStartupTimer=null;
   let engineGeneration=0;
+  let engineAdviceGeneration=0;
+  let engineHelpEnabled=true;
+  let restoringSession=false;
+  let sessionSaveTimer=null;
+  const ENGINE_PREFERENCE_KEY='chessCoachEngineHelp_v1';
+  const sessionStore=ChessCoachSession.createStore(localStorage);
   // Exactly one tagged job may own Stockfish. UCI has no request IDs, so every
   // job is separated from its predecessor by stop -> isready -> readyok.
   let engineJob=null;
@@ -922,6 +946,94 @@ button:hover:not(:disabled){border-color:#9b6cff}
   let aiCoachRequestId=0;
   const AI_COACH_URL='https://chess-coach-ai.hartman-stuart95.workers.dev/coach/explain-line';
   const aiCoachTokenStore=AiCoachToken.createTokenStore(localStorage);
+
+  function enginePreference(){
+    try{const value=localStorage.getItem(ENGINE_PREFERENCE_KEY);return value===null?null:value==='on';}catch(e){return null;}
+  }
+
+  function saveEnginePreference(){
+    try{localStorage.setItem(ENGINE_PREFERENCE_KEY,engineHelpEnabled?'on':'off');}catch(e){}
+  }
+
+  function cancelEngineAdvice(){
+    clearTimeout(analysisTimer);clearEngineWatchdog();engineAdviceGeneration++;
+    activeAnalysisFen=null;engineJob=null;bestMoveHighlight=null;
+    if(tryLine){tryLine.stockfishRecommendedResponseSan=null;tryLine.stockfishPrincipalVariationSan=null;}
+    if(engine){try{engine.postMessage('stop');engine.postMessage('isready');}catch(e){}}
+    if(batchMode){batchMode=null;const btn=document.getElementById('analyzeGameBtn');btn.disabled=false;btn.textContent='Analyze full game';}
+    reviewStage=null;reviewData=null;
+  }
+
+  function applyEngineHelpUi(){
+    document.body.classList.toggle('engineHelpOff',!engineHelpEnabled);
+    ['engineHelpBtn','engineHelpTabBtn'].forEach(id=>{const btn=document.getElementById(id);if(btn){btn.textContent='Stockfish: '+(engineHelpEnabled?'ON':'OFF');btn.setAttribute('aria-pressed',String(engineHelpEnabled));}});
+    ['analyzeBtn','restartEngineBtn','autoAnalyze','reviewMoveBtn','analyzeGameBtn'].forEach(id=>{const el=document.getElementById(id);if(el&&!tryLine)el.disabled=!engineHelpEnabled;});
+    if(!engineHelpEnabled){clearEngineDisplay();document.getElementById('engineStatus').textContent='Study Mode • Stockfish help is off.';if(tryLine){tryLine.locked=false;document.getElementById('tryLineStatus').textContent='Study Mode • Explore the line, then turn Stockfish on for feedback.';}}
+  }
+
+  function setEngineHelp(enabled,persist=true){
+    engineHelpEnabled=Boolean(enabled);
+    if(!engineHelpEnabled)cancelEngineAdvice();
+    if(persist)saveEnginePreference();
+    applyEngineHelpUi();renderTryLine();render();scheduleSessionSave();
+    if(engineHelpEnabled){
+      if(tryLine)requestTryLineAnalysis(tryLine.baseEval?'current':'base');
+      else scheduleAutoAnalysis();
+    }
+  }
+
+  function activeTabId(){return document.querySelector('.tabPane.activePane')?.id||'gameTab';}
+
+  function sessionSnapshot(){
+    const pgn=pgnInput.value.trim();
+    if(!pgn&&!loadedMoves.length&&!tryLine)return null;
+    return {version:1,savedAt:Date.now(),pgn,loadedMoves:loadedMoves.slice(),cursor,canonicalFen:tryLine?tryLine.snapshot.fen:game.fen(),
+      orientation,currentFocus,activeTab:activeTabId(),engineEnabled:engineHelpEnabled,autoAnalyze:document.getElementById('autoAnalyze').checked,
+      pgnHeaders:{...pgnHeaders},mySide,batchRows:batchRows.slice(),batchEvaluations:batchEvaluations.slice(),reviewCategory,
+      tryLine:tryLine?{startFen:tryLine.startFen,startFullmove:tryLine.startFullmove,startTurn:tryLine.startTurn,startLabel:tryLine.startLabel,
+        moves:tryLine.moves.slice(),currentFen:game.fen(),baseEval:tryLine.baseEval,currentEval:tryLine.currentEval,
+        stockfishRecommendedResponseSan:tryLine.stockfishRecommendedResponseSan,stockfishPrincipalVariationSan:tryLine.stockfishPrincipalVariationSan,
+        snapshot:{...tryLine.snapshot,loadedMoves:tryLine.snapshot.loadedMoves.slice(),lastEngineInfo:{...tryLine.snapshot.lastEngineInfo,pv:(tryLine.snapshot.lastEngineInfo?.pv||[]).slice()}}}:null};
+  }
+
+  function saveSessionNow(){
+    if(restoringSession)return;
+    const snapshot=sessionSnapshot();
+    if(snapshot)sessionStore.save(snapshot);else sessionStore.clear();
+  }
+
+  function scheduleSessionSave(){
+    if(restoringSession)return;
+    clearTimeout(sessionSaveTimer);sessionSaveTimer=setTimeout(saveSessionNow,180);
+  }
+
+  function restoreSession(){
+    const saved=sessionStore.load();if(!saved)return false;
+    restoringSession=true;
+    try{
+      const canonical=new Chess();
+      for(const san of saved.loadedMoves)if(!canonical.move(san))throw new Error('Invalid saved move');
+      loadedMoves=saved.loadedMoves.slice();cursor=Math.min(saved.cursor,loadedMoves.length);pgnInput.value=saved.pgn;
+      pgnHeaders=saved.pgnHeaders||parseHeaders(saved.pgn);mySide=saved.mySide||null;orientation=saved.orientation;currentFocus=saved.currentFocus||'me';
+      batchRows=Array.isArray(saved.batchRows)?saved.batchRows:[];batchEvaluations=Array.isArray(saved.batchEvaluations)?saved.batchEvaluations:[];reviewCategory=saved.reviewCategory||'key';
+      engineHelpEnabled=saved.engineEnabled;document.getElementById('autoAnalyze').checked=Boolean(saved.autoAnalyze);
+      const position=buildPositionAt(cursor);if(!position)throw new Error('Invalid saved cursor');game=position.game;lastMove=position.last?{from:position.last.from,to:position.last.to}:null;
+      if(saved.tryLine){
+        const lineGame=new Chess(saved.tryLine.startFen);for(const san of saved.tryLine.moves)if(!lineGame.move(san))throw new Error('Invalid saved variation');
+        if(saved.tryLine.currentFen&&lineGame.fen()!==saved.tryLine.currentFen)throw new Error('Variation mismatch');
+        game=lineGame;tryLine={...saved.tryLine,moves:saved.tryLine.moves.slice(),snapshot:{...saved.tryLine.snapshot,loadedMoves:saved.tryLine.snapshot.loadedMoves.slice()},locked:false};
+        tryLineGeneration++;setTryLineConsumersDisabled(true);document.getElementById('tryLineBtn').disabled=true;
+      }
+      detectMySide();updateFocusHeader();
+      document.querySelectorAll('.focusBtn').forEach(btn=>btn.classList.toggle('activeFocus',btn.dataset.focus===currentFocus));
+      switchTab(saved.activeTab||'gameTab');applyEngineHelpUi();renderTryLine();render();
+      if(batchRows.length){renderFocusedReview();renderPatternInsights();document.getElementById('gameReviewStatus').textContent='Full game review restored • '+batchRows.length+' moves classified.';}
+      feedbackEl.textContent='Previous study session restored.';feedbackEl.className='small ok';
+      if(engineHelpEnabled)setTimeout(()=>{if(tryLine)initEngine();else scheduleAutoAnalysis();},0);
+      return true;
+    }catch(e){sessionStore.clear();tryLine=null;loadedMoves=[];cursor=0;game=new Chess();return false;}
+    finally{restoringSession=false;}
+  }
 
   const TRY_LINE_CONSUMER_IDS=['analyzeBtn','autoAnalyze','reviewMoveBtn','analyzeGameBtn','trainBtn','revealBtn','thinkBtn','pauseStartBtn','pauseRevealBtn','loadBtn','sampleBtn','resetBtn','undoBtn','startMoveBtn','previousMoveBtn','nextMoveBtn','endMoveBtn'];
 
@@ -966,7 +1078,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
     }
     document.getElementById('tryLineUndo').disabled=!tryLine.moves.length||tryLine.locked;
     document.getElementById('tryLineRestart').disabled=tryLine.locked;
-    document.getElementById('explainLineBtn').disabled=tryLine.locked||!tryLine.moves.length||!tryLine.currentEval||!tryLine.stockfishRecommendedResponseSan||!tryLine.stockfishPrincipalVariationSan;
+    document.getElementById('explainLineBtn').disabled=!engineHelpEnabled||tryLine.locked||!tryLine.moves.length||!tryLine.currentEval||!tryLine.stockfishRecommendedResponseSan||!tryLine.stockfishPrincipalVariationSan;
   }
 
   function getAiCoachToken(){
@@ -1084,6 +1196,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
   function requestTryLineAnalysis(kind){
     if(!tryLine)return;
     clearAiCoachExplanation();
+    if(!engineHelpEnabled){tryLine.locked=false;tryLine.stockfishRecommendedResponseSan=null;tryLine.stockfishPrincipalVariationSan=null;bestMoveHighlight=null;renderTryLine();render();return;}
     tryLine.stockfishRecommendedResponseSan=null;
     tryLine.stockfishPrincipalVariationSan=null;
     tryLine.locked=true;
@@ -1102,7 +1215,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
     const parts=game.fen().split(' ');
     const fullmove=parseInt(parts[5],10)||1, turn=parts[1];
     tryLine={
-      snapshot:{fen:game.fen(),cursor,loadedMoves:loadedMoves.slice(),lastMove:lastMove?{...lastMove}:null,pgn:pgnInput.value,autoAnalyze:document.getElementById('autoAnalyze').checked,
+      snapshot:{fen:game.fen(),cursor,loadedMoves:loadedMoves.slice(),lastMove:lastMove?{...lastMove}:null,pgn:pgnInput.value,autoAnalyze:document.getElementById('autoAnalyze').checked,engineHelpEnabled,
         puzzleMode,pauseMode,lastEngineInfo:{...lastEngineInfo,pv:lastEngineInfo.pv.slice()},bestMoveHighlight:bestMoveHighlight?{...bestMoveHighlight}:null,
         engineDisplay:{eval:document.getElementById('evalValue').textContent,best:document.getElementById('bestMoveValue').textContent,pv:document.getElementById('pvValue').textContent,status:document.getElementById('engineStatus').textContent}},
       startFen:game.fen(),startFullmove:fullmove,startTurn:turn,startLabel:'Move '+fullmove+(turn==='w'?' (White)':'… (Black)'),
@@ -1110,7 +1223,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
     };
     tryLineGeneration++;
     clearTimeout(analysisTimer);
-    stopEngine('Try a Line has exclusive use of Stockfish.');
+    cancelEngineAdvice();
     puzzleMode=false;pauseMode=false;
     document.getElementById('autoAnalyze').checked=false;
     setTryLineConsumersDisabled(true);
@@ -1118,8 +1231,11 @@ button:hover:not(:disabled){border-color:#9b6cff}
     document.getElementById('tryLineEval').textContent='—';
     document.getElementById('tryLineDelta').textContent='—';
     renderAiCoachConnection();
+    const pref=enginePreference();
+    if(pref===null)setEngineHelp(false,false);else setEngineHelp(pref,false);
     renderTryLine();
-    initEngine();
+    if(engineHelpEnabled)initEngine();
+    scheduleSessionSave();
   }
 
   function restartTryLine(){
@@ -1129,12 +1245,14 @@ button:hover:not(:disabled){border-color:#9b6cff}
     document.getElementById('tryLineEval').textContent=tryLine.baseEval?.label||'—';
     document.getElementById('tryLineDelta').textContent=tryLine.baseEval?.type==='cp'?'0.00':'—';
     requestTryLineAnalysis('current');
+    scheduleSessionSave();
   }
 
   function undoTryLineMove(){
     if(!tryLine||!tryLine.moves.length)return;
     game.undo();tryLine.moves.pop();tryLineGeneration++;lastMove=null;
     requestTryLineAnalysis('current');
+    scheduleSessionSave();
   }
 
   function exitTryLine(){
@@ -1148,6 +1266,8 @@ button:hover:not(:disabled){border-color:#9b6cff}
     tryLine=null;selected=null;legalTargets=[];puzzleMode=saved.puzzleMode;pauseMode=saved.pauseMode;clearAiCoachExplanation();
     lastEngineInfo=saved.lastEngineInfo;bestMoveHighlight=saved.bestMoveHighlight;
     setTryLineConsumersDisabled(false);document.getElementById('tryLineBtn').disabled=false;
+    if(enginePreference()===null)engineHelpEnabled=saved.engineHelpEnabled!==false;
+    applyEngineHelpUi();
     renderTryLine();render();
     document.getElementById('evalValue').textContent=saved.engineDisplay.eval;
     document.getElementById('bestMoveValue').textContent=saved.engineDisplay.best;
@@ -1155,6 +1275,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
     document.getElementById('engineStatus').textContent=saved.engineDisplay.status;
     feedbackEl.textContent='Returned to the original game and move.';feedbackEl.className='small ok';
     scheduleAutoAnalysis();
+    scheduleSessionSave();
   }
 
   function switchTab(tabId){
@@ -1162,6 +1283,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
     document.querySelectorAll('.tabBtn').forEach(b=>b.classList.remove('activeTab'));
     document.getElementById(tabId)?.classList.add('activePane');
     document.querySelector('.tabBtn[data-tab="'+tabId+'"]')?.classList.add('activeTab');
+    scheduleSessionSave();
   }
 
   function parseHeaders(pgn){
@@ -1692,8 +1814,8 @@ button:hover:not(:disabled){border-color:#9b6cff}
 
       if(selected===sq)div.classList.add('selected');
       if(lastMove&&(lastMove.from===sq||lastMove.to===sq))div.classList.add('last');
-      if(bestMoveHighlight&&bestMoveHighlight.from===sq)div.classList.add('bestFrom');
-      if(bestMoveHighlight&&bestMoveHighlight.to===sq)div.classList.add('bestTo');
+      if(engineHelpEnabled&&bestMoveHighlight&&bestMoveHighlight.from===sq)div.classList.add('bestFrom');
+      if(engineHelpEnabled&&bestMoveHighlight&&bestMoveHighlight.to===sq)div.classList.add('bestTo');
 
       const p=game.get(sq);
       if(p && p.type==='k' && p.color===game.turn() && game.in_check()){
@@ -1745,6 +1867,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
     renderMoves();
     renderCurrentMoveLearning();
     if(tryLine)setTryLineConsumersDisabled(true);
+    scheduleSessionSave();
   }
 
   let pendingPromotion=null;
@@ -2201,7 +2324,8 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
   });
 
   document.getElementById('clearPgnBtn').addEventListener('click',()=>{
-    pgnInput.value='';
+    if(tryLine)exitTryLine();
+    pgnInput.value='';loadedMoves=[];batchRows=[];batchEvaluations=[];cursor=0;game=new Chess();lastMove=null;selected=null;legalTargets=[];sessionStore.clear();render();
     pgnInput.focus();
     feedbackEl.textContent='PGN box cleared. Paste the next game.';
     feedbackEl.className='small ok';
@@ -2214,6 +2338,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
   });
 
   document.getElementById('loadBtn').addEventListener('click',()=>{
+    if(tryLine)exitTryLine();
     const pgn=pgnInput.value.trim();
 
     if(!pgn){
@@ -2261,6 +2386,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
     document.getElementById('gameReviewStatus').textContent='Ready to analyze '+loadedMoves.length+' half-moves.';
 
     rebuildTo(0);
+    scheduleSessionSave();
   });
 
   function clearEngineDisplay(){
@@ -2304,9 +2430,9 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
   }
 
   function requestEngineJob(owner,fen,depth,retries=0,lineToken=null,tryLineKind=null){
-    if(!engineReady||!engine)return false;
+    if(!engineHelpEnabled||!engineReady||!engine)return false;
     if(batchMode&&owner!=='batch')return false; // Full Game Review is exclusive.
-    engineJob={owner,fen,depth,retries,lineToken,tryLineKind,phase:'flushing'};
+    engineJob={owner,fen,depth,retries,lineToken,tryLineKind,adviceGeneration:engineAdviceGeneration,phase:'flushing'};
     engine.postMessage('stop');
     engine.postMessage('isready');
     armEngineWatchdog();
@@ -2530,6 +2656,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
   }
 
   function startMoveReview(){
+    if(!engineHelpEnabled){document.getElementById('reviewStatus').textContent='Turn Stockfish on to review this move.';return;}
     if(batchMode){
       document.getElementById('reviewStatus').textContent='Full Game Review has exclusive use of Stockfish.';
       return;
@@ -2690,6 +2817,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
     renderOpeningCoach();
     renderCurrentMoveLearning();
     document.getElementById('gameReviewStatus').textContent='Full game review complete • '+rows.length+' moves classified.';
+    scheduleSessionSave();
     document.getElementById('analyzeGameBtn').disabled=false;
     document.getElementById('analyzeGameBtn').textContent='Analyze full game again';
     batchMode=null;
@@ -2864,6 +2992,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
   }
 
   function startFullGameReview(){
+    if(!engineHelpEnabled){document.getElementById('gameReviewStatus').textContent='Turn Stockfish on to analyze the full game.';return;}
     if(!loadedMoves.length){
       document.getElementById('gameReviewStatus').textContent='Load a PGN first.';
       return;
@@ -2983,6 +3112,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
     if(line==='readyok'){
       engineReady=true;
       engineLoading=false;
+      if(!engineHelpEnabled){document.getElementById('engineStatus').textContent='Study Mode • Stockfish help is off.';return;}
       document.getElementById('engineStatus').textContent='Engine ready.';
       if(engineJob&&engineJob.phase==='flushing'){
         engineJob.phase='searching';
@@ -3002,8 +3132,9 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
     }
 
     // bestmove/info emitted before readyok belongs to the stopped predecessor.
-    if(!engineJob||engineJob.phase!=='searching')return;
+    if(!engineHelpEnabled||!engineJob||engineJob.phase!=='searching')return;
     const job=engineJob;
+    if(job.adviceGeneration!==engineAdviceGeneration)return;
 
     if(line.startsWith('info ')){
       if(job.owner==='batch')parseEngineInfo(line,batchInfo);
@@ -3102,6 +3233,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
   }
 
   async function initEngine(){
+    if(!engineHelpEnabled){applyEngineHelpUi();return;}
     if(engineReady){
       if(tryLine)requestTryLineAnalysis(tryLine.baseEval?'current':'base');
       else runAnalysis();
@@ -3159,7 +3291,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
   }
 
   function runAnalysis(){
-    if(!engineReady||!engine||batchMode)return;
+    if(!engineHelpEnabled||!engineReady||!engine||batchMode)return;
 
     clearEngineDisplay();
     activeAnalysisFen=game.fen();
@@ -3169,7 +3301,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
   }
 
   function scheduleAutoAnalysis(){
-    if(batchMode||!document.getElementById('autoAnalyze')?.checked)return;
+    if(!engineHelpEnabled||batchMode||!document.getElementById('autoAnalyze')?.checked)return;
     clearTimeout(analysisTimer);
     analysisTimer=setTimeout(()=>{
       if(engineReady)runAnalysis();
@@ -3178,6 +3310,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
   }
 
   document.getElementById('analyzeBtn').addEventListener('click',initEngine);
+  ['engineHelpBtn','engineHelpTabBtn'].forEach(id=>document.getElementById(id).addEventListener('click',()=>setEngineHelp(!engineHelpEnabled,true)));
   document.getElementById('tryLineBtn').addEventListener('click',startTryLine);
   document.getElementById('tryLineUndo').addEventListener('click',undoTryLineMove);
   document.getElementById('tryLineRestart').addEventListener('click',restartTryLine);
@@ -3212,6 +3345,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
     btn.classList.add('activeFocus');
     renderFocusedReview();
     renderPatternInsights();
+    scheduleSessionSave();
   }));
   document.getElementById('summaryBestBox').addEventListener('click',()=>renderReviewCategory('best'));
   document.getElementById('summaryGoodBox').addEventListener('click',()=>renderReviewCategory('good'));
@@ -3250,12 +3384,15 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
     else{
       clearTimeout(analysisTimer);
       if(engine)engine.postMessage('stop');
+      cancelEngineAdvice();
       document.getElementById('engineStatus').textContent='Live analysis paused.';
     }
+    scheduleSessionSave();
   });
 
 
   loadLearningProfile();
+  const preferred=enginePreference();if(preferred!==null)engineHelpEnabled=preferred;
 
   if(typeof Chess==='undefined'){
     feedbackEl.textContent='Chess library failed to load. Refresh the page while connected to the internet.';
@@ -3263,10 +3400,11 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
   }else{
     runResultIntegrityRegressionChecks();
     runTryLineRegressionChecks();
-    render();
+    if(!restoreSession()){applyEngineHelpUi();render();}
   }
 })();
 </script>
 
 </body>
 </html>
+
