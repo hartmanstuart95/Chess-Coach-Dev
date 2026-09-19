@@ -7,7 +7,7 @@ const html=fs.readFileSync(path.join(__dirname,'..','index.html'),'utf8');
 test('Study Mode invalidates jobs and blocks engine work while disabled',()=>{
   assert.match(html,/engineAdviceGeneration\+\+/);
   assert.match(html,/job\.adviceGeneration!==engineAdviceGeneration/);
-  assert.match(html,/if\(!engineHelpEnabled\|\|!engineReady\|\|!engine\)return false/);
+  assert.match(html,/if\(\(!engineHelpEnabled&&owner!=='bot'\)\|\|!engineReady\|\|!engine\)return false/);
   assert.match(html,/engine\.postMessage\('stop'\);engine\.postMessage\('isready'\)/);
 });
 
@@ -25,5 +25,12 @@ test('session restore keeps canonical and variation histories separate',()=>{
 test('locked SVG renderer remains in use',()=>{
   assert.match(html,/img\.src=pieceSVGData\(p\.type,p\.color\)/);
   assert.doesNotMatch(html,/labGlyphs/);
+});
+
+test('custom setup and bot practice share the current-position engine safely',()=>{
+  assert.match(html,/function enterSetupPosition\(fen=game\.fen\(\)\)/);
+  assert.match(html,/requestEngineJob\('bot',game\.fen\(\),botGame\.depth\)/);
+  assert.match(html,/if\(job\.owner==='bot'\)/);
+  assert.match(html,/if\(\(!engineHelpEnabled&&owner!=='bot'\)\|\|!engineReady\|\|!engine\)return false/);
 });
 
