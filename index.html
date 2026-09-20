@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Chess Coach DEV v0.9.3.9</title>
+<title>Chess Coach DEV v0.9.3.10</title>
 <style>
 :root{
   --bg:#0d0c13;--panel:#181622;--text:#f9f7ff;--muted:#aaa6bb;
@@ -526,7 +526,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
 </head>
 <body>
 <div class="wrap">
-<h1>Chess Coach DEV v0.9.3.9</h1>
+<h1>Chess Coach DEV v0.9.3.10</h1>
 <div class="sub">Explore alternatives safely with Try a Line.</div>
 
 <div class="layout">
@@ -1001,7 +1001,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
   }
 
   function restoreAppSnapshot(snapshot){
-    game=new Chess(snapshot.fen);moveStartFen=snapshot.moveStartFen||STANDARD_FEN;cursor=snapshot.cursor;loadedMoves=snapshot.loadedMoves.slice();lastMove=snapshot.lastMove;pgnInput.value=snapshot.pgn;orientation=snapshot.orientation;
+    game=new Chess(ChessPositionTools.normalizeFen(snapshot.fen));moveStartFen=ChessPositionTools.normalizeFen(snapshot.moveStartFen||STANDARD_FEN);cursor=snapshot.cursor;loadedMoves=snapshot.loadedMoves.slice();lastMove=snapshot.lastMove;pgnInput.value=snapshot.pgn;orientation=snapshot.orientation;
     batchRows=snapshot.batchRows.slice();batchEvaluations=snapshot.batchEvaluations.slice();selected=null;legalTargets=[];
   }
 
@@ -1057,6 +1057,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
   function validatedSetupFen(){
     const result=ChessPositionTools.validate(currentSetupPosition());
     if(!result.valid)return result;
+    if(result.castlingAdjusted){syncSetupControls(ChessPositionTools.parseFen(result.fen));result.notice='Impossible castling rights were removed.';}
     const candidate=new Chess();let loaded=false;try{loaded=candidate.load(result.fen);}catch(e){}
     return loaded?result:{valid:false,message:'That position is not legal. Check the kings, checks, and castling rights.'};
   }
@@ -1065,7 +1066,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
     const result=validatedSetupFen();if(!result.valid){document.getElementById('setupStatus').textContent=result.message;return false;}
     setupMode=false;document.getElementById('positionSetupPanel').classList.remove('active');document.getElementById('setupPositionBtn').disabled=false;
     game=new Chess(result.fen);moveStartFen=result.fen;loadedMoves=[];cursor=0;lastMove=null;batchRows=[];batchEvaluations=[];pgnInput.value='';selected=null;legalTargets=[];setPracticeConsumersDisabled(false);
-    document.getElementById('setupStatus').textContent='Position ready.';render();return result.fen;
+    document.getElementById('setupStatus').textContent=result.notice||'Position ready.';render();return result.fen;
   }
 
   function renderBotMoves(){
@@ -1167,7 +1168,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
     const saved=sessionStore.load();if(!saved)return false;
     restoringSession=true;
     try{
-      moveStartFen=saved.moveStartFen||STANDARD_FEN;
+      moveStartFen=ChessPositionTools.normalizeFen(saved.moveStartFen||(saved.customFen&&!saved.loadedMoves.length?saved.customFen:STANDARD_FEN));
       const canonical=new Chess(moveStartFen);
       for(const san of saved.loadedMoves)if(!canonical.move(san))throw new Error('Invalid saved move');
       loadedMoves=saved.loadedMoves.slice();cursor=Math.min(saved.cursor,loadedMoves.length);pgnInput.value=saved.pgn;
@@ -1175,7 +1176,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
       batchRows=Array.isArray(saved.batchRows)?saved.batchRows:[];batchEvaluations=Array.isArray(saved.batchEvaluations)?saved.batchEvaluations:[];reviewCategory=saved.reviewCategory||'key';
       engineHelpEnabled=saved.engineEnabled;document.getElementById('autoAnalyze').checked=Boolean(saved.autoAnalyze);
       const position=buildPositionAt(cursor);if(!position)throw new Error('Invalid saved cursor');game=position.game;lastMove=position.last?{from:position.last.from,to:position.last.to}:null;
-      if(saved.customFen&&!saved.loadedMoves.length)game=new Chess(saved.customFen);
+      if(saved.customFen&&!saved.loadedMoves.length)game=new Chess(ChessPositionTools.normalizeFen(saved.customFen));
       if(saved.tryLine){
         const lineGame=new Chess(saved.tryLine.startFen);for(const san of saved.tryLine.moves)if(!lineGame.move(san))throw new Error('Invalid saved variation');
         if(saved.tryLine.currentFen&&lineGame.fen()!==saved.tryLine.currentFen)throw new Error('Variation mismatch');
@@ -1421,7 +1422,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
     tryLineGeneration++;
     if(engine){engine.postMessage('stop');engine.postMessage('isready');}
     engineJob=null;activeAnalysisFen=null;
-    game=new Chess(saved.fen);moveStartFen=saved.moveStartFen||STANDARD_FEN;cursor=saved.cursor;loadedMoves=saved.loadedMoves.slice();lastMove=saved.lastMove;pgnInput.value=saved.pgn;
+    game=new Chess(ChessPositionTools.normalizeFen(saved.fen));moveStartFen=ChessPositionTools.normalizeFen(saved.moveStartFen||STANDARD_FEN);cursor=saved.cursor;loadedMoves=saved.loadedMoves.slice();lastMove=saved.lastMove;pgnInput.value=saved.pgn;
     document.getElementById('autoAnalyze').checked=saved.autoAnalyze;
     tryLine=null;selected=null;legalTargets=[];puzzleMode=saved.puzzleMode;pauseMode=saved.pauseMode;clearAiCoachExplanation();
     lastEngineInfo=saved.lastEngineInfo;bestMoveHighlight=saved.bestMoveHighlight;
@@ -2537,7 +2538,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
 
     loadedMoves=temp.history();
     pgnHeaders=parseHeaders(pgn);
-    moveStartFen=pgnHeaders.FEN||STANDARD_FEN;
+    moveStartFen=ChessPositionTools.normalizeFen(pgnHeaders.FEN||STANDARD_FEN);
     detectMySide();
     updateFocusHeader();
 
@@ -2614,8 +2615,16 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
   }
 
   function retryEngineJob(job,reason){
-    console.warn('Discarded Stockfish result for '+job.owner+' ('+reason+'); retrying '+job.fen);
+    console.warn('Discarded an invalid Stockfish result for '+job.owner+' ('+reason+').');
     if(job.owner==='tryline'&&!tryLineJobMatches(job))return;
+    if(job.retries>=1){
+      const owner=job.owner;
+      stopEngine('Stockfish could not analyze this position. Restart the engine and try again.');
+      if(owner==='batch')document.getElementById('gameReviewStatus').textContent='This position could not be analyzed. Check the setup and try again.';
+      if(owner==='tryline'&&tryLine){tryLine.locked=false;document.getElementById('tryLineStatus').textContent='This position could not be analyzed. Check the setup and try again.';renderTryLine();}
+      if(owner==='bot'&&botGame){botGame.locked=false;document.getElementById('botGameStatus').textContent='Stockfish could not move from this position. Check the setup and restart.';render();}
+      return;
+    }
     requestEngineJob(job.owner,job.fen,job.depth,job.retries+1,job.lineToken,job.tryLineKind);
   }
 
@@ -3248,7 +3257,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
       const button=document.getElementById('analyzeGameBtn');
       button.disabled=false;
       button.textContent='Analyze full game again';
-      document.getElementById('gameReviewStatus').textContent='Game analysis stopped. Restart it to try again.';
+      document.getElementById('gameReviewStatus').textContent=statusMessage||'Game analysis stopped. Restart it to try again.';
     }
     if(reviewStage){
       reviewStage=null;
@@ -3432,14 +3441,9 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
       const generation=++engineGeneration;
 
       let started=false;
-      const worker=engine;
       engineStartupTimer=setTimeout(()=>{
         if(!started&&generation===engineGeneration){
-          try{worker.terminate();}catch(e){}
-          engine=null;
-          engineReady=false;
-          engineLoading=false;
-          document.getElementById('engineStatus').textContent='Stockfish worker timed out. Use Restart engine to try again.';
+          stopEngine('Stockfish worker timed out. Restart the engine and try again.');
         }
       },15000);
 
@@ -3453,20 +3457,13 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
 
       engine.onerror=e=>{
         if(generation!==engineGeneration)return;
-        clearTimeout(engineStartupTimer);
-        engineStartupTimer=null;
-        clearEngineWatchdog();
-        engine=null;
-        engineReady=false;
-        engineLoading=false;
-        document.getElementById('engineStatus').textContent='Stockfish worker could not start. Make sure stockfish-worker.js was added to the repository.';
+        stopEngine('Stockfish worker stopped. Restart the engine and try again.');
         console.error(e);
       };
 
       engine.postMessage('uci');
     }catch(e){
-      engineLoading=false;
-      document.getElementById('engineStatus').textContent='Could not start the local Stockfish worker.';
+      stopEngine('Could not start the local Stockfish worker.');
       console.error(e);
     }
   }
