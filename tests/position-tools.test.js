@@ -22,3 +22,12 @@ test('rejects malformed FEN input',()=>{
   assert.throws(()=>Position.parseFen('8/8/8/8/8/8/8/9 w - - 0 1'),/invalid piece layout|eight squares/);
 });
 
+test('removes impossible castling rights from a custom setup',()=>{
+  const fen='1k3b2/p4q2/2R3p1/7p/pp2p3/4P3/6PP/4Q1K1 b KQkq - 0 2';
+  assert.equal(Position.normalizeFen(fen),'1k3b2/p4q2/2R3p1/7p/pp2p3/4P3/6PP/4Q1K1 b - - 0 2');
+  const result=Position.validate(Position.parseFen(fen));
+  assert.equal(result.valid,true);
+  assert.equal(result.castlingAdjusted,true);
+  assert.match(result.fen,/ b - - 0 2$/);
+});
+
