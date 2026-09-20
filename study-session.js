@@ -18,6 +18,7 @@
   function validate(session){
     if(!plainObject(session)||session.version!==1)return false;
     if(!validString(session.pgn,250000)||!Array.isArray(session.loadedMoves)||session.loadedMoves.length>2000)return false;
+    if(session.moveStartFen!==undefined&&!validString(session.moveStartFen,120))return false;
     if(!session.loadedMoves.every(move=>validString(move,40)))return false;
     if(!Number.isInteger(session.cursor)||session.cursor<0||session.cursor>session.loadedMoves.length)return false;
     if(!['white','black'].includes(session.orientation)||typeof session.engineEnabled!=='boolean')return false;

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Chess Coach DEV v0.9.3.8</title>
+<title>Chess Coach DEV v0.9.3.9</title>
 <style>
 :root{
   --bg:#0d0c13;--panel:#181622;--text:#f9f7ff;--muted:#aaa6bb;
@@ -526,7 +526,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
 </head>
 <body>
 <div class="wrap">
-<h1>Chess Coach DEV v0.9.3.8</h1>
+<h1>Chess Coach DEV v0.9.3.9</h1>
 <div class="sub">Explore alternatives safely with Try a Line.</div>
 
 <div class="layout">
@@ -927,12 +927,14 @@ button:hover:not(:disabled){border-color:#9b6cff}
   const movesEl=document.getElementById('moves');
   const pgnInput=document.getElementById('pgnInput');
 
+  const STANDARD_FEN='rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
   let game=new Chess();
   let orientation='white';
   let savedOrientation='white';
   let selected=null;
   let legalTargets=[];
   let loadedMoves=[];   // SAN moves from imported/current line
+  let moveStartFen=STANDARD_FEN;
   let cursor=0;         // number of half-moves currently shown
   let lastMove=null;
   let bestMoveHighlight=null;
@@ -991,16 +993,15 @@ button:hover:not(:disabled){border-color:#9b6cff}
   const AI_COACH_URL='https://chess-coach-ai.hartman-stuart95.workers.dev/coach/explain-line';
   const aiCoachTokenStore=AiCoachToken.createTokenStore(localStorage);
 
-  const STANDARD_FEN='rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
   const PRACTICE_CONSUMER_IDS=['tryLineBtn','flipBtn','undoBtn','resetBtn','loadBtn','sampleBtn','analyzeGameBtn','reviewMoveBtn','startMoveBtn','previousMoveBtn','nextMoveBtn','endMoveBtn'];
 
   function appSnapshot(){
-    return {fen:game.fen(),cursor,loadedMoves:loadedMoves.slice(),lastMove:lastMove?{...lastMove}:null,pgn:pgnInput.value,orientation,
+    return {fen:game.fen(),moveStartFen,cursor,loadedMoves:loadedMoves.slice(),lastMove:lastMove?{...lastMove}:null,pgn:pgnInput.value,orientation,
       batchRows:batchRows.slice(),batchEvaluations:batchEvaluations.slice()};
   }
 
   function restoreAppSnapshot(snapshot){
-    game=new Chess(snapshot.fen);cursor=snapshot.cursor;loadedMoves=snapshot.loadedMoves.slice();lastMove=snapshot.lastMove;pgnInput.value=snapshot.pgn;orientation=snapshot.orientation;
+    game=new Chess(snapshot.fen);moveStartFen=snapshot.moveStartFen||STANDARD_FEN;cursor=snapshot.cursor;loadedMoves=snapshot.loadedMoves.slice();lastMove=snapshot.lastMove;pgnInput.value=snapshot.pgn;orientation=snapshot.orientation;
     batchRows=snapshot.batchRows.slice();batchEvaluations=snapshot.batchEvaluations.slice();selected=null;legalTargets=[];
   }
 
@@ -1063,7 +1064,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
   function useSetupPosition(){
     const result=validatedSetupFen();if(!result.valid){document.getElementById('setupStatus').textContent=result.message;return false;}
     setupMode=false;document.getElementById('positionSetupPanel').classList.remove('active');document.getElementById('setupPositionBtn').disabled=false;
-    game=new Chess(result.fen);loadedMoves=[];cursor=0;lastMove=null;batchRows=[];batchEvaluations=[];pgnInput.value='';selected=null;legalTargets=[];setPracticeConsumersDisabled(false);
+    game=new Chess(result.fen);moveStartFen=result.fen;loadedMoves=[];cursor=0;lastMove=null;batchRows=[];batchEvaluations=[];pgnInput.value='';selected=null;legalTargets=[];setPracticeConsumersDisabled(false);
     document.getElementById('setupStatus').textContent='Position ready.';render();return result.fen;
   }
 
@@ -1140,7 +1141,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
   function sessionSnapshot(){
     const pgn=pgnInput.value.trim();
     if(!pgn&&!loadedMoves.length&&!tryLine&&!setupMode&&!botGame&&game.fen()===STANDARD_FEN)return null;
-    return {version:1,savedAt:Date.now(),pgn,loadedMoves:loadedMoves.slice(),cursor,canonicalFen:tryLine?tryLine.snapshot.fen:game.fen(),
+    return {version:1,savedAt:Date.now(),pgn,moveStartFen,loadedMoves:loadedMoves.slice(),cursor,canonicalFen:tryLine?tryLine.snapshot.fen:game.fen(),
       orientation,currentFocus,activeTab:activeTabId(),engineEnabled:engineHelpEnabled,autoAnalyze:document.getElementById('autoAnalyze').checked,
       pgnHeaders:{...pgnHeaders},mySide,batchRows:batchRows.slice(),batchEvaluations:batchEvaluations.slice(),reviewCategory,customFen:(!loadedMoves.length?game.fen():null),
       setup:setupMode?{position:currentSetupPosition(),selectedPiece:setupSelectedPiece,snapshot:setupSnapshot}:null,
@@ -1166,7 +1167,8 @@ button:hover:not(:disabled){border-color:#9b6cff}
     const saved=sessionStore.load();if(!saved)return false;
     restoringSession=true;
     try{
-      const canonical=new Chess();
+      moveStartFen=saved.moveStartFen||STANDARD_FEN;
+      const canonical=new Chess(moveStartFen);
       for(const san of saved.loadedMoves)if(!canonical.move(san))throw new Error('Invalid saved move');
       loadedMoves=saved.loadedMoves.slice();cursor=Math.min(saved.cursor,loadedMoves.length);pgnInput.value=saved.pgn;
       pgnHeaders=saved.pgnHeaders||parseHeaders(saved.pgn);mySide=saved.mySide||null;orientation=saved.orientation;currentFocus=saved.currentFocus||'me';
@@ -1189,7 +1191,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
       feedbackEl.textContent='Previous study session restored.';feedbackEl.className='small ok';
       if(engineHelpEnabled||botGame)setTimeout(()=>{if(botGame)scheduleBotMove();else if(tryLine)initEngine();else scheduleAutoAnalysis();},0);
       return true;
-    }catch(e){sessionStore.clear();tryLine=null;loadedMoves=[];cursor=0;game=new Chess();return false;}
+    }catch(e){sessionStore.clear();tryLine=null;moveStartFen=STANDARD_FEN;loadedMoves=[];cursor=0;game=new Chess();return false;}
     finally{restoringSession=false;}
   }
 
@@ -1373,7 +1375,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
     const parts=game.fen().split(' ');
     const fullmove=parseInt(parts[5],10)||1, turn=parts[1];
     tryLine={
-      snapshot:{fen:game.fen(),cursor,loadedMoves:loadedMoves.slice(),lastMove:lastMove?{...lastMove}:null,pgn:pgnInput.value,autoAnalyze:document.getElementById('autoAnalyze').checked,engineHelpEnabled,
+      snapshot:{fen:game.fen(),moveStartFen,cursor,loadedMoves:loadedMoves.slice(),lastMove:lastMove?{...lastMove}:null,pgn:pgnInput.value,autoAnalyze:document.getElementById('autoAnalyze').checked,engineHelpEnabled,
         puzzleMode,pauseMode,lastEngineInfo:{...lastEngineInfo,pv:lastEngineInfo.pv.slice()},bestMoveHighlight:bestMoveHighlight?{...bestMoveHighlight}:null,
         engineDisplay:{eval:document.getElementById('evalValue').textContent,best:document.getElementById('bestMoveValue').textContent,pv:document.getElementById('pvValue').textContent,status:document.getElementById('engineStatus').textContent}},
       startFen:game.fen(),startFullmove:fullmove,startTurn:turn,startLabel:'Move '+fullmove+(turn==='w'?' (White)':'… (Black)'),
@@ -1419,7 +1421,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
     tryLineGeneration++;
     if(engine){engine.postMessage('stop');engine.postMessage('isready');}
     engineJob=null;activeAnalysisFen=null;
-    game=new Chess(saved.fen);cursor=saved.cursor;loadedMoves=saved.loadedMoves.slice();lastMove=saved.lastMove;pgnInput.value=saved.pgn;
+    game=new Chess(saved.fen);moveStartFen=saved.moveStartFen||STANDARD_FEN;cursor=saved.cursor;loadedMoves=saved.loadedMoves.slice();lastMove=saved.lastMove;pgnInput.value=saved.pgn;
     document.getElementById('autoAnalyze').checked=saved.autoAnalyze;
     tryLine=null;selected=null;legalTargets=[];puzzleMode=saved.puzzleMode;pauseMode=saved.pauseMode;clearAiCoachExplanation();
     lastEngineInfo=saved.lastEngineInfo;bestMoveHighlight=saved.bestMoveHighlight;
@@ -1858,7 +1860,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
   // the same target immediately after the reviewed move.
   function directThreatContext(moveIndex){
     if(moveIndex<1||moveIndex+1>=loadedMoves.length)return null;
-    const g=new Chess();
+    const g=new Chess(moveStartFen);
     let previous=null;
     for(let i=0;i<moveIndex;i++){
       try{previous=g.move(loadedMoves[i]);}catch(e){return null;}
@@ -2229,7 +2231,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
 
 
   function rebuildTo(n){
-    const rebuilt=new Chess();
+    const rebuilt=new Chess(moveStartFen);
     let lm=null;
 
     for(let i=0;i<n;i++){
@@ -2438,7 +2440,8 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
   });
 
   document.getElementById('resetBtn').addEventListener('click',()=>{
-    game=new Chess();
+    moveStartFen=STANDARD_FEN;
+    game=new Chess(moveStartFen);
     loadedMoves=[];
     batchRows=[];
     cursor=0;
@@ -2495,7 +2498,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
 
   document.getElementById('clearPgnBtn').addEventListener('click',()=>{
     if(tryLine)exitTryLine();
-    pgnInput.value='';loadedMoves=[];batchRows=[];batchEvaluations=[];cursor=0;game=new Chess();lastMove=null;selected=null;legalTargets=[];sessionStore.clear();render();
+    pgnInput.value='';moveStartFen=STANDARD_FEN;loadedMoves=[];batchRows=[];batchEvaluations=[];cursor=0;game=new Chess();lastMove=null;selected=null;legalTargets=[];sessionStore.clear();render();
     pgnInput.focus();
     feedbackEl.textContent='PGN box cleared. Paste the next game.';
     feedbackEl.className='small ok';
@@ -2534,10 +2537,11 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
 
     loadedMoves=temp.history();
     pgnHeaders=parseHeaders(pgn);
+    moveStartFen=pgnHeaders.FEN||STANDARD_FEN;
     detectMySide();
     updateFocusHeader();
 
-    game=new Chess();
+    game=new Chess(moveStartFen);
     cursor=0;
     lastMove=null;
     selected=null;
@@ -2695,7 +2699,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
   }
 
   function buildPositionAt(n){
-    const g=new Chess();
+    const g=new Chess(moveStartFen);
     let last=null;
     for(let i=0;i<n;i++){
       const m=g.move(loadedMoves[i]);
@@ -2883,7 +2887,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
   }
 
   function buildBatchPositions(){
-    const g=new Chess();
+    const g=new Chess(moveStartFen);
     const positions=[{fen:g.fen(),turn:g.turn(),moveIndex:0}];
     const actual=[];
 
@@ -3145,7 +3149,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
   }
 
   function jumpToMove(n){
-    const rebuilt=new Chess();
+    const rebuilt=new Chess(moveStartFen);
     let lm=null;
     for(let i=0;i<n;i++){
       const m=rebuilt.move(loadedMoves[i]);
