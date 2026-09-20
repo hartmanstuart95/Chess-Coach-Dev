@@ -25,6 +25,13 @@ test('accepts a restorable Try a Line snapshot',()=>{
   assert.equal(Session.validate(session),true);
 });
 
+test('accepts a custom move-list starting position',()=>{
+  const session=validSession();
+  session.moveStartFen='8/8/8/8/8/8/R3K3/4k3 w - - 0 1';
+  assert.equal(Session.validate(session),true);
+  assert.equal(Session.validate({...session,moveStartFen:'x'.repeat(121)}),false);
+});
+
 test('rejects malformed and oversized session data',()=>{
   assert.equal(Session.validate({...validSession(),cursor:99}),false);
   assert.equal(Session.validate({...validSession(),pgn:'x'.repeat(Session.MAX_BYTES+1)}),false);
