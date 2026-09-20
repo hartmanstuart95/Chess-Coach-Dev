@@ -47,6 +47,24 @@
     return rows.join('/')+' '+position.turn+' '+(position.castling||'-')+' '+(position.enPassant||'-')+' '+(position.halfmove||0)+' '+(position.fullmove||1);
   }
 
+  function legalCastlingRights(position){
+    const pieces=position.pieces||{};
+    const has=(square,color,type)=>pieces[square]?.color===color&&pieces[square]?.type===type;
+    const requested=typeof position.castling==='string'?position.castling:'';
+    let rights='';
+    if(requested.includes('K')&&has('e1','w','k')&&has('h1','w','r'))rights+='K';
+    if(requested.includes('Q')&&has('e1','w','k')&&has('a1','w','r'))rights+='Q';
+    if(requested.includes('k')&&has('e8','b','k')&&has('h8','b','r'))rights+='k';
+    if(requested.includes('q')&&has('e8','b','k')&&has('a8','b','r'))rights+='q';
+    return rights||'-';
+  }
+
+  function normalizeFen(fen){
+    const position=parseFen(fen);
+    position.castling=legalCastlingRights(position);
+    return buildFen(position);
+  }
+
   function validate(position){
     const pieces=Object.entries(position.pieces||{});
     const whiteKings=pieces.filter(([,p])=>p.color==='w'&&p.type==='k').length;
@@ -54,9 +72,13 @@
     if(whiteKings!==1||blackKings!==1)return {valid:false,message:'Position needs exactly one white king and one black king.'};
     if(pieces.some(([square,p])=>p.type==='p'&&(square[1]==='1'||square[1]==='8')))return {valid:false,message:'Pawns cannot be placed on the first or eighth rank.'};
     if(!['w','b'].includes(position.turn))return {valid:false,message:'Choose which side moves first.'};
-    try{return {valid:true,fen:buildFen(position)};}catch(e){return {valid:false,message:e.message};}
+    try{
+      const castling=legalCastlingRights(position);
+      const fen=buildFen({...position,castling});
+      return castling===(position.castling||'-')?{valid:true,fen}:{valid:true,fen,castlingAdjusted:true};
+    }catch(e){return {valid:false,message:e.message};}
   }
 
-  return {parseFen,buildFen,validate};
+  return {parseFen,buildFen,legalCastlingRights,normalizeFen,validate};
 });
 
