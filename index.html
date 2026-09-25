@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Chess Coach DEV v0.9.3.10</title>
+<title>Chess Coach DEV v0.9.4.0</title>
 <style>
 :root{
   --bg:#0d0c13;--panel:#181622;--text:#f9f7ff;--muted:#aaa6bb;
@@ -521,12 +521,14 @@ button:hover:not(:disabled){border-color:#9b6cff}
 .palettePiece{min-width:0;height:54px;padding:5px}.palettePiece img{width:42px;height:42px;max-width:100%}.palettePiece.selectedTool{border-color:#caff75;box-shadow:inset 0 0 0 2px #caff75}
 .setupOptions,.botOptions{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;margin:10px 0}.setupOptions label,.botOptions label,.fenLabel{display:flex;flex-direction:column;gap:5px;color:var(--muted);font-size:12px;font-weight:750}.setupOptions select,.botOptions select,.fenLabel input{border:1px solid #353047;background:#13111a;color:var(--text);border-radius:9px;padding:9px;font-size:14px}
 .setupOptions fieldset{display:flex;gap:8px;flex-wrap:wrap;border:1px solid #353047;border-radius:10px;color:var(--muted);font-size:12px}.setupOptions fieldset label{display:flex;flex-direction:row;align-items:center}.fenLabel input{width:100%;font-family:ui-monospace,monospace}.setupActions{margin-top:10px}.botGamePanel .tryLineMoves{margin-bottom:10px}
+.positionLibraryForm{display:grid;grid-template-columns:minmax(150px,1fr) minmax(130px,.7fr) auto;gap:8px;align-items:end;margin-top:12px}.positionLibraryForm label,.libraryOptions label{display:flex;flex-direction:column;gap:5px;color:var(--muted);font-size:12px;font-weight:750}.positionLibraryForm input,.positionLibraryForm select,.libraryOptions select{min-width:0;border:1px solid #353047;background:#13111a;color:var(--text);border-radius:9px;padding:9px;font-size:14px}.libraryOptions{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}.positionLibraryList{display:flex;flex-direction:column;gap:9px;margin-top:12px}.libraryPosition{border:1px solid #353047;background:#13111a;border-radius:11px;padding:11px}.libraryPositionHeader{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.libraryPositionName{font-weight:850}.libraryCategory{display:inline-block;border-radius:999px;background:#2b2141;color:#ddd6fe;padding:3px 7px;font-size:11px;font-weight:800}.libraryFen{margin-top:7px;color:var(--muted);font:11px ui-monospace,monospace;overflow-wrap:anywhere}.libraryActions{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}.libraryActions button{font-size:13px;padding:8px 9px}.libraryEmpty{padding:12px;border:1px dashed #4a445d;border-radius:10px;color:var(--muted);text-align:center}
 @media(max-width:560px){.piecePalette{grid-template-columns:repeat(7,1fr);gap:4px}.palettePiece{height:46px;padding:3px}.palettePiece img{width:36px;height:36px}.setupOptions fieldset{display:grid;grid-template-columns:1fr 1fr}.setupActions button{flex:1 1 44%}}
+@media(max-width:560px){.positionLibraryForm{grid-template-columns:1fr 1fr}.positionLibraryForm label:first-child{grid-column:1/-1}.positionLibraryForm button{min-height:42px}}
 </style>
 </head>
 <body>
 <div class="wrap">
-<h1>Chess Coach DEV v0.9.3.10</h1>
+<h1>Chess Coach DEV v0.9.4.0</h1>
 <div class="sub">Explore alternatives safely with Try a Line.</div>
 
 <div class="layout">
@@ -688,6 +690,21 @@ button:hover:not(:disabled){border-color:#9b6cff}
       <p class="small">Create any legal position, import a FEN, or start from the board you are studying.</p>
       <div class="row" style="margin-top:10px"><button id="practiceSetupBtn" class="primary">Set Up Position</button><button id="practiceCurrentBotBtn">Play Current Position</button></div>
       <p class="small" style="margin-top:10px">Stockfish can play while Engine Help is off, so you can practice without seeing evaluations or suggested moves.</p>
+    </div>
+    <div class="card">
+      <div class="badge">POSITION LIBRARY</div><strong> Save positions worth practicing</strong>
+      <p class="small">Save the position on the board, then reopen it for analysis, Try a Line, or a practice game.</p>
+      <div class="positionLibraryForm">
+        <label>Position name<input id="libraryName" maxlength="80" placeholder="Example: Rook endgame technique"></label>
+        <label>Category<select id="libraryCategory"><option>Tactics</option><option>Opening</option><option>Middlegame</option><option>Endgame</option><option>Defense</option><option>Favorites</option></select></label>
+        <button id="librarySave" class="primary">Save Current</button>
+      </div>
+      <div class="libraryOptions">
+        <label>Play as<select id="libraryBotSide"><option value="turn">Side to move</option><option value="w">White</option><option value="b">Black</option></select></label>
+        <label>Bot strength<select id="libraryBotLevel"><option value="5">Beginner</option><option value="8" selected>Improving</option><option value="11">Club</option><option value="14">Advanced</option></select></label>
+      </div>
+      <div id="libraryStatus" class="small" style="margin-top:10px" aria-live="polite">No saved positions yet.</div>
+      <div id="positionLibraryList" class="positionLibraryList"></div>
     </div></div>
     <div id="engineTab" class="tabPane"><div class="card">
       <div class="badge">ENGINE</div>
@@ -899,6 +916,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
 <script src="./ai-coach-response.js"></script>
 <script src="./study-session.js"></script>
 <script src="./position-tools.js"></script>
+<script src="./position-library.js"></script>
 <script>
 (function(){
   /*
@@ -952,6 +970,8 @@ button:hover:not(:disabled){border-color:#9b6cff}
   let sessionSaveTimer=null;
   const ENGINE_PREFERENCE_KEY='chessCoachEngineHelp_v1';
   const sessionStore=ChessCoachSession.createStore(localStorage);
+  const positionLibraryStore=ChessPositionLibrary.createStore(localStorage);
+  let positionLibraryEntries=[];
   // Exactly one tagged job may own Stockfish. UCI has no request IDs, so every
   // job is separated from its predecessor by stop -> isready -> readyok.
   let engineJob=null;
@@ -1100,6 +1120,87 @@ button:hover:not(:disabled){border-color:#9b6cff}
     if(!botGame)return;const snapshot=botGame.snapshot;botGame=null;engineAdviceGeneration++;if(engine)engine.postMessage('stop');engineJob=null;
     document.getElementById('botGamePanel').classList.remove('active');document.getElementById('setupPositionBtn').disabled=false;setPracticeConsumersDisabled(false);
     restoreAppSnapshot(snapshot);render();scheduleAutoAnalysis();
+  }
+
+  function closeActivePracticeForLibrary(){
+    if(tryLine)exitTryLine();
+    if(setupMode)leaveSetupPosition(true);
+    if(botGame)endBotGame();
+  }
+
+  function prepareLibraryPosition(entry){
+    closeActivePracticeForLibrary();
+    const fen=ChessPositionTools.normalizeFen(entry.fen);
+    const candidate=new Chess();let loaded=false;try{loaded=candidate.load(fen);}catch(e){}
+    if(!loaded){document.getElementById('libraryStatus').textContent='That saved position is no longer valid.';return false;}
+    cancelEngineAdvice();
+    game=candidate;moveStartFen=fen;loadedMoves=[];cursor=0;lastMove=null;selected=null;legalTargets=[];bestMoveHighlight=null;
+    batchRows=[];batchEvaluations=[];activeLessonRow=null;puzzleMode=false;pauseMode=false;pgnHeaders={};mySide=null;pgnInput.value='';
+    clearEngineDisplay();clearReview();resetBatchUI();updateFocusHeader();render();
+    feedbackEl.textContent='Loaded from Position Library: '+entry.name;feedbackEl.className='small ok';
+    return true;
+  }
+
+  function openLibraryAnalysis(entry){
+    if(!prepareLibraryPosition(entry))return;
+    switchTab('engineTab');
+    if(engineHelpEnabled)initEngine();
+    else document.getElementById('engineStatus').textContent='Position loaded. Turn Stockfish on when you want analysis.';
+  }
+
+  function openLibraryTryLine(entry){
+    if(!prepareLibraryPosition(entry))return;
+    switchTab('gameTab');startTryLine();
+  }
+
+  function openLibraryBot(entry){
+    closeActivePracticeForLibrary();
+    const fen=ChessPositionTools.normalizeFen(entry.fen);
+    const candidate=new Chess();let loaded=false;try{loaded=candidate.load(fen);}catch(e){}
+    if(!loaded){document.getElementById('libraryStatus').textContent='That saved position is no longer valid.';return;}
+    const returnSnapshot=appSnapshot();
+    const sideChoice=document.getElementById('libraryBotSide').value;
+    const playerColor=sideChoice==='turn'?candidate.turn():sideChoice;
+    startBotGame(fen,playerColor,document.getElementById('libraryBotLevel').value,returnSnapshot);
+    switchTab('practiceTab');
+  }
+
+  function renderPositionLibrary(){
+    positionLibraryEntries=positionLibraryStore.list();
+    const list=document.getElementById('positionLibraryList');list.replaceChildren();
+    if(!positionLibraryEntries.length){
+      const empty=document.createElement('div');empty.className='libraryEmpty';empty.textContent='Save a position from the board to begin your library.';list.appendChild(empty);
+      document.getElementById('libraryStatus').textContent='No saved positions yet.';return;
+    }
+    document.getElementById('libraryStatus').textContent=positionLibraryEntries.length+' saved position'+(positionLibraryEntries.length===1?'':'s')+'.';
+    positionLibraryEntries.forEach(entry=>{
+      const card=document.createElement('article');card.className='libraryPosition';
+      const header=document.createElement('div');header.className='libraryPositionHeader';
+      const name=document.createElement('div');name.className='libraryPositionName';name.textContent=entry.name;
+      const category=document.createElement('span');category.className='libraryCategory';category.textContent=entry.category;
+      header.append(name,category);card.appendChild(header);
+      const side=document.createElement('div');side.className='small';side.textContent=(entry.fen.split(/\s+/)[1]==='b'?'Black':'White')+' to move';card.appendChild(side);
+      const fen=document.createElement('div');fen.className='libraryFen';fen.textContent=entry.fen;card.appendChild(fen);
+      const actions=document.createElement('div');actions.className='libraryActions';
+      const button=(label,handler,primary=false)=>{const btn=document.createElement('button');btn.type='button';btn.textContent=label;if(primary)btn.className='primary';btn.addEventListener('click',handler);return btn;};
+      actions.append(button('Analyze',()=>openLibraryAnalysis(entry),true),button('Try a Line',()=>openLibraryTryLine(entry)),button('Play Bot',()=>openLibraryBot(entry)),button('Delete',()=>{if(confirm('Delete “'+entry.name+'” from your Position Library?')){positionLibraryStore.remove(entry.id);renderPositionLibrary();}}));
+      card.appendChild(actions);list.appendChild(card);
+    });
+  }
+
+  function saveCurrentPositionToLibrary(){
+    const name=document.getElementById('libraryName').value.trim();
+    if(!name){document.getElementById('libraryStatus').textContent='Give this position a name before saving it.';document.getElementById('libraryName').focus();return;}
+    let fen;
+    if(setupMode){
+      const result=validatedSetupFen();
+      if(!result.valid){document.getElementById('libraryStatus').textContent=result.message;return;}
+      fen=result.fen;
+    }else fen=ChessPositionTools.normalizeFen(game.fen());
+    const saved=positionLibraryStore.save({name,category:document.getElementById('libraryCategory').value,fen});
+    if(!saved){document.getElementById('libraryStatus').textContent='Could not save that position.';return;}
+    document.getElementById('libraryName').value='';renderPositionLibrary();
+    document.getElementById('libraryStatus').textContent='Saved “'+saved.name+'”.';
   }
 
   function enginePreference(){
@@ -3559,6 +3660,8 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
   document.getElementById('thinkBtn').addEventListener('click',analyzeThinkingPosition);
   document.getElementById('pauseStartBtn').addEventListener('click',startPausePosition);
   document.getElementById('pauseRevealBtn').addEventListener('click',revealPausePlan);
+  document.getElementById('librarySave').addEventListener('click',saveCurrentPositionToLibrary);
+  document.getElementById('libraryName').addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();saveCurrentPositionToLibrary();}});
 
   document.getElementById('profileDetailsBtn').addEventListener('click',()=>{
     const el=document.getElementById('profileDetails');
@@ -3596,6 +3699,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
 
 
   loadLearningProfile();
+  renderPositionLibrary();
   const preferred=enginePreference();if(preferred!==null)engineHelpEnabled=preferred;
 
   if(typeof Chess==='undefined'){
