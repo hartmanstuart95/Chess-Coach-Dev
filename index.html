@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Chess Coach DEV v0.9.4.0</title>
+<title>Chess Coach DEV v0.9.4.1</title>
 <style>
 :root{
   --bg:#0d0c13;--panel:#181622;--text:#f9f7ff;--muted:#aaa6bb;
@@ -522,13 +522,15 @@ button:hover:not(:disabled){border-color:#9b6cff}
 .setupOptions,.botOptions{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;margin:10px 0}.setupOptions label,.botOptions label,.fenLabel{display:flex;flex-direction:column;gap:5px;color:var(--muted);font-size:12px;font-weight:750}.setupOptions select,.botOptions select,.fenLabel input{border:1px solid #353047;background:#13111a;color:var(--text);border-radius:9px;padding:9px;font-size:14px}
 .setupOptions fieldset{display:flex;gap:8px;flex-wrap:wrap;border:1px solid #353047;border-radius:10px;color:var(--muted);font-size:12px}.setupOptions fieldset label{display:flex;flex-direction:row;align-items:center}.fenLabel input{width:100%;font-family:ui-monospace,monospace}.setupActions{margin-top:10px}.botGamePanel .tryLineMoves{margin-bottom:10px}
 .positionLibraryForm{display:grid;grid-template-columns:minmax(150px,1fr) minmax(130px,.7fr) auto;gap:8px;align-items:end;margin-top:12px}.positionLibraryForm label,.libraryOptions label{display:flex;flex-direction:column;gap:5px;color:var(--muted);font-size:12px;font-weight:750}.positionLibraryForm input,.positionLibraryForm select,.libraryOptions select{min-width:0;border:1px solid #353047;background:#13111a;color:var(--text);border-radius:9px;padding:9px;font-size:14px}.libraryOptions{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}.positionLibraryList{display:flex;flex-direction:column;gap:9px;margin-top:12px}.libraryPosition{border:1px solid #353047;background:#13111a;border-radius:11px;padding:11px}.libraryPositionHeader{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.libraryPositionName{font-weight:850}.libraryCategory{display:inline-block;border-radius:999px;background:#2b2141;color:#ddd6fe;padding:3px 7px;font-size:11px;font-weight:800}.libraryFen{margin-top:7px;color:var(--muted);font:11px ui-monospace,monospace;overflow-wrap:anywhere}.libraryActions{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}.libraryActions button{font-size:13px;padding:8px 9px}.libraryEmpty{padding:12px;border:1px dashed #4a445d;border-radius:10px;color:var(--muted);text-align:center}
-@media(max-width:560px){.piecePalette{grid-template-columns:repeat(7,1fr);gap:4px}.palettePiece{height:46px;padding:3px}.palettePiece img{width:36px;height:36px}.setupOptions fieldset{display:grid;grid-template-columns:1fr 1fr}.setupActions button{flex:1 1 44%}}
+.threatChecklist{margin:11px 0;padding:10px;border:1px solid #4b3a69;border-radius:10px;background:#17131f;color:#caff75;font-weight:800;letter-spacing:.01em}.threatGuess{display:flex;flex-direction:column;gap:5px;margin:10px 0;color:var(--muted);font-size:12px;font-weight:750}.threatGuess input{border:1px solid #353047;background:#13111a;color:var(--text);border-radius:9px;padding:10px;font-size:14px}.threatResults{display:none;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}.threatResults.active{display:grid}.threatResult{border:1px solid #353047;border-radius:10px;background:#13111a;padding:10px}.threatResult.wide{grid-column:1/-1}.threatResultLabel{color:#65d9ff;font-size:11px;font-weight:850;text-transform:uppercase}.threatResultValue{margin-top:5px;line-height:1.38}.threatUrgent{border-color:#ff6b8a;background:#2a1520}.threatSafe{border-color:#5b7b43}.threatActions{display:flex;gap:8px;flex-wrap:wrap}.threatActions button{flex:1 1 140px}
+@media(max-width:560px){.piecePalette{grid-template-columns:repeat(7,1fr);gap:4px}.palettePiece{height:46px;padding:3px}.palettePiece img{width:36px;height:36px;max-width:100%}.setupOptions fieldset{display:grid;grid-template-columns:1fr 1fr}.setupActions button{flex:1 1 44%}}
 @media(max-width:560px){.positionLibraryForm{grid-template-columns:1fr 1fr}.positionLibraryForm label:first-child{grid-column:1/-1}.positionLibraryForm button{min-height:42px}}
+@media(max-width:560px){.threatResults{grid-template-columns:1fr}.threatResult.wide{grid-column:auto}}
 </style>
 </head>
 <body>
 <div class="wrap">
-<h1>Chess Coach DEV v0.9.4.0</h1>
+<h1>Chess Coach DEV v0.9.4.1</h1>
 <div class="sub">Explore alternatives safely with Try a Line.</div>
 
 <div class="layout">
@@ -809,6 +811,28 @@ button:hover:not(:disabled){border-color:#9b6cff}
       <div class="small" style="margin-top:8px">Ratings use Chess Coach's centipawn-loss heuristic. Mate is classified separately from centipawn loss.</div>
     </div>
 
+    <div class="card">
+      <div class="badge">THREAT SCANNER</div>
+      <strong> Find what changed before you move</strong>
+      <p class="small">Study the board and name the danger first. Then reveal the scan to compare your answer with the position.</p>
+      <div class="threatChecklist">Checks → captures → attacked pieces → king safety</div>
+      <label class="threatGuess">What do you think the threat is?
+        <input id="threatGuess" type="text" maxlength="180" autocomplete="off" placeholder="Example: My queen is attacked on d4">
+      </label>
+      <div class="threatActions">
+        <button id="threatRevealBtn" class="primary">Reveal Threats</button>
+        <button id="threatResetBtn">Think Again</button>
+      </div>
+      <div id="threatStatus" class="small" style="margin-top:9px" aria-live="polite">Study the current board before revealing the answer.</div>
+      <div id="threatResults" class="threatResults" aria-live="polite">
+        <div id="threatImmediateCard" class="threatResult"><div class="threatResultLabel">Immediate danger</div><div id="threatImmediate" class="threatResultValue">—</div></div>
+        <div class="threatResult"><div class="threatResultLabel">Opponent attacks</div><div id="threatOpponent" class="threatResultValue">—</div></div>
+        <div class="threatResult"><div class="threatResultLabel">Loose pieces</div><div id="threatLoose" class="threatResultValue">—</div></div>
+        <div class="threatResult"><div class="threatResultLabel">Your forcing moves</div><div id="threatForcing" class="threatResultValue">—</div></div>
+        <div class="threatResult wide"><div class="threatResultLabel">King safety</div><div id="threatKing" class="threatResultValue">—</div></div>
+      </div>
+    </div>
+
     </div>
     <div id="trainTab" class="tabPane"><div class="card">
       <div class="badge">TEACH ME</div>
@@ -917,6 +941,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
 <script src="./study-session.js"></script>
 <script src="./position-tools.js"></script>
 <script src="./position-library.js"></script>
+<script src="./threat-scanner.js"></script>
 <script>
 (function(){
   /*
@@ -1786,6 +1811,72 @@ button:hover:not(:disabled){border-color:#9b6cff}
     }
   }
 
+  function threatPieceText(piece){
+    return (piece.color==='w'?'White ':'Black ')+piece.name+' on '+piece.square;
+  }
+
+  function resetThreatScanner(clearGuess=true,message='Study the current board before revealing the answer.'){
+    const results=document.getElementById('threatResults');
+    results.classList.remove('active');delete results.dataset.fen;
+    document.getElementById('threatImmediateCard').classList.remove('threatUrgent','threatSafe');
+    document.getElementById('threatStatus').textContent=message;
+    if(clearGuess)document.getElementById('threatGuess').value='';
+  }
+
+  function threatForcingMoves(fen){
+    const position=new Chess(fen),checks=[],captures=[];
+    position.moves({verbose:true}).forEach(move=>{
+      const line=new Chess(fen),played=line.move(move);
+      if(!played)return;
+      if(line.in_check())checks.push(played.san);
+      if(move.captured)captures.push(played.san);
+    });
+    return {checks,captures};
+  }
+
+  function revealThreatScanner(){
+    let fen;
+    if(setupMode){
+      const setup=validatedSetupFen();
+      if(!setup.valid){document.getElementById('threatStatus').textContent='Finish a legal setup before scanning: '+setup.message;return;}
+      fen=setup.fen;
+    }else fen=game.fen();
+    let scan,forcing;
+    try{scan=ChessThreatScanner.scan(fen);forcing=threatForcingMoves(fen);}catch(e){
+      document.getElementById('threatStatus').textContent='This position could not be scanned. Check the setup and try again.';return;
+    }
+
+    const guess=document.getElementById('threatGuess').value.trim();
+    document.getElementById('threatStatus').textContent=guess?'Compare the scan with your answer above.':'Scan revealed. Next time, write your answer first to strengthen threat recognition.';
+
+    const immediate=document.getElementById('threatImmediate');
+    const immediateCard=document.getElementById('threatImmediateCard');
+    immediateCard.classList.remove('threatUrgent','threatSafe');
+    if(scan.inCheck){immediate.textContent=scan.sideName+' is in check. Answer the check before considering any other move.';immediateCard.classList.add('threatUrgent');}
+    else if(scan.hanging.length){immediate.textContent=threatPieceText(scan.hanging[0])+' is attacked and undefended.';immediateCard.classList.add('threatUrgent');}
+    else if(scan.underdefended.length){immediate.textContent=threatPieceText(scan.underdefended[0])+' has more attackers than defenders.';immediateCard.classList.add('threatUrgent');}
+    else{immediate.textContent='No check, hanging piece, or overloaded defense was found.';immediateCard.classList.add('threatSafe');}
+
+    const opponent=document.getElementById('threatOpponent');
+    opponent.textContent=scan.captureThreats.length?scan.captureThreats.slice(0,4).map(threat=>(scan.opponentName+' '+threat.attackerName+' on '+threat.from+' attacks '+scan.sideName.toLowerCase()+' '+threat.victimName+' on '+threat.target+(threat.defended?' (defended)':' (undefended)'))).join(' · '):'No current piece captures were found for '+scan.opponentName+'.';
+
+    const loose=document.getElementById('threatLoose');
+    const looseNotes=[];
+    if(scan.hanging.length)looseNotes.push('Hanging: '+scan.hanging.slice(0,3).map(threatPieceText).join(', ')+'.');
+    if(scan.underdefended.length)looseNotes.push('Underdefended: '+scan.underdefended.slice(0,3).map(threatPieceText).join(', ')+'.');
+    if(!looseNotes.length&&scan.loose.length)looseNotes.push('Undefended but not attacked: '+scan.loose.slice(0,3).map(threatPieceText).join(', ')+'.');
+    loose.textContent=looseNotes.join(' ')||'Every non-king piece has at least one defender.';
+
+    const forcingText=[];
+    if(forcing.checks.length)forcingText.push('Checks: '+forcing.checks.slice(0,5).join(', ')+'.');
+    if(forcing.captures.length)forcingText.push('Captures: '+forcing.captures.slice(0,5).join(', ')+'.');
+    document.getElementById('threatForcing').textContent=forcingText.join(' ')||'No legal checks or captures. Look for a forcing threat or improve a piece.';
+
+    const king=scan.kingDanger;
+    document.getElementById('threatKing').textContent=(scan.inCheck?'The '+scan.sideName.toLowerCase()+' king on '+king.square+' is under attack. ':'The '+scan.sideName.toLowerCase()+' king on '+king.square+' is not in check. ')+(king.controlledSquares.length?'Opponent controls nearby squares: '+king.controlledSquares.join(', ')+'.':'No neighboring king squares are controlled by the opponent’s current attack map.');
+    const results=document.getElementById('threatResults');results.dataset.fen=fen;results.classList.add('active');
+  }
+
   function findWorstPiece(g,color){
     const board=g.board(), list=[];
     for(let r=0;r<8;r++)for(let f=0;f<8;f++){
@@ -2124,7 +2215,10 @@ button:hover:not(:disabled){border-color:#9b6cff}
     else if(!setupMode&&game.in_draw())txt+=' — Draw';
 
     statusEl.textContent=txt;
-    fenEl.textContent=setupMode?ChessPositionTools.buildFen(currentSetupPosition()):game.fen();
+    const displayedFen=setupMode?ChessPositionTools.buildFen(currentSetupPosition()):game.fen();
+    fenEl.textContent=displayedFen;
+    const threatResults=document.getElementById('threatResults');
+    if(threatResults.classList.contains('active')&&threatResults.dataset.fen!==displayedFen)resetThreatScanner(false,'The position changed. Study the new board, then reveal a fresh scan.');
     if(!setupMode){updateMaterialCounter();renderMoves();renderCurrentMoveLearning();}
     if(tryLine)setTryLineConsumersDisabled(true);
     scheduleSessionSave();
@@ -3658,6 +3752,9 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
   document.getElementById('showKeyBtn').addEventListener('click',()=>renderReviewCategory('key'));
 
   document.getElementById('thinkBtn').addEventListener('click',analyzeThinkingPosition);
+  document.getElementById('threatRevealBtn').addEventListener('click',revealThreatScanner);
+  document.getElementById('threatResetBtn').addEventListener('click',()=>resetThreatScanner(true));
+  document.getElementById('threatGuess').addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();revealThreatScanner();}});
   document.getElementById('pauseStartBtn').addEventListener('click',startPausePosition);
   document.getElementById('pauseRevealBtn').addEventListener('click',revealPausePlan);
   document.getElementById('librarySave').addEventListener('click',saveCurrentPositionToLibrary);
