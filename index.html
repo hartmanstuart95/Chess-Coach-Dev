@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Chess Coach DEV v0.9.5.0</title>
+<title>Chess Coach DEV v0.9.6.0</title>
 <style>
 :root{
   --bg:#0d0c13;--panel:#181622;--text:#f9f7ff;--muted:#aaa6bb;
@@ -524,15 +524,17 @@ button:hover:not(:disabled){border-color:#9b6cff}
 .positionLibraryForm{display:grid;grid-template-columns:minmax(150px,1fr) minmax(130px,.7fr) auto;gap:8px;align-items:end;margin-top:12px}.positionLibraryForm label,.libraryOptions label{display:flex;flex-direction:column;gap:5px;color:var(--muted);font-size:12px;font-weight:750}.positionLibraryForm input,.positionLibraryForm select,.libraryOptions select{min-width:0;border:1px solid #353047;background:#13111a;color:var(--text);border-radius:9px;padding:9px;font-size:14px}.libraryOptions{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}.positionLibraryList{display:flex;flex-direction:column;gap:9px;margin-top:12px}.libraryPosition{border:1px solid #353047;background:#13111a;border-radius:11px;padding:11px}.libraryPositionHeader{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.libraryPositionName{font-weight:850}.libraryCategory{display:inline-block;border-radius:999px;background:#2b2141;color:#ddd6fe;padding:3px 7px;font-size:11px;font-weight:800}.libraryFen{margin-top:7px;color:var(--muted);font:11px ui-monospace,monospace;overflow-wrap:anywhere}.libraryActions{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}.libraryActions button{font-size:13px;padding:8px 9px}.libraryEmpty{padding:12px;border:1px dashed #4a445d;border-radius:10px;color:var(--muted);text-align:center}
 .threatChecklist{margin:11px 0;padding:10px;border:1px solid #4b3a69;border-radius:10px;background:#17131f;color:#caff75;font-weight:800;letter-spacing:.01em}.threatGuess{display:flex;flex-direction:column;gap:5px;margin:10px 0;color:var(--muted);font-size:12px;font-weight:750}.threatGuess input{border:1px solid #353047;background:#13111a;color:var(--text);border-radius:9px;padding:10px;font-size:14px}.threatResults{display:none;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}.threatResults.active{display:grid}.threatResult{border:1px solid #353047;border-radius:10px;background:#13111a;padding:10px}.threatResult.wide{grid-column:1/-1}.threatResultLabel{color:#65d9ff;font-size:11px;font-weight:850;text-transform:uppercase}.threatResultValue{margin-top:5px;line-height:1.38}.threatUrgent{border-color:#ff6b8a;background:#2a1520}.threatSafe{border-color:#5b7b43}.threatActions{display:flex;gap:8px;flex-wrap:wrap}.threatActions button{flex:1 1 140px}
 .openingPracticeOptions{display:grid;grid-template-columns:minmax(180px,1fr) minmax(120px,.55fr);gap:9px;margin-top:12px}.openingPracticeOptions label{display:flex;flex-direction:column;gap:5px;color:var(--muted);font-size:12px;font-weight:750}.openingPracticeOptions select{min-width:0;border:1px solid #353047;background:#13111a;color:var(--text);border-radius:9px;padding:10px;font-size:14px}.openingPracticePanel{margin-top:11px;padding:12px;border:1px solid #4b3a69;border-radius:12px;background:#13111a}.openingPracticeTitle{font-size:18px;font-weight:850}.openingPracticeLine{margin-top:7px;color:#ddd6fe;line-height:1.55;word-spacing:3px}.openingPracticeProgress{height:8px;margin-top:10px;border-radius:999px;background:#282335;overflow:hidden}.openingPracticeProgress span{display:block;height:100%;width:0;background:linear-gradient(90deg,#6d3ee8,#caff75);transition:width .2s}.openingPracticeStats{display:flex;gap:10px;flex-wrap:wrap;margin-top:9px;color:var(--muted);font-size:12px}.openingPracticeActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.openingPracticeActions button{flex:1 1 120px}.openingPracticeGood{color:#86efac}.openingPracticeTry{color:#fde68a}
+.dashboardStats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}.dashboardStat{padding:11px;border:1px solid #353047;border-radius:11px;background:#13111a}.dashboardNumber{font-size:23px;font-weight:900;color:#caff75}.dashboardLabel{margin-top:3px;color:var(--muted);font-size:11px}.dashboardFocus{display:flex;flex-direction:column;gap:9px;margin-top:13px}.dashboardFocusRow{display:grid;grid-template-columns:minmax(120px,1fr) 2fr 28px;gap:8px;align-items:center;font-size:12px}.dashboardFocusTrack{height:8px;border-radius:999px;background:#2a2635;overflow:hidden}.dashboardFocusFill{height:100%;border-radius:999px;background:linear-gradient(90deg,#6d3ee8,#9b6cff)}.chessComConnect{display:grid;grid-template-columns:minmax(150px,1fr) auto auto;gap:8px;margin-top:12px}.chessComConnect input{min-width:0;border:1px solid #353047;background:#13111a;color:var(--text);border-radius:9px;padding:10px;font-size:14px}.chessComPanel{display:none;margin-top:12px}.chessComPanel.active{display:block}.chessComRatings{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.chessComRating{padding:11px;border:1px solid #353047;border-radius:10px;background:#13111a}.chessComRatingValue{font-size:22px;font-weight:850}.recentForm{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}.recentForm div{padding:9px;border:1px solid #353047;border-radius:9px;background:#13111a;text-align:center}.privacyNote{margin-top:11px;padding:10px;border-left:3px solid #65d9ff;border-radius:0 9px 9px 0;background:#17202b;line-height:1.45}
 @media(max-width:560px){.piecePalette{grid-template-columns:repeat(7,1fr);gap:4px}.palettePiece{height:46px;padding:3px}.palettePiece img{width:36px;height:36px;max-width:100%}.setupOptions fieldset{display:grid;grid-template-columns:1fr 1fr}.setupActions button{flex:1 1 44%}}
 @media(max-width:560px){.positionLibraryForm{grid-template-columns:1fr 1fr}.positionLibraryForm label:first-child{grid-column:1/-1}.positionLibraryForm button{min-height:42px}}
 @media(max-width:560px){.threatResults{grid-template-columns:1fr}.threatResult.wide{grid-column:auto}}
 @media(max-width:560px){.openingPracticeOptions{grid-template-columns:1fr}.openingPracticeActions button{min-height:44px}}
+@media(max-width:620px){.dashboardStats{grid-template-columns:1fr 1fr}.chessComConnect{grid-template-columns:1fr 1fr}.chessComConnect input{grid-column:1/-1}.recentForm{grid-template-columns:1fr 1fr}.dashboardFocusRow{grid-template-columns:105px 1fr 24px}}
 </style>
 </head>
 <body>
 <div class="wrap">
-<h1>Chess Coach DEV v0.9.5.0</h1>
+<h1>Chess Coach DEV v0.9.6.0</h1>
 <div class="sub">Explore alternatives safely with Try a Line.</div>
 
 <div class="layout">
@@ -646,6 +648,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
       <button class="tabBtn" data-tab="trainTab">Train</button>
       <button class="tabBtn" data-tab="middleTab">Middlegame</button>
       <button class="tabBtn" data-tab="practiceTab">Practice</button>
+      <button class="tabBtn" data-tab="dashboardTab">Dashboard</button>
     </div>
     <div id="gameTab" class="tabPane activePane"><div class="card">
       <div class="badge">PGN</div>
@@ -725,6 +728,44 @@ button:hover:not(:disabled){border-color:#9b6cff}
       <div id="libraryStatus" class="small" style="margin-top:10px" aria-live="polite">No saved positions yet.</div>
       <div id="positionLibraryList" class="positionLibraryList"></div>
     </div></div>
+    <div id="dashboardTab" class="tabPane">
+      <div class="card">
+        <div class="badge">PROGRESS DASHBOARD</div><strong> Your learning at a glance</strong>
+        <p class="small">Chess Coach keeps these learning totals on this browser.</p>
+        <div class="dashboardStats">
+          <div class="dashboardStat"><div id="dashGames" class="dashboardNumber">0</div><div class="dashboardLabel">Games reviewed</div></div>
+          <div class="dashboardStat"><div id="dashPositions" class="dashboardNumber">0</div><div class="dashboardLabel">Saved positions</div></div>
+          <div class="dashboardStat"><div id="dashOpeningReps" class="dashboardNumber">0</div><div class="dashboardLabel">Opening drills</div></div>
+          <div class="dashboardStat"><div id="dashOpeningAccuracy" class="dashboardNumber">—</div><div class="dashboardLabel">Opening accuracy</div></div>
+        </div>
+        <div class="reviewLabel" style="margin-top:15px">Learning priorities found in reviewed games</div>
+        <div class="dashboardFocus">
+          <div class="dashboardFocusRow"><span>Tactical misses</span><div class="dashboardFocusTrack"><div id="dashTacticalBar" class="dashboardFocusFill"></div></div><strong id="dashTactical">0</strong></div>
+          <div class="dashboardFocusRow"><span>Threats overlooked</span><div class="dashboardFocusTrack"><div id="dashThreatBar" class="dashboardFocusFill"></div></div><strong id="dashThreat">0</strong></div>
+          <div class="dashboardFocusRow"><span>King safety</span><div class="dashboardFocusTrack"><div id="dashKingBar" class="dashboardFocusFill"></div></div><strong id="dashKing">0</strong></div>
+          <div class="dashboardFocusRow"><span>Planning</span><div class="dashboardFocusTrack"><div id="dashPlanningBar" class="dashboardFocusFill"></div></div><strong id="dashPlanning">0</strong></div>
+        </div>
+        <div id="dashInsight" class="lessonPrompt small" style="margin-top:12px">Review games and practice openings to build your dashboard.</div>
+      </div>
+      <div class="card">
+        <div class="badge">CHESS.COM</div><strong> Add your public playing history</strong>
+        <p class="small">Enter a Chess.com username to show ratings and recent form. No password or Chess.com access token is needed.</p>
+        <div class="chessComConnect"><input id="chessComUsername" maxlength="25" autocomplete="off" spellcheck="false" placeholder="Chess.com username"><button id="chessComSync" class="primary">Connect &amp; Sync</button><button id="chessComDisconnect" disabled>Disconnect</button></div>
+        <div id="chessComStatus" class="small" style="margin-top:9px" aria-live="polite">No Chess.com username saved.</div>
+        <div class="privacyNote small"><strong>Privacy:</strong> the username is stored only in this browser. Chess Coach requests public profile, rating, and game data directly from Chess.com and does not save your games in GitHub. Anyone who already knows a Chess.com username can view the same public data through Chess.com.</div>
+        <div id="chessComPanel" class="chessComPanel">
+          <div id="chessComProfile" class="openingPracticeTitle"></div>
+          <div class="chessComRatings">
+            <div class="chessComRating"><div class="dashboardLabel">Rapid</div><div id="chessRapid" class="chessComRatingValue">—</div><div id="chessRapidBest" class="small"></div></div>
+            <div class="chessComRating"><div class="dashboardLabel">Blitz</div><div id="chessBlitz" class="chessComRatingValue">—</div><div id="chessBlitzBest" class="small"></div></div>
+            <div class="chessComRating"><div class="dashboardLabel">Bullet</div><div id="chessBullet" class="chessComRatingValue">—</div><div id="chessBulletBest" class="small"></div></div>
+          </div>
+          <div class="reviewLabel" style="margin-top:13px">Most recent public games</div>
+          <div class="recentForm"><div><strong id="chessGames">0</strong><br><span class="small">Games</span></div><div><strong id="chessWins">0</strong><br><span class="small">Wins</span></div><div><strong id="chessDraws">0</strong><br><span class="small">Draws</span></div><div><strong id="chessLosses">0</strong><br><span class="small">Losses</span></div></div>
+          <div id="chessFormNote" class="small" style="margin-top:9px"></div>
+        </div>
+      </div>
+    </div>
     <div id="engineTab" class="tabPane"><div class="card">
       <div class="badge">ENGINE</div>
       <strong> Stockfish analysis</strong>
@@ -960,6 +1001,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
 <script src="./position-library.js"></script>
 <script src="./threat-scanner.js"></script>
 <script src="./opening-practice.js"></script>
+<script src="./progress-dashboard.js"></script>
 <script>
 (function(){
   /*
@@ -1015,10 +1057,12 @@ button:hover:not(:disabled){border-color:#9b6cff}
   const sessionStore=ChessCoachSession.createStore(localStorage);
   const positionLibraryStore=ChessPositionLibrary.createStore(localStorage);
   const openingPracticeStore=ChessOpeningPractice.createProgressStore(localStorage);
+  const chessComConnectionStore=ChessProgressDashboard.createConnectionStore(localStorage);
   let positionLibraryEntries=[];
   let openingPractice=null;
   let openingPracticeTimer=null;
   let openingPracticeGeneration=0;
+  let chessComSyncGeneration=0;
   // Exactly one tagged job may own Stockfish. UCI has no request IDs, so every
   // job is separated from its predecessor by stop -> isready -> readyok.
   let engineJob=null;
@@ -1377,6 +1421,96 @@ button:hover:not(:disabled){border-color:#9b6cff}
     advanceOpeningPractice();
   }
 
+  function renderProgressDashboard(){
+    const openingTotals=ChessProgressDashboard.localOpeningTotals(ChessOpeningPractice.OPENINGS,openingPracticeStore);
+    const positions=positionLibraryStore.list().length;
+    document.getElementById('dashGames').textContent=learningProfile.games||0;
+    document.getElementById('dashPositions').textContent=positions;
+    document.getElementById('dashOpeningReps').textContent=openingTotals.completions;
+    document.getElementById('dashOpeningAccuracy').textContent=openingTotals.attempts?openingTotals.accuracy+'%':'—';
+    const priorities=[['tactical','dashTactical','dashTacticalBar','tactical calculation'],['threats','dashThreat','dashThreatBar','opponent threats'],['king','dashKing','dashKingBar','king safety'],['planning','dashPlanning','dashPlanningBar','planning and piece activity']];
+    const maximum=Math.max(1,...priorities.map(([key])=>learningProfile[key]||0));
+    priorities.forEach(([key,valueId,barId])=>{const value=learningProfile[key]||0;document.getElementById(valueId).textContent=value;document.getElementById(barId).style.width=Math.round(value/maximum*100)+'%';});
+    const ranked=priorities.map(([key,,,name])=>({key,name,value:learningProfile[key]||0})).sort((a,b)=>b.value-a.value);
+    const insight=document.getElementById('dashInsight');
+    if(ranked[0].value)insight.textContent='Current training priority: '+ranked[0].name+'. Use reviewed key positions, Threat Scanner, and opening drills to work on recurring patterns.';
+    else if(openingTotals.attempts)insight.textContent='Opening work is underway. Review a complete game next to add personalized middlegame priorities.';
+    else insight.textContent='Review games and practice openings to build your dashboard.';
+  }
+
+  function resetChessComPanel(){
+    document.getElementById('chessComPanel').classList.remove('active');
+    document.getElementById('chessComProfile').textContent='';
+    ['chessRapid','chessBlitz','chessBullet'].forEach(id=>document.getElementById(id).textContent='—');
+    ['chessRapidBest','chessBlitzBest','chessBulletBest'].forEach(id=>document.getElementById(id).textContent='');
+    ['chessGames','chessWins','chessDraws','chessLosses'].forEach(id=>document.getElementById(id).textContent='0');
+    document.getElementById('chessFormNote').textContent='';
+  }
+
+  function renderChessComConnection(){
+    const saved=chessComConnectionStore.get(),input=document.getElementById('chessComUsername');
+    if(saved&&!input.value)input.value=saved;
+    document.getElementById('chessComDisconnect').disabled=!saved;
+    document.getElementById('chessComStatus').textContent=saved?'Username saved locally. Tap Connect & Sync to refresh public Chess.com data.':'No Chess.com username saved.';
+  }
+
+  async function fetchChessComJson(url){
+    const parsed=new URL(url);
+    if(parsed.protocol!=='https:'||parsed.hostname!=='api.chess.com'||!parsed.pathname.startsWith('/pub/player/'))throw new Error('Invalid Chess.com API URL');
+    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
+    try{
+      const response=await fetch(parsed.href,{headers:{Accept:'application/json'},signal:controller.signal});
+      if(!response.ok){const error=new Error(response.status===404?'Chess.com username not found.':'Chess.com data is temporarily unavailable.');error.status=response.status;throw error;}
+      return await response.json();
+    }finally{clearTimeout(timer);}
+  }
+
+  function renderChessComData(username,profile,stats,games){
+    document.getElementById('chessComProfile').textContent=(profile.name||profile.username||username)+' · @'+(profile.username||username);
+    ChessProgressDashboard.ratingSummary(stats).forEach((rating,index)=>{
+      const ids=[['chessRapid','chessRapidBest'],['chessBlitz','chessBlitzBest'],['chessBullet','chessBulletBest']][index];
+      document.getElementById(ids[0]).textContent=rating.rating===null?'—':rating.rating;
+      document.getElementById(ids[1]).textContent=rating.best===null?'No published rating':'Best '+rating.best;
+    });
+    const recent=ChessProgressDashboard.summarizeGames(games,username,20);
+    document.getElementById('chessGames').textContent=recent.games;document.getElementById('chessWins').textContent=recent.wins;
+    document.getElementById('chessDraws').textContent=recent.draws;document.getElementById('chessLosses').textContent=recent.losses;
+    document.getElementById('chessFormNote').textContent=recent.games?'Win rate across these games: '+recent.winRate+'% · '+recent.white+' as White, '+recent.black+' as Black.':'No recent public games were returned.';
+    document.getElementById('chessComPanel').classList.add('active');
+  }
+
+  async function syncChessCom(){
+    const input=document.getElementById('chessComUsername'),username=ChessProgressDashboard.normalizeUsername(input.value);
+    if(!username){document.getElementById('chessComStatus').textContent='Enter a valid Chess.com username using letters, numbers, underscores, or hyphens.';input.focus();return;}
+    if(!chessComConnectionStore.save(username)){document.getElementById('chessComStatus').textContent='Could not save the username in this browser.';return;}
+    const generation=++chessComSyncGeneration,button=document.getElementById('chessComSync');button.disabled=true;button.textContent='Syncing…';
+    document.getElementById('chessComDisconnect').disabled=false;document.getElementById('chessComStatus').textContent='Loading public Chess.com profile and ratings…';resetChessComPanel();
+    try{
+      const base='https://api.chess.com/pub/player/'+encodeURIComponent(username);
+      const profile=await fetchChessComJson(base);if(generation!==chessComSyncGeneration)return;
+      const stats=await fetchChessComJson(base+'/stats');if(generation!==chessComSyncGeneration)return;
+      const archiveData=await fetchChessComJson(base+'/games/archives');if(generation!==chessComSyncGeneration)return;
+      const archiveUrls=Array.isArray(archiveData.archives)?archiveData.archives.slice(-2).reverse():[],games=[];
+      for(const archiveUrl of archiveUrls){
+        if(games.length>=20)break;
+        const archive=await fetchChessComJson(archiveUrl);if(generation!==chessComSyncGeneration)return;
+        if(Array.isArray(archive.games))games.push(...archive.games);
+      }
+      renderChessComData(username,profile,stats,games);
+      document.getElementById('chessComStatus').textContent='Synced public Chess.com data for '+username+'. Chess.com may cache API updates for several hours.';
+    }catch(error){
+      if(generation===chessComSyncGeneration)document.getElementById('chessComStatus').textContent=error.name==='AbortError'?'Chess.com took too long to respond. Try again.':(error.message||'Chess.com data is temporarily unavailable.');
+    }finally{
+      if(generation===chessComSyncGeneration){button.disabled=false;button.textContent='Connect & Sync';}
+    }
+  }
+
+  function disconnectChessCom(){
+    chessComSyncGeneration++;chessComConnectionStore.remove();document.getElementById('chessComUsername').value='';
+    document.getElementById('chessComSync').disabled=false;document.getElementById('chessComSync').textContent='Connect & Sync';
+    document.getElementById('chessComDisconnect').disabled=true;document.getElementById('chessComStatus').textContent='Chess.com username removed from this browser.';resetChessComPanel();
+  }
+
   function enginePreference(){
     try{const value=localStorage.getItem(ENGINE_PREFERENCE_KEY);return value===null?null:value==='on';}catch(e){return null;}
   }
@@ -1719,6 +1853,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
     document.querySelectorAll('.tabBtn').forEach(b=>b.classList.remove('activeTab'));
     document.getElementById(tabId)?.classList.add('activePane');
     document.querySelector('.tabBtn[data-tab="'+tabId+'"]')?.classList.add('activeTab');
+    if(tabId==='dashboardTab')renderProgressDashboard();
     scheduleSessionSave();
   }
 
@@ -3916,6 +4051,9 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
   document.getElementById('openingPracticeHint').addEventListener('click',showOpeningPracticeHint);
   document.getElementById('openingPracticeStop').addEventListener('click',stopOpeningPractice);
   document.getElementById('openingPracticeSelect').addEventListener('change',renderOpeningPractice);
+  document.getElementById('chessComSync').addEventListener('click',syncChessCom);
+  document.getElementById('chessComDisconnect').addEventListener('click',disconnectChessCom);
+  document.getElementById('chessComUsername').addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();syncChessCom();}});
 
   document.getElementById('profileDetailsBtn').addEventListener('click',()=>{
     const el=document.getElementById('profileDetails');
@@ -3955,6 +4093,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
   loadLearningProfile();
   populateOpeningPractice();
   renderPositionLibrary();
+  renderProgressDashboard();renderChessComConnection();
   const preferred=enginePreference();if(preferred!==null)engineHelpEnabled=preferred;
 
   if(typeof Chess==='undefined'){
