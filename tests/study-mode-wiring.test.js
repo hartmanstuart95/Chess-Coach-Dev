@@ -49,3 +49,12 @@ test('custom positions are normalized and engine failures release full-game revi
   assert.match(html,/stopEngine\('Stockfish worker stopped\. Restart the engine and try again\.'\)/);
 });
 
+test('Position Library opens saved positions in analysis, Try a Line, and bot practice',()=>{
+  assert.match(html,/ChessPositionLibrary\.createStore\(localStorage\)/);
+  assert.match(html,/function openLibraryAnalysis\(entry\)/);
+  assert.match(html,/switchTab\('engineTab'\)/);
+  assert.match(html,/function openLibraryTryLine\(entry\)[\s\S]*?startTryLine\(\)/);
+  assert.match(html,/function openLibraryBot\(entry\)[\s\S]*?startBotGame\(fen,playerColor/);
+  assert.match(html,/positionLibraryStore\.save\(\{name,category:/);
+});
+
