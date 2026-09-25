@@ -80,3 +80,14 @@ test('Opening Practice runs recall drills and preserves the prior study position
   assert.match(html,/if\(!openingPractice\)scheduleSessionSave\(\)/);
 });
 
+test('Progress Dashboard combines local learning with an optional public Chess.com sync',()=>{
+  assert.match(html,/src="\.\/progress-dashboard\.js"/);
+  assert.match(html,/data-tab="dashboardTab"/);
+  assert.match(html,/ChessProgressDashboard\.localOpeningTotals/);
+  assert.match(html,/ChessProgressDashboard\.createConnectionStore\(localStorage\)/);
+  assert.match(html,/function syncChessCom\(\)/);
+  assert.match(html,/https:\/\/api\.chess\.com\/pub\/player\//);
+  assert.match(html,/archiveData\.archives\.slice\(-2\)\.reverse\(\)/);
+  assert.match(html,/does not save your games in GitHub/);
+});
+
