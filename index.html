@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Chess Coach DEV v0.9.4.1</title>
+<title>Chess Coach DEV v0.9.5.0</title>
 <style>
 :root{
   --bg:#0d0c13;--panel:#181622;--text:#f9f7ff;--muted:#aaa6bb;
@@ -523,14 +523,16 @@ button:hover:not(:disabled){border-color:#9b6cff}
 .setupOptions fieldset{display:flex;gap:8px;flex-wrap:wrap;border:1px solid #353047;border-radius:10px;color:var(--muted);font-size:12px}.setupOptions fieldset label{display:flex;flex-direction:row;align-items:center}.fenLabel input{width:100%;font-family:ui-monospace,monospace}.setupActions{margin-top:10px}.botGamePanel .tryLineMoves{margin-bottom:10px}
 .positionLibraryForm{display:grid;grid-template-columns:minmax(150px,1fr) minmax(130px,.7fr) auto;gap:8px;align-items:end;margin-top:12px}.positionLibraryForm label,.libraryOptions label{display:flex;flex-direction:column;gap:5px;color:var(--muted);font-size:12px;font-weight:750}.positionLibraryForm input,.positionLibraryForm select,.libraryOptions select{min-width:0;border:1px solid #353047;background:#13111a;color:var(--text);border-radius:9px;padding:9px;font-size:14px}.libraryOptions{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}.positionLibraryList{display:flex;flex-direction:column;gap:9px;margin-top:12px}.libraryPosition{border:1px solid #353047;background:#13111a;border-radius:11px;padding:11px}.libraryPositionHeader{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.libraryPositionName{font-weight:850}.libraryCategory{display:inline-block;border-radius:999px;background:#2b2141;color:#ddd6fe;padding:3px 7px;font-size:11px;font-weight:800}.libraryFen{margin-top:7px;color:var(--muted);font:11px ui-monospace,monospace;overflow-wrap:anywhere}.libraryActions{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}.libraryActions button{font-size:13px;padding:8px 9px}.libraryEmpty{padding:12px;border:1px dashed #4a445d;border-radius:10px;color:var(--muted);text-align:center}
 .threatChecklist{margin:11px 0;padding:10px;border:1px solid #4b3a69;border-radius:10px;background:#17131f;color:#caff75;font-weight:800;letter-spacing:.01em}.threatGuess{display:flex;flex-direction:column;gap:5px;margin:10px 0;color:var(--muted);font-size:12px;font-weight:750}.threatGuess input{border:1px solid #353047;background:#13111a;color:var(--text);border-radius:9px;padding:10px;font-size:14px}.threatResults{display:none;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}.threatResults.active{display:grid}.threatResult{border:1px solid #353047;border-radius:10px;background:#13111a;padding:10px}.threatResult.wide{grid-column:1/-1}.threatResultLabel{color:#65d9ff;font-size:11px;font-weight:850;text-transform:uppercase}.threatResultValue{margin-top:5px;line-height:1.38}.threatUrgent{border-color:#ff6b8a;background:#2a1520}.threatSafe{border-color:#5b7b43}.threatActions{display:flex;gap:8px;flex-wrap:wrap}.threatActions button{flex:1 1 140px}
+.openingPracticeOptions{display:grid;grid-template-columns:minmax(180px,1fr) minmax(120px,.55fr);gap:9px;margin-top:12px}.openingPracticeOptions label{display:flex;flex-direction:column;gap:5px;color:var(--muted);font-size:12px;font-weight:750}.openingPracticeOptions select{min-width:0;border:1px solid #353047;background:#13111a;color:var(--text);border-radius:9px;padding:10px;font-size:14px}.openingPracticePanel{margin-top:11px;padding:12px;border:1px solid #4b3a69;border-radius:12px;background:#13111a}.openingPracticeTitle{font-size:18px;font-weight:850}.openingPracticeLine{margin-top:7px;color:#ddd6fe;line-height:1.55;word-spacing:3px}.openingPracticeProgress{height:8px;margin-top:10px;border-radius:999px;background:#282335;overflow:hidden}.openingPracticeProgress span{display:block;height:100%;width:0;background:linear-gradient(90deg,#6d3ee8,#caff75);transition:width .2s}.openingPracticeStats{display:flex;gap:10px;flex-wrap:wrap;margin-top:9px;color:var(--muted);font-size:12px}.openingPracticeActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.openingPracticeActions button{flex:1 1 120px}.openingPracticeGood{color:#86efac}.openingPracticeTry{color:#fde68a}
 @media(max-width:560px){.piecePalette{grid-template-columns:repeat(7,1fr);gap:4px}.palettePiece{height:46px;padding:3px}.palettePiece img{width:36px;height:36px;max-width:100%}.setupOptions fieldset{display:grid;grid-template-columns:1fr 1fr}.setupActions button{flex:1 1 44%}}
 @media(max-width:560px){.positionLibraryForm{grid-template-columns:1fr 1fr}.positionLibraryForm label:first-child{grid-column:1/-1}.positionLibraryForm button{min-height:42px}}
 @media(max-width:560px){.threatResults{grid-template-columns:1fr}.threatResult.wide{grid-column:auto}}
+@media(max-width:560px){.openingPracticeOptions{grid-template-columns:1fr}.openingPracticeActions button{min-height:44px}}
 </style>
 </head>
 <body>
 <div class="wrap">
-<h1>Chess Coach DEV v0.9.4.1</h1>
+<h1>Chess Coach DEV v0.9.5.0</h1>
 <div class="sub">Explore alternatives safely with Try a Line.</div>
 
 <div class="layout">
@@ -688,6 +690,21 @@ button:hover:not(:disabled){border-color:#9b6cff}
 
     </div>
     <div id="practiceTab" class="tabPane"><div class="card">
+      <div class="badge">OPENING PRACTICE</div><strong> Learn the moves from the board</strong>
+      <p class="small">Choose a line and the side you want to learn. Chess Coach plays the other side while you recall your moves.</p>
+      <div class="openingPracticeOptions">
+        <label>Opening<select id="openingPracticeSelect"></select></label>
+        <label>Practice as<select id="openingPracticeSide"><option value="w">White</option><option value="b">Black</option><option value="both">Both sides</option></select></label>
+      </div>
+      <div class="openingPracticeActions"><button id="openingPracticeStart" class="primary">Start Drill</button><button id="openingPracticeHint" disabled>Show Hint</button><button id="openingPracticeStop" disabled>Stop</button></div>
+      <div class="openingPracticePanel">
+        <div id="openingPracticeTitle" class="openingPracticeTitle">Choose an opening to begin.</div>
+        <div id="openingPracticeStatus" class="small" style="margin-top:5px" aria-live="polite">Your saved accuracy will appear here.</div>
+        <div id="openingPracticeLine" class="openingPracticeLine">Moves stay hidden until you play them.</div>
+        <div class="openingPracticeProgress"><span id="openingPracticeProgress"></span></div>
+        <div class="openingPracticeStats"><span id="openingPracticeAccuracy">Accuracy: —</span><span id="openingPracticeCompleted">Completed: 0</span></div>
+      </div>
+    </div><div class="card">
       <div class="badge">POSITION PRACTICE</div><strong> Build it. Play it. Learn it.</strong>
       <p class="small">Create any legal position, import a FEN, or start from the board you are studying.</p>
       <div class="row" style="margin-top:10px"><button id="practiceSetupBtn" class="primary">Set Up Position</button><button id="practiceCurrentBotBtn">Play Current Position</button></div>
@@ -942,6 +959,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
 <script src="./position-tools.js"></script>
 <script src="./position-library.js"></script>
 <script src="./threat-scanner.js"></script>
+<script src="./opening-practice.js"></script>
 <script>
 (function(){
   /*
@@ -996,7 +1014,11 @@ button:hover:not(:disabled){border-color:#9b6cff}
   const ENGINE_PREFERENCE_KEY='chessCoachEngineHelp_v1';
   const sessionStore=ChessCoachSession.createStore(localStorage);
   const positionLibraryStore=ChessPositionLibrary.createStore(localStorage);
+  const openingPracticeStore=ChessOpeningPractice.createProgressStore(localStorage);
   let positionLibraryEntries=[];
+  let openingPractice=null;
+  let openingPracticeTimer=null;
+  let openingPracticeGeneration=0;
   // Exactly one tagged job may own Stockfish. UCI has no request IDs, so every
   // job is separated from its predecessor by stop -> isready -> readyok.
   let engineJob=null;
@@ -1148,6 +1170,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
   }
 
   function closeActivePracticeForLibrary(){
+    if(openingPractice)stopOpeningPractice();
     if(tryLine)exitTryLine();
     if(setupMode)leaveSetupPosition(true);
     if(botGame)endBotGame();
@@ -1226,6 +1249,132 @@ button:hover:not(:disabled){border-color:#9b6cff}
     if(!saved){document.getElementById('libraryStatus').textContent='Could not save that position.';return;}
     document.getElementById('libraryName').value='';renderPositionLibrary();
     document.getElementById('libraryStatus').textContent='Saved “'+saved.name+'”.';
+  }
+
+  function populateOpeningPractice(){
+    const select=document.getElementById('openingPracticeSelect');select.replaceChildren();
+    ChessOpeningPractice.OPENINGS.forEach(opening=>{
+      const option=document.createElement('option');option.value=opening.id;option.textContent=opening.name+' · '+opening.eco;select.appendChild(option);
+    });
+    renderOpeningPractice();
+  }
+
+  function openingPracticeMoveText(moves){
+    let text='';
+    moves.forEach((san,index)=>{text+=(text?' ':'')+(index%2===0?(Math.floor(index/2)+1)+'. '+san:san);});
+    return text;
+  }
+
+  function openingPracticeStats(openingId){
+    const stats=openingPracticeStore.get(openingId);
+    document.getElementById('openingPracticeAccuracy').textContent='Accuracy: '+(stats.attempts?Math.round(stats.correct/stats.attempts*100)+'%':'—');
+    document.getElementById('openingPracticeCompleted').textContent='Completed: '+stats.completions;
+  }
+
+  function renderOpeningPractice(){
+    const selected=ChessOpeningPractice.findOpening(document.getElementById('openingPracticeSelect').value)||ChessOpeningPractice.OPENINGS[0];
+    const title=document.getElementById('openingPracticeTitle'),status=document.getElementById('openingPracticeStatus'),line=document.getElementById('openingPracticeLine');
+    if(!openingPractice){
+      title.textContent=selected.name+' · ECO '+selected.eco;
+      status.className='small';status.textContent='Choose your side, then start. The continuation stays hidden.';
+      line.textContent='Moves stay hidden until you play them.';
+      document.getElementById('openingPracticeProgress').style.width='0%';openingPracticeStats(selected.id);return;
+    }
+    const session=openingPractice,percent=Math.round(session.index/session.opening.moves.length*100);
+    title.textContent=session.opening.name+' · ECO '+session.opening.eco;
+    line.textContent=openingPracticeMoveText(session.played)+(session.completed?'':'  … ?');
+    document.getElementById('openingPracticeProgress').style.width=percent+'%';openingPracticeStats(session.opening.id);
+    if(session.completed){status.className='small openingPracticeGood';status.textContent='Line complete. Practice it again until every move feels automatic.';}
+    else if(ChessOpeningPractice.isUserTurn(session.index,session.side)){status.className='small';status.textContent='Your move as '+(session.index%2===0?'White':'Black')+'. Recall the idea before moving.';}
+    else{status.className='small';status.textContent='Chess Coach is playing the other side…';}
+  }
+
+  function setOpeningPracticeLocked(locked){
+    setPracticeConsumersDisabled(locked);
+    ['practiceSetupBtn','practiceCurrentBotBtn','librarySave','libraryName','libraryCategory','libraryBotSide','libraryBotLevel','openingPracticeSelect','openingPracticeSide','analyzeBtn','autoAnalyze','restartEngineBtn','engineHelpTabBtn','engineHelpBtn'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=locked;});
+    document.querySelectorAll('.libraryActions button').forEach(button=>button.disabled=locked);
+    document.querySelectorAll('.tabBtn').forEach(button=>button.disabled=locked);
+    document.getElementById('openingPracticeHint').disabled=!locked;
+    document.getElementById('openingPracticeStop').disabled=!locked;
+  }
+
+  function finishOpeningPractice(){
+    if(!openingPractice||openingPractice.completed)return;
+    openingPractice.completed=true;openingPracticeStore.recordCompletion(openingPractice.opening.id);
+    document.getElementById('openingPracticeStart').disabled=false;document.getElementById('openingPracticeStart').textContent='Practice Again';
+    document.getElementById('openingPracticeHint').disabled=true;
+    renderOpeningPractice();render();
+  }
+
+  function advanceOpeningPractice(){
+    if(!openingPractice)return;
+    const session=openingPractice;
+    if(session.index>=session.opening.moves.length){finishOpeningPractice();return;}
+    renderOpeningPractice();render();
+    if(ChessOpeningPractice.isUserTurn(session.index,session.side))return;
+    const generation=openingPracticeGeneration;
+    clearTimeout(openingPracticeTimer);
+    openingPracticeTimer=setTimeout(()=>{
+      if(!openingPractice||generation!==openingPracticeGeneration)return;
+      const san=openingPractice.opening.moves[openingPractice.index],move=game.move(san);
+      if(!move){document.getElementById('openingPracticeStatus').textContent='This practice line could not continue.';return;}
+      openingPractice.played.push(move.san);openingPractice.index++;lastMove={from:move.from,to:move.to};
+      advanceOpeningPractice();
+    },420);
+  }
+
+  function resetOpeningPracticeBoard(){
+    clearTimeout(openingPracticeTimer);openingPracticeGeneration++;
+    game=new Chess();moveStartFen=STANDARD_FEN;loadedMoves=[];cursor=0;lastMove=null;selected=null;legalTargets=[];bestMoveHighlight=null;
+    openingPractice.index=0;openingPractice.played=[];openingPractice.completed=false;
+    orientation=openingPractice.side==='b'?'black':'white';
+    document.getElementById('openingPracticeStart').disabled=true;document.getElementById('openingPracticeStart').textContent='Drill Running';
+    document.getElementById('openingPracticeHint').disabled=false;
+    clearEngineDisplay();clearReview();advanceOpeningPractice();
+  }
+
+  function startOpeningPractice(){
+    if(openingPractice){resetOpeningPracticeBoard();return;}
+    if(tryLine||setupMode||botGame){document.getElementById('openingPracticeStatus').textContent='Finish the current practice mode before starting an opening drill.';return;}
+    const opening=ChessOpeningPractice.findOpening(document.getElementById('openingPracticeSelect').value);
+    if(!opening)return;
+    const side=document.getElementById('openingPracticeSide').value;
+    if(side!=='both'&&!opening.moves.some((move,index)=>(index%2===0?'w':'b')===side)){
+      document.getElementById('openingPracticeStatus').textContent='This short line has no move for that side. Choose White or Both sides.';return;
+    }
+    const snapshot=appSnapshot();cancelEngineAdvice();
+    openingPractice={opening,side,index:0,played:[],completed:false,snapshot};
+    setOpeningPracticeLocked(true);switchTab('practiceTab');resetOpeningPracticeBoard();
+  }
+
+  function stopOpeningPractice(){
+    if(!openingPractice)return;
+    clearTimeout(openingPracticeTimer);openingPracticeGeneration++;
+    const snapshot=openingPractice.snapshot;openingPractice=null;restoreAppSnapshot(snapshot);setOpeningPracticeLocked(false);
+    document.getElementById('openingPracticeStart').disabled=false;document.getElementById('openingPracticeStart').textContent='Start Drill';
+    applyEngineHelpUi();renderOpeningPractice();render();scheduleAutoAnalysis();scheduleSessionSave();
+  }
+
+  function showOpeningPracticeHint(){
+    if(!openingPractice||openingPractice.completed)return;
+    const expected=openingPractice.opening.moves[openingPractice.index];
+    document.getElementById('openingPracticeStatus').className='small openingPracticeTry';
+    document.getElementById('openingPracticeStatus').textContent='Hint: the repertoire move is '+expected+'. Find it on the board.';
+  }
+
+  function handleOpeningPracticeMove(move){
+    const session=openingPractice,expected=session.opening.moves[session.index];
+    if(!ChessOpeningPractice.isCorrect(expected,move.san)){
+      game.undo();
+      const history=game.history({verbose:true}),previous=history[history.length-1];lastMove=previous?{from:previous.from,to:previous.to}:null;
+      selected=null;legalTargets=[];openingPracticeStore.recordAttempt(session.opening.id,false);
+      document.getElementById('openingPracticeStatus').className='small openingPracticeTry';
+      document.getElementById('openingPracticeStatus').textContent=move.san+' is legal, but it is not the repertoire move. Try again or use the hint.';
+      openingPracticeStats(session.opening.id);render();return;
+    }
+    openingPracticeStore.recordAttempt(session.opening.id,true);session.played.push(move.san);session.index++;lastMove={from:move.from,to:move.to};
+    document.getElementById('openingPracticeStatus').className='small openingPracticeGood';document.getElementById('openingPracticeStatus').textContent='Correct: '+move.san+'.';
+    advanceOpeningPractice();
   }
 
   function enginePreference(){
@@ -2221,7 +2370,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
     if(threatResults.classList.contains('active')&&threatResults.dataset.fen!==displayedFen)resetThreatScanner(false,'The position changed. Study the new board, then reveal a fresh scan.');
     if(!setupMode){updateMaterialCounter();renderMoves();renderCurrentMoveLearning();}
     if(tryLine)setTryLineConsumersDisabled(true);
-    scheduleSessionSave();
+    if(!openingPractice)scheduleSessionSave();
   }
 
   let pendingPromotion=null;
@@ -2254,6 +2403,8 @@ button:hover:not(:disabled){border-color:#9b6cff}
     lastMove={from:move.from,to:move.to};
     selected=null;
     legalTargets=[];
+
+    if(openingPractice){handleOpeningPracticeMove(move);return;}
 
     if(tryLine){
       tryLine.moves.push(move.san);
@@ -2326,6 +2477,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
   }
 
   function attemptManualMove(from,to,promotion){
+    if(openingPractice&&!ChessOpeningPractice.isUserTurn(openingPractice.index,openingPractice.side))return false;
     if(botGame&&(botGame.locked||game.turn()!==botGame.playerColor))return false;
     if(tryLine?.locked){
       feedbackEl.textContent='Wait for Stockfish to finish before playing the next move.';
@@ -2365,6 +2517,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
     }
 
     if(botGame&&(botGame.locked||game.turn()!==botGame.playerColor))return;
+    if(openingPractice&&!ChessOpeningPractice.isUserTurn(openingPractice.index,openingPractice.side))return;
 
     if(!selected){
       const p=game.get(sq);
@@ -3759,6 +3912,10 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
   document.getElementById('pauseRevealBtn').addEventListener('click',revealPausePlan);
   document.getElementById('librarySave').addEventListener('click',saveCurrentPositionToLibrary);
   document.getElementById('libraryName').addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();saveCurrentPositionToLibrary();}});
+  document.getElementById('openingPracticeStart').addEventListener('click',startOpeningPractice);
+  document.getElementById('openingPracticeHint').addEventListener('click',showOpeningPracticeHint);
+  document.getElementById('openingPracticeStop').addEventListener('click',stopOpeningPractice);
+  document.getElementById('openingPracticeSelect').addEventListener('change',renderOpeningPractice);
 
   document.getElementById('profileDetailsBtn').addEventListener('click',()=>{
     const el=document.getElementById('profileDetails');
@@ -3796,6 +3953,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
 
 
   loadLearningProfile();
+  populateOpeningPractice();
   renderPositionLibrary();
   const preferred=enginePreference();if(preferred!==null)engineHelpEnabled=preferred;
 
