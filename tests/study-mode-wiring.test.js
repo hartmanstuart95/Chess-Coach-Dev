@@ -68,3 +68,15 @@ test('Threat Scanner reveals current-position danger after the learner thinks fi
   assert.match(html,/threatRevealBtn.*revealThreatScanner/);
 });
 
+test('Opening Practice runs recall drills and preserves the prior study position',()=>{
+  assert.match(html,/src="\.\/opening-practice\.js"/);
+  assert.match(html,/ChessOpeningPractice\.createProgressStore\(localStorage\)/);
+  assert.match(html,/function startOpeningPractice\(\)/);
+  assert.match(html,/snapshot=appSnapshot\(\)/);
+  assert.match(html,/function handleOpeningPracticeMove\(move\)/);
+  assert.match(html,/ChessOpeningPractice\.isCorrect\(expected,move\.san\)/);
+  assert.match(html,/game\.undo\(\)/);
+  assert.match(html,/restoreAppSnapshot\(snapshot\)/);
+  assert.match(html,/if\(!openingPractice\)scheduleSessionSave\(\)/);
+});
+
