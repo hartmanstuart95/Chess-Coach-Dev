@@ -58,3 +58,13 @@ test('Position Library opens saved positions in analysis, Try a Line, and bot pr
   assert.match(html,/positionLibraryStore\.save\(\{name,category:/);
 });
 
+test('Threat Scanner reveals current-position danger after the learner thinks first',()=>{
+  assert.match(html,/src="\.\/threat-scanner\.js"/);
+  assert.match(html,/What do you think the threat is\?/);
+  assert.match(html,/function revealThreatScanner\(\)/);
+  assert.match(html,/ChessThreatScanner\.scan\(fen\)/);
+  assert.match(html,/function threatForcingMoves\(fen\)/);
+  assert.match(html,/threatResults\.dataset\.fen!==displayedFen/);
+  assert.match(html,/threatRevealBtn.*revealThreatScanner/);
+});
+
