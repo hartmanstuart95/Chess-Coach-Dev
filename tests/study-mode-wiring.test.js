@@ -19,7 +19,7 @@ test('turning Stockfish on in Try a Line analyzes the current line',()=>{
 test('session restore keeps canonical and variation histories separate',()=>{
   assert.match(html,/loadedMoves:tryLine\.snapshot\.loadedMoves\.slice\(\)/);
   assert.match(html,/const lineGame=new Chess\(saved\.tryLine\.startFen\)/);
-  assert.match(html,/game=new Chess\(saved\.fen\);moveStartFen=saved\.moveStartFen\|\|STANDARD_FEN;cursor=saved\.cursor;loadedMoves=saved\.loadedMoves\.slice\(\)/);
+  assert.match(html,/game=new Chess\(ChessPositionTools\.normalizeFen\(saved\.fen\)\);moveStartFen=ChessPositionTools\.normalizeFen\(saved\.moveStartFen\|\|STANDARD_FEN\);cursor=saved\.cursor;loadedMoves=saved\.loadedMoves\.slice\(\)/);
 });
 
 test('locked SVG renderer remains in use',()=>{
@@ -39,6 +39,13 @@ test('custom-position moves rebuild from their original FEN before Try a Line',(
   assert.match(html,/function rebuildTo\(n\)[\s\S]*?const rebuilt=new Chess\(moveStartFen\)/);
   assert.match(html,/function buildPositionAt\(n\)[\s\S]*?const g=new Chess\(moveStartFen\)/);
   assert.match(html,/snapshot:\{fen:game\.fen\(\),moveStartFen,cursor/);
-  assert.match(html,/game=new Chess\(saved\.fen\);moveStartFen=saved\.moveStartFen\|\|STANDARD_FEN/);
+  assert.match(html,/game=new Chess\(ChessPositionTools\.normalizeFen\(saved\.fen\)\);moveStartFen=ChessPositionTools\.normalizeFen\(saved\.moveStartFen\|\|STANDARD_FEN\)/);
+});
+
+test('custom positions are normalized and engine failures release full-game review',()=>{
+  assert.match(html,/moveStartFen=ChessPositionTools\.normalizeFen\(saved\.moveStartFen/);
+  assert.match(html,/if\(job\.retries>=1\)/);
+  assert.match(html,/This position could not be analyzed\. Check the setup and try again\./);
+  assert.match(html,/stopEngine\('Stockfish worker stopped\. Restart the engine and try again\.'\)/);
 });
 
