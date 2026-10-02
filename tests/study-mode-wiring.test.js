@@ -34,6 +34,14 @@ test('custom setup and bot practice share the current-position engine safely',()
   assert.match(html,/if\(\(!engineHelpEnabled&&owner!=='bot'\)\|\|!engineReady\|\|!engine\)return false/);
 });
 
+test('position setup separates board view from side to move',()=>{
+  assert.match(html,/id="setupTurn"/);
+  assert.match(html,/id="setupView"/);
+  assert.match(html,/orientation='white';document\.getElementById\('setupView'\)\.value=orientation/);
+  assert.match(html,/document\.getElementById\('setupView'\)\.addEventListener\('change'/);
+  assert.match(html,/Piece squares and side to move are unchanged/);
+});
+
 test('custom-position moves rebuild from their original FEN before Try a Line',()=>{
   assert.match(html,/game=new Chess\(result\.fen\);moveStartFen=result\.fen;loadedMoves=\[\]/);
   assert.match(html,/function rebuildTo\(n\)[\s\S]*?const rebuilt=new Chess\(moveStartFen\)/);
