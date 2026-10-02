@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Chess Coach DEV v0.9.6.0</title>
+<title>Chess Coach DEV v0.9.6.1</title>
 <style>
 :root{
   --bg:#0d0c13;--panel:#181622;--text:#f9f7ff;--muted:#aaa6bb;
@@ -534,7 +534,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
 </head>
 <body>
 <div class="wrap">
-<h1>Chess Coach DEV v0.9.6.0</h1>
+<h1>Chess Coach DEV v0.9.6.1</h1>
 <div class="sub">Explore alternatives safely with Try a Line.</div>
 
 <div class="layout">
@@ -584,10 +584,11 @@ button:hover:not(:disabled){border-color:#9b6cff}
     </div>
     <section id="positionSetupPanel" class="positionSetupPanel" aria-live="polite">
       <div class="tryLineTitle">Set Up Position</div>
-      <div class="small">Choose a piece, then tap squares to place it. Select Eraser to remove pieces.</div>
+      <div class="small">Choose a piece, then tap squares to place it. Select Eraser to remove pieces. Side to move controls the turn; Board view controls only which color is shown at the bottom.</div>
       <div id="piecePalette" class="piecePalette" aria-label="Chess piece palette"></div>
       <div class="setupOptions">
         <label>Side to move<select id="setupTurn"><option value="w">White</option><option value="b">Black</option></select></label>
+        <label>Board view<select id="setupView"><option value="white">White at bottom</option><option value="black">Black at bottom</option></select></label>
         <fieldset><legend>Castling</legend><label><input id="castleWK" type="checkbox"> White O-O</label><label><input id="castleWQ" type="checkbox"> White O-O-O</label><label><input id="castleBK" type="checkbox"> Black O-O</label><label><input id="castleBQ" type="checkbox"> Black O-O-O</label></fieldset>
       </div>
       <label class="fenLabel">FEN<input id="setupFen" type="text" spellcheck="false" autocomplete="off"></label>
@@ -1154,7 +1155,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
     if(tryLine||botGame)return;
     setupSnapshot=appSnapshot();
     try{syncSetupControls(ChessPositionTools.parseFen(fen));}catch(e){syncSetupControls(ChessPositionTools.parseFen(STANDARD_FEN));}
-    setupMode=true;setupSelectedPiece='wp';selected=null;legalTargets=[];cancelEngineAdvice();setPracticeConsumersDisabled(true);
+    setupMode=true;setupSelectedPiece='wp';selected=null;legalTargets=[];orientation='white';document.getElementById('setupView').value=orientation;cancelEngineAdvice();setPracticeConsumersDisabled(true);
     document.getElementById('positionSetupPanel').classList.add('active');document.getElementById('setupPositionBtn').disabled=true;
     renderPiecePalette();render();document.getElementById('setupStatus').textContent='Choose a piece, then tap the board.';
   }
@@ -1592,7 +1593,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
         game=lineGame;tryLine={...saved.tryLine,moves:saved.tryLine.moves.slice(),snapshot:{...saved.tryLine.snapshot,loadedMoves:saved.tryLine.snapshot.loadedMoves.slice()},locked:false};
         tryLineGeneration++;setTryLineConsumersDisabled(true);document.getElementById('tryLineBtn').disabled=true;
       }
-      if(saved.setup){setupSnapshot=saved.setup.snapshot;syncSetupControls(saved.setup.position);setupSelectedPiece=saved.setup.selectedPiece||'wp';setupMode=true;setPracticeConsumersDisabled(true);document.getElementById('positionSetupPanel').classList.add('active');document.getElementById('setupPositionBtn').disabled=true;renderPiecePalette();}
+      if(saved.setup){setupSnapshot=saved.setup.snapshot;syncSetupControls(saved.setup.position);setupSelectedPiece=saved.setup.selectedPiece||'wp';setupMode=true;document.getElementById('setupView').value=orientation;setPracticeConsumersDisabled(true);document.getElementById('positionSetupPanel').classList.add('active');document.getElementById('setupPositionBtn').disabled=true;renderPiecePalette();}
       if(saved.botGame){game=new Chess(saved.botGame.currentFen);botGame={...saved.botGame,moves:saved.botGame.moves.slice(),locked:false};setPracticeConsumersDisabled(true);document.getElementById('botGamePanel').classList.add('active');document.getElementById('setupPositionBtn').disabled=true;renderBotMoves();}
       detectMySide();updateFocusHeader();
       document.querySelectorAll('.focusBtn').forEach(btn=>btn.classList.toggle('activeFocus',btn.dataset.focus===currentFocus));
@@ -3975,6 +3976,11 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
   ['setupPositionBtn','practiceSetupBtn'].forEach(id=>document.getElementById(id).addEventListener('click',()=>enterSetupPosition(game.fen())));
   document.getElementById('practiceCurrentBotBtn').addEventListener('click',()=>startBotGame(game.fen(),game.turn(),8,appSnapshot()));
   ['setupTurn','castleWK','castleWQ','castleBK','castleBQ'].forEach(id=>document.getElementById(id).addEventListener('change',updateSetupFen));
+  document.getElementById('setupView').addEventListener('change',event=>{
+    orientation=event.target.value==='black'?'black':'white';
+    render();
+    document.getElementById('setupStatus').textContent=(orientation==='white'?'White':'Black')+' is shown at the bottom. Piece squares and side to move are unchanged.';
+  });
   document.getElementById('setupLoadFen').addEventListener('click',()=>{
     try{syncSetupControls(ChessPositionTools.parseFen(document.getElementById('setupFen').value));render();document.getElementById('setupStatus').textContent='FEN loaded into the editor.';}
     catch(e){document.getElementById('setupStatus').textContent=e.message;}
