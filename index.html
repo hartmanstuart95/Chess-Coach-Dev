@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Chess Coach DEV v0.9.6.2</title>
+<title>Chess Coach DEV v0.9.6.3</title>
 <style>
 :root{
   --bg:#0d0c13;--panel:#181622;--text:#f9f7ff;--muted:#aaa6bb;
@@ -534,7 +534,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
 </head>
 <body>
 <div class="wrap">
-<h1>Chess Coach DEV v0.9.6.2</h1>
+<h1>Chess Coach DEV v0.9.6.3</h1>
 <div class="sub">Explore alternatives safely with Try a Line.</div>
 
 <div class="layout">
@@ -1688,7 +1688,10 @@ button:hover:not(:disabled){border-color:#9b6cff}
     const result=document.getElementById('aiCoachResult');
     result.classList.add('active');result.replaceChildren();
     const heading=document.createElement('div');heading.className='aiCoachHeading';heading.textContent='AI Coach error';result.appendChild(heading);
-    const fields=[['Error code',error.code],['Upstream status',String(error.upstreamStatus)],['Message',error.message]];
+    const fields=[['Error code',error.code]];
+    if(error.httpStatus)fields.push(['Worker HTTP status',String(error.httpStatus)]);
+    if(error.upstreamStatus)fields.push(['Z.AI HTTP status',String(error.upstreamStatus)]);
+    fields.push(['Message',error.message]);
     fields.forEach(([label,value])=>{
       const section=document.createElement('div');section.className='aiCoachSection';
       const strong=document.createElement('strong');strong.textContent=label;section.appendChild(strong);
@@ -1760,7 +1763,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
       if(outcome.kind==='worker-error'){setAiCoachError(outcome.error);return;}
       setAiCoachState(outcome.message);
     }catch(e){
-      if(requestId===aiCoachRequestId)setAiCoachState(AiCoachResponse.FALLBACK_MESSAGE);
+      if(requestId===aiCoachRequestId)setAiCoachState('Could not reach the AI Worker. Check your connection and try again.');
     }finally{
       if(requestId===aiCoachRequestId)renderTryLine();
     }
