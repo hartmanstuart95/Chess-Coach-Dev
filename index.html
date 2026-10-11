@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Chess Coach DEV v0.9.6.1</title>
+<title>Chess Coach DEV v0.9.6.2</title>
 <style>
 :root{
   --bg:#0d0c13;--panel:#181622;--text:#f9f7ff;--muted:#aaa6bb;
@@ -534,7 +534,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
 </head>
 <body>
 <div class="wrap">
-<h1>Chess Coach DEV v0.9.6.1</h1>
+<h1>Chess Coach DEV v0.9.6.2</h1>
 <div class="sub">Explore alternatives safely with Try a Line.</div>
 
 <div class="layout">
@@ -632,6 +632,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
         <div class="aiCoachDisclaimer">Stockfish supplies every move and evaluation. AI Coach only explains those verified facts.</div>
       </div>
       <div class="tryLineControls">
+        <button id="tryLineRetry" hidden>Retry Stockfish</button>
         <button id="tryLineUndo">Undo Move</button><button id="tryLineRestart">Restart Line</button>
         <button id="tryLineExit">Exit Try a Line</button><button id="tryLineReturn" class="primary">Return to Game</button>
       </div>
@@ -1636,6 +1637,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
     const panel=document.getElementById('tryLinePanel');
     panel.classList.toggle('active',Boolean(tryLine));
     if(!tryLine)return;
+    document.getElementById('tryLineRetry').hidden=!tryLine.analysisFailed;
     document.getElementById('tryLineStartMove').textContent=tryLine.startLabel;
     const moves=document.getElementById('tryLineMoves');
     if(!tryLine.moves.length)moves.textContent='No experimental moves yet.';
@@ -1766,6 +1768,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
 
   function requestTryLineAnalysis(kind){
     if(!tryLine)return;
+    tryLine.analysisFailed=false;
     clearAiCoachExplanation();
     if(!engineHelpEnabled){tryLine.locked=false;tryLine.stockfishRecommendedResponseSan=null;tryLine.stockfishPrincipalVariationSan=null;bestMoveHighlight=null;renderTryLine();render();return;}
     tryLine.stockfishRecommendedResponseSan=null;
@@ -3749,6 +3752,22 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
       document.getElementById('reviewStatus').textContent='Move review stopped. Try it again after restarting the engine.';
     }
     if(statusMessage)document.getElementById('engineStatus').textContent=statusMessage;
+    if(tryLine){
+      tryLine.locked=false;
+      tryLine.analysisFailed=true;
+      tryLine.currentEval=null;
+      tryLine.stockfishRecommendedResponseSan=null;
+      tryLine.stockfishPrincipalVariationSan=null;
+      bestMoveHighlight=null;
+      clearAiCoachExplanation();
+      document.getElementById('tryLineEval').textContent='—';
+      document.getElementById('tryLineDelta').textContent='—';
+      document.getElementById('tryLineBest').textContent='—';
+      document.getElementById('tryLineStatus').textContent='Stockfish stopped. You can still play legal moves. Tap Retry Stockfish for analysis and AI coaching.';
+      feedbackEl.textContent='You can continue exploring or retry Stockfish.';
+      feedbackEl.className='small';
+      renderTryLine();render();scheduleSessionSave();
+    }
   }
 
   function restartEngine(){
@@ -3933,9 +3952,11 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
 
       engine.onmessage=e=>{
         if(generation!==engineGeneration)return;
-        started=true;
-        clearTimeout(engineStartupTimer);
-        engineStartupTimer=null;
+        if(e.data==='readyok'){
+          started=true;
+          clearTimeout(engineStartupTimer);
+          engineStartupTimer=null;
+        }
         handleEngineLine(e.data);
       };
 
@@ -4006,6 +4027,7 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
   });
   document.getElementById('tryLineBtn').addEventListener('click',startTryLine);
   document.getElementById('tryLineUndo').addEventListener('click',undoTryLineMove);
+  document.getElementById('tryLineRetry').addEventListener('click',restartEngine);
   document.getElementById('tryLineRestart').addEventListener('click',restartTryLine);
   document.getElementById('tryLineExit').addEventListener('click',exitTryLine);
   document.getElementById('tryLineReturn').addEventListener('click',exitTryLine);
