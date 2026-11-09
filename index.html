@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Chess Coach DEV v0.9.6.3</title>
+<title>Chess Coach DEV v0.9.7.0</title>
 <style>
 :root{
   --bg:#0d0c13;--panel:#181622;--text:#f9f7ff;--muted:#aaa6bb;
@@ -530,11 +530,32 @@ button:hover:not(:disabled){border-color:#9b6cff}
 @media(max-width:560px){.threatResults{grid-template-columns:1fr}.threatResult.wide{grid-column:auto}}
 @media(max-width:560px){.openingPracticeOptions{grid-template-columns:1fr}.openingPracticeActions button{min-height:44px}}
 @media(max-width:620px){.dashboardStats{grid-template-columns:1fr 1fr}.chessComConnect{grid-template-columns:1fr 1fr}.chessComConnect input{grid-column:1/-1}.recentForm{grid-template-columns:1fr 1fr}.dashboardFocusRow{grid-template-columns:105px 1fr 24px}}
+.appearance{display:flex;justify-content:flex-end;margin-bottom:8px}
+.appearance label,.engineCompare label{font-size:13px;color:var(--muted)}
+.appearance select,.engineCompare select{background:var(--panel);color:var(--text);border:1px solid #84746d;border-radius:8px;padding:8px;font:inherit}
+.engineCompare .row{align-items:center;margin-bottom:8px}
+.comparisonLines{list-style:none;padding:0;margin:10px 0 0;display:grid;gap:6px}
+.comparisonLines li{background:var(--panel);border:1px solid #84746d;border-radius:8px;padding:8px;overflow-wrap:anywhere}
+.comparisonLines strong{display:block;margin-bottom:4px}
+body:not([data-theme="purple"]){
+  --bg:#211d18;--panel:#302920;--text:#faf0df;--muted:#d0bea5;
+  --light:#ebdcc0;--dark:#ad8450;--sel:#f8db91;--last:#f8db91;--best:#78b17c;
+  background:radial-gradient(circle at 76% -10%,#453522 0,transparent 42%),var(--bg)
+}
+body:not([data-theme="purple"]) :is(.card,.currentMoveCard,.tryLinePanel,.positionSetupPanel,.botGamePanel){background:linear-gradient(145deg,#362d22,#28231c);border-color:#76614a}
+body:not([data-theme="purple"]) :is(button,.tabBtn,.engineStat,.pv,.aiCoachPanel,textarea,.libraryPosition,.dashboardStat,.threatResult,.openingPracticePanel,.tryLineStat,.tryLineMoves){background:#302920;border-color:#76614a}
+body:not([data-theme="purple"]) :is(button.primary,.activeTab,.activeFocus,.selectedChoice,.tryLineLaunch,.aiCoachExplain){background:#8e632e;border-color:#b38a54;color:#fff8ed}
+body:not([data-theme="purple"]) :is(.badge,.openingPracticeLine,.tryLineNotice){color:#f2d39e}
+body:not([data-theme="purple"]) .badge{background:#4b3926}
+body:not([data-theme="purple"]) .dot{background:#f5d58cd9}
+body:not([data-theme="purple"]) .sq.last::after{background:#f8db9140}
+body:not([data-theme="purple"]) :is(button,select,input,textarea):focus-visible{outline-color:#f8db91}
 </style>
 </head>
 <body>
 <div class="wrap">
-<h1>Chess Coach DEV v0.9.6.3</h1>
+<div class="appearance"><label>Theme <select id="appearanceTheme"><option value="ochre">Beige / Ochre</option><option value="purple">Purple</option></select></label></div>
+<h1>Chess Coach DEV v0.9.7.0</h1>
 <div class="sub">Explore alternatives safely with Try a Line.</div>
 
 <div class="layout">
@@ -804,7 +825,17 @@ button:hover:not(:disabled){border-color:#9b6cff}
       </div>
       <div class="small" style="margin-top:8px">Stockfish 18 • Safari-safe local worker • live depth 12 • review depth 10</div>
     </div>
-
+    <section class="card engineCompare engineAdvice" aria-labelledby="comparisonHeading">
+      <strong id="comparisonHeading">Compare engine lines</strong>
+      <p class="small">Compare moves for the current position. Ask the Coach always uses Stockfish.</p>
+      <div class="row">
+        <label>Engine <select id="comparisonEngine"><option value="stockfish">Stockfish</option><option value="lozza">Lozza</option></select></label>
+        <label>Lines <select id="comparisonCount"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option></select></label>
+        <button id="comparisonAnalyze" class="primary">Analyze lines</button>
+      </div>
+      <div id="comparisonStatus" class="small" role="status">Scores are from White’s perspective.</div>
+      <ol id="comparisonLines" class="comparisonLines"></ol>
+    </section>
     </div>
     <div id="reviewTab" class="tabPane"><div class="card">
       <div class="badge">GAME REVIEW</div>
@@ -1004,6 +1035,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
 <script src="./threat-scanner.js"></script>
 <script src="./opening-practice.js"></script>
 <script src="./progress-dashboard.js"></script>
+<script src="./engine-comparison.js"></script>
 <script>
 (function(){
   /*
@@ -2445,6 +2477,7 @@ button:hover:not(:disabled){border-color:#9b6cff}
   }
 
   function render(){
+    if(comparisonFen!==null&&(comparisonFen!==game.fen()||!engineHelpEnabled||setupMode||tryLine||botGame||batchMode))clearComparison();
     boardEl.innerHTML='';
 
     squareNames().forEach(sq=>{
@@ -4120,6 +4153,63 @@ document.getElementById('flipBtn').addEventListener('click',()=>{
     scheduleSessionSave();
   });
 
+
+  const themeSelect=document.getElementById('appearanceTheme');
+  try{themeSelect.value=localStorage.getItem('chess-coach-theme')==='purple'?'purple':'ochre';}catch{}
+  document.body.dataset.theme=themeSelect.value;
+  themeSelect.addEventListener('change',()=>{
+    document.body.dataset.theme=themeSelect.value;
+    try{localStorage.setItem('chess-coach-theme',themeSelect.value);}catch{}
+  });
+  const comparisonEngine=document.getElementById('comparisonEngine');
+  const comparisonCount=document.getElementById('comparisonCount');
+  const comparisonStatus=document.getElementById('comparisonStatus');
+  const comparisonLines=document.getElementById('comparisonLines');
+  let comparisonFen=null, stopComparison=null;
+  function clearComparison(){
+    if(stopComparison)stopComparison();
+    stopComparison=null;comparisonFen=null;
+    comparisonLines.replaceChildren();
+    comparisonStatus.textContent='Scores are from White’s perspective.';
+  }
+  comparisonEngine.addEventListener('change',clearComparison);
+  comparisonCount.addEventListener('change',clearComparison);
+  document.getElementById('comparisonAnalyze').addEventListener('click',()=>{
+    clearComparison();
+    if(!engineHelpEnabled||setupMode||botGame||tryLine||batchMode){
+      comparisonStatus.textContent='Finish the current activity and turn engine help on to compare lines.';
+      return;
+    }
+    const fen=game.fen(), count=Math.min(Number(comparisonCount.value),game.moves().length);
+    if(!count){comparisonStatus.textContent='There are no legal moves in this position.';return;}
+    const engineId=comparisonEngine.value, name=ChessEngineComparison.engines[engineId].name;
+    comparisonFen=fen;
+    comparisonStatus.textContent=name+' is analyzing…';
+    function show(lines,done){
+      const nodes=[];
+      for(const line of lines){
+        const best=validateBestMove(fen,line.moves[0]);
+        if(!best.valid)continue;
+        const evalInfo=evaluationForFen({score:line.type==='cp'?line.value:null,mate:line.type==='mate'?line.value:null},fen);
+        const li=document.createElement('li'), title=document.createElement('strong');
+        title.textContent=['Best','2nd','3rd'][line.rank-1]+' · '+best.san+' · '+evalInfo.label;
+        const continuation=document.createElement('div');
+        continuation.textContent=pvToSan(fen,line.moves);
+        li.append(title,continuation);nodes.push(li);
+      }
+      comparisonLines.replaceChildren(...nodes);
+      comparisonStatus.textContent=nodes.length
+        ?name+' · depth '+lines[0].depth+' · White’s perspective'+(done?'':' · analyzing…')
+        :name+' did not return a complete set of lines. Try fewer lines.';
+    }
+    try{
+      stopComparison=ChessEngineComparison.search({engineId,fen,count,
+        onUpdate:lines=>show(lines,false),
+        onFinish:lines=>{stopComparison=null;show(lines,true);},
+        onError:message=>{stopComparison=null;comparisonStatus.textContent=message;}
+      });
+    }catch{comparisonStatus.textContent='Could not start '+name+'.';}
+  });
 
   loadLearningProfile();
   populateOpeningPractice();
